@@ -77,6 +77,20 @@ class FileUtils:
         # maybe try filecmp.dircmp ?
         pass
 
+    @staticmethod
+    def copyToList(path:str):
+        # opening the file in read mode
+        with open("Proxy_List.txt", "r") as f:
+            # reading the file
+            data = f.read()
+            # replacing end splitting the text 
+            # when newline ('\n') is seen.
+            data_into_list = data.split("\n")
+            # print(data_into_list)
+            # print(len(data_into_list))
+            return data_into_list
+
+
 
 
 

@@ -97,7 +97,7 @@ def main():
             f.write('')
     with open(f'{os.getcwd()}/time_stamp.txt', 'r') as f:
         lastDate = f.read()
-        if lastDate == time.strftime("%Y-%m-%d"):
+        if lastDate == time.strftime("%Y-%m-%d") and tools.IS_CONNECTED_TO_NETWORK:
             print(f'{__file__}: already ran this')
             return
     with open(f'{os.getcwd()}/time_stamp.txt', 'w') as f:
