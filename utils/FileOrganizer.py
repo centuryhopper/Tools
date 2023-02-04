@@ -56,6 +56,8 @@ class FileUtils:
             if filecmp.cmp(sourceFile, destinationFile):
                 print('files are the same')
                 return
+        else:
+            open(destinationFile, 'w').close()
 
         print('overwriting destination file with the source')
         # overwrite contents of destinationFile with those of the source
