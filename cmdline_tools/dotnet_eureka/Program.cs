@@ -1,88 +1,126 @@
 ﻿using System;
-using System.Diagnostics;
-using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Binding;
+using DotNetEnv;
+using System.CommandLine;
+using System.Diagnostics;
+using System.Text;
+using Newtonsoft.Json;
+
+
+/*
+
+TODO:
+
+dotnet run --file [path (default is ~/.config/dotnet_eureka/]
+
+*/
 
 
 public class Program
 {
     internal static async Task Main(string[] args)
     {
-        var fileOption = new Option<FileInfo?>(
-              name: "--file",
-              description: "An option whose argument is parsed as a FileInfo",
-              getDefaultValue: () => new FileInfo("scl.runtimeconfig.json"));
+        DotNetEnv.Env.Load();
 
-        var firstNameOption = new Option<string>(
-              name: "--first-name",
-              description: "Person.FirstName");
+        var repoPath = new Option<string>(
+              name: "--path",
+              description: "The absolute path of your repository. An empty folder is recommended.",
+              getDefaultValue: () => $"/home/{Environment.UserName}/.config/dotnet_eureka/");
 
-        var lastNameOption = new Option<string>(
-              name: "--last-name",
-              description: "Person.LastName");
+        var isPrivateOption = new Option<bool>(
+            name: "--private",
+            description: "Decide whether the created repository should be private. Default is false.");
+
+        var repoName = new Option<string>(
+              name: "--name",
+              description: "The name of your repository");
 
         var rootCommand = new RootCommand();
-        rootCommand.Add(fileOption);
-        rootCommand.Add(firstNameOption);
-        rootCommand.Add(lastNameOption);
+        rootCommand.Add(repoPath);
+        rootCommand.Add(isPrivateOption);
+        rootCommand.Add(repoName);
 
-        rootCommand.SetHandler((fileOptionValue, person) =>
-        {
-            DoRootCommand(fileOptionValue, person);
-        },
-            fileOption, new PersonBinder(firstNameOption, lastNameOption));
+        rootCommand.SetHandler((string path, string name, bool isPrivate) =>
+            {
+                DoRootCommand(path, name, isPrivate);
+            }, repoPath, repoName,isPrivateOption
+        );
 
         await rootCommand.InvokeAsync(args);
     }
 
-    public static void DoRootCommand(FileInfo? aFile, Person aPerson)
+    public static void DoRootCommand(in string path, in string name, in bool isPrivate)
     {
-        // Console.WriteLine($"File = {aFile?.FullName}");
-        // Console.WriteLine($"Person = {aPerson?.FirstName} {aPerson?.LastName}");
+        // System.Console.WriteLine(path);
 
-        var editor = Environment.GetEnvironmentVariable("EDITOR");
-        if (string.IsNullOrEmpty(editor))
+        if (!Directory.Exists(path))
         {
-            Console.WriteLine("EDITOR environment variable not set.");
+            Directory.CreateDirectory(path);
+        }
+
+        #region remote github repo setup
+
+        string accessToken = Environment.GetEnvironmentVariable("githubAPIToken")!;
+        var jsonData = new { name=name, @private=isPrivate };
+        HttpContent content = new StringContent(JsonConvert.SerializeObject(jsonData), Encoding.UTF8, "application/json");
+        var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", "token " + accessToken);
+        httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+        var response = httpClient.PostAsync("https://api.github.com/user/repos/", content ).Result;
+
+        #endregion
+
+        #region temporary comment for now
+        // var editor = Environment.GetEnvironmentVariable("EDITOR");
+        // if (string.IsNullOrEmpty(editor))
+        // {
+        //     Console.WriteLine("EDITOR environment variable not set.");
+        //     return;
+        // }
+        #endregion
+
+        var directory = path;
+        var filename = $"{DateTime.Now.ToString("yyyy_mm_dd_HH_MM_ss")}.txt";
+        var filepath = Path.Combine(directory, filename);
+
+
+        #region create local repo and make the link to remote repo
+        try
+        {
+            Directory.SetCurrentDirectory(path);
+            Directory.CreateDirectory(name);
+            Directory.SetCurrentDirectory(name);
+            Process.Start("git", "init").WaitForExit();
+            Process.Start("git", $"remote add origin git@github.com:leozhang1/{name}.git").WaitForExit();
+            File.WriteAllText("README.md", $"# {name}");
+            File.AppendAllText(".gitignore", Environment.NewLine + ".DS_Store" + Environment.NewLine + "__pycache__" + Environment.NewLine + "secrets.py");
+            Process.Start("git", "add .").WaitForExit();
+            Process.Start("git", "commit -m 'Initial Commit'").WaitForExit();
+            Process.Start("git", "branch -m main").WaitForExit();
+            Process.Start("git", "push -u origin main").WaitForExit();
+            Process.Start("git", "checkout -b main_laptop").WaitForExit();
+            Process.Start("git", "push -u origin main_laptop").WaitForExit();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
             return;
         }
 
-        var directory = $"/home/{Environment.UserName}/Documents/"; // Replace with the path to the desired directory
-        var filename = "newfile.txt"; // Replace with the desired file name
-        var filepath = Path.Combine(directory, filename);
+
+        #endregion
 
         Process.Start(new ProcessStartInfo
         {
             FileName = "code",
             Arguments = filepath,
             UseShellExecute = true,
-            WorkingDirectory = directory
+
+            // TODO: build the path to the local repo
+            // WorkingDirectory = path
         });
-    }
 
-    public class Person
-    {
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-    }
-
-    public class PersonBinder : BinderBase<Person>
-    {
-        private readonly Option<string> _firstNameOption;
-        private readonly Option<string> _lastNameOption;
-
-        public PersonBinder(Option<string> firstNameOption, Option<string> lastNameOption)
-        {
-            _firstNameOption = firstNameOption;
-            _lastNameOption = lastNameOption;
-        }
-
-        protected override Person GetBoundValue(BindingContext bindingContext) =>
-        new Person
-        {
-            FirstName = bindingContext.ParseResult.GetValueForOption(_firstNameOption),
-            LastName = bindingContext.ParseResult.GetValueForOption(_lastNameOption)
-        };
     }
 }
+
