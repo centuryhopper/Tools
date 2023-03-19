@@ -106,7 +106,7 @@ public class Program
             Console.WriteLine($"Created repository {repo.Name} with ID {repo.Id}");
 
             Process.Start("git", "init").WaitForExit();
-            Process.Start("git", $"remote add origin git@github.com:leozhang1/{name}.git").WaitForExit();
+            Process.Start("git", $"remote add origin git@github.com:{githubUserName}/{name}.git").WaitForExit();
             File.WriteAllText("README.md", $"# {name}");
             File.AppendAllText(".gitignore", Environment.NewLine + ".DS_Store" + Environment.NewLine + "__pycache__" + Environment.NewLine + "secrets.py");
             #endregion
