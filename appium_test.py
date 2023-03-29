@@ -26,6 +26,8 @@ TODO:
 cron shell script:
 
 emulator -avd test_emulator -no-window -no-audio &
+# to kill, use this command:
+    adb emu kill
 
 echo "Waiting for emulator to start up..."
 adb wait-for-device
