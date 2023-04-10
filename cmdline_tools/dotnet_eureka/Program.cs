@@ -5,9 +5,17 @@ using Octokit;
 
 public class Program
 {
+    /*
+
+    dotnet run --reponame testing_dir --username leozhang1 --filename my_secret_ideas
+
+    */
     internal static async Task Main(string[] args)
     {
+        // look for a .env file in this project
         DotNetEnv.Env.Load();
+
+#region create arguments
 
         var repoPath = new Option<string>(
               name: "--path",
@@ -45,6 +53,9 @@ public class Program
             description: "print out all of your stored ideas"
         );
 
+#endregion
+
+#region add arguments to the root command
         var rootCommand = new RootCommand();
         rootCommand.Add(repoPath);
         rootCommand.Add(isPrivateOption);
@@ -53,9 +64,13 @@ public class Program
         rootCommand.Add(editorToUse);
         rootCommand.Add(fileName);
         rootCommand.Add(view);
+#endregion
 
-        rootCommand.SetHandler(async (string repoPath, string ideaRepoName, bool isPrivate, string githubUserName, string editorToUse, string fileName, bool view) =>
+        // order of arguments do matter
+        rootCommand.SetHandler(
+            async (string repoPath, string ideaRepoName, bool isPrivate, string githubUserName, string editorToUse, string fileName, bool view) =>
             {
+                // if user passes in --view
                 if (view)
                 {
                     await ShowIdeas(ideaRepoName, githubUserName);
@@ -99,7 +114,7 @@ public class Program
 
     public static async Task RunEureka(string repoPath, string ideaRepoName, bool isPrivate, string githubUserName, string editorToUse, string fileName)
     {
-        #region initialize parameters
+#region initialize parameters
         string accessToken = Environment.GetEnvironmentVariable("githubAPIToken")!;
         var client = new GitHubClient(new ProductHeaderValue("testing"))
         {
@@ -108,15 +123,17 @@ public class Program
         var filename = $"{fileName}_{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss")}.txt";
         var filePath = Path.Combine(repoPath, ideaRepoName);
         var fullPathToFile = Path.Combine(filePath, filename);
-        #endregion
+#endregion
 
-        #region create local repo and make the link to remote repo
+#region create local repo and make the link to remote repo
         if (!Directory.Exists(filePath))
         {
             Directory.CreateDirectory(filePath);
         }
+
         Directory.SetCurrentDirectory(filePath);
         bool doesRemoteRepoExist = true;
+
         try
         {
             // Check if the repository already exists
@@ -186,7 +203,7 @@ public class Program
         }
         await Process.Start("git", "push -u origin main").WaitForExitAsync();
 
-        #endregion
+#endregion
 
     }
 }
