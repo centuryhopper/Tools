@@ -93,8 +93,8 @@ class FileUtils:
             # print(len(data_into_list))
             return data_into_list
 
-   @staticmethod 
-   def get_latest_proxies(destinationPath:str,fileName:str) -> None:
+    @staticmethod
+    def get_latest_proxies(destinationPath:str,fileName:str) -> None:
        r = requests.get('https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all')
        if not fileName.endswith('.txt'):
            print('please use a .txt file')
