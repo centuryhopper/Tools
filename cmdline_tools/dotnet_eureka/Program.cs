@@ -3,6 +3,15 @@ using System.CommandLine;
 using System.Diagnostics;
 using Octokit;
 
+/*
+optional nuget packages:
+-DotNetEnv
+
+required nuget packages:
+-Octokit
+-System.CommandLine
+*/
+
 public class Program
 {
     /*
@@ -85,13 +94,18 @@ public class Program
         await rootCommand.InvokeAsync(args);
     }
 
-     public static async Task ShowIdeas(string ideaRepoName, string githubUserName)
-     {
+    public static async Task ShowIdeas(string ideaRepoName, string githubUserName)
+    {
         string accessToken = Environment.GetEnvironmentVariable("githubAPIToken")!;
         var client = new GitHubClient(new ProductHeaderValue("testing"))
         {
             Credentials = new Credentials(Environment.GetEnvironmentVariable("githubAPIToken")!)
         };
+
+        if (!await DoesRepoExist(client, githubUserName, ideaRepoName))
+        {
+            return;
+        }
 
         var fileContents = await client.Repository.Content.GetAllContents(githubUserName, ideaRepoName);
 
@@ -114,12 +128,13 @@ public class Program
 
     public static async Task RunEureka(string repoPath, string ideaRepoName, bool isPrivate, string githubUserName, string editorToUse, string fileName)
     {
-#region initialize parameters and interact with github
+        #region initialize parameters and interact with github
+
         string accessToken = Environment.GetEnvironmentVariable("githubAPIToken")!;
 
         var client = new GitHubClient(new ProductHeaderValue("testing"))
         {
-            Credentials = new Credentials(Environment.GetEnvironmentVariable("githubAPIToken")!)
+            Credentials = new Credentials(accessToken)
         };
 
         var filePath = Path.Combine(repoPath, ideaRepoName);
@@ -127,9 +142,9 @@ public class Program
 
         // default for my case is /home/leo_zhang/.config/dotnet_eureka/testing_dir/[file_name].txt
         var fullPathToFile = Path.Combine(filePath, filename);
-#endregion
 
-#region create local repo and make the link to remote repo if haven't linked already
+        #endregion
+
         if (!Directory.Exists(filePath))
         {
             Directory.CreateDirectory(filePath);
@@ -137,21 +152,10 @@ public class Program
 
         // equivalent to a "cd" command in bash
         Directory.SetCurrentDirectory(filePath);
-        bool doesRemoteRepoExist = true;
 
-        try
+        if (!await DoesRepoExist(client, githubUserName, ideaRepoName))
         {
-            // Check if the remote repository already exists
-            var existingRepo = await client.Repository.Get(githubUserName, ideaRepoName);
-
-            Console.WriteLine($"The repository {existingRepo.Name} already exists with ID {existingRepo.Id}");
-        }
-        catch (NotFoundException)
-        {
-            Console.WriteLine("The repository does not exist.");
-            doesRemoteRepoExist = false;
-
-#region remote github repo setup
+            // remote github repo setup
             // Create a new repository
             var newRepo = new NewRepository(ideaRepoName)
             {
@@ -164,20 +168,15 @@ public class Program
 
             Console.WriteLine($"Created repository {repo.Name} with ID {repo.Id}");
 
+            // link local with remote repo
             await Process.Start("git", "init").WaitForExitAsync();
             await Process.Start("git", $"remote add origin git@github.com:{githubUserName}/{ideaRepoName}.git").WaitForExitAsync();
+            await Process.Start("git", "branch -m main").WaitForExitAsync();
             await File.WriteAllTextAsync("README.md", $"# {ideaRepoName}");
             await File.AppendAllTextAsync("README.md", $"generated repo id: {repo.Id}");
-#endregion
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            return;
         }
 
-        // at this point we have a local and it is linked to the remote repository, so
-        // all we need to do is to create a new file and let the user add content to it
+        // create a new file and let the user add content to it
         // so that it can be automatically pushed to the remote repository
         Process.Start(new ProcessStartInfo
         {
@@ -187,7 +186,7 @@ public class Program
             WorkingDirectory = filePath,
         });
 
-#region watch for when the user saves the file
+        // watch for when the user saves the file
         // Create a FileSystemWatcher to monitor the directory
         var watcher = new FileSystemWatcher(filePath);
 
@@ -202,19 +201,34 @@ public class Program
 
         // Clean up the watcher
         watcher.Dispose();
-#endregion
 
-#region push changes to the remote
+        //push changes to the remote
         await Process.Start("git", "add .").WaitForExitAsync();
         await Process.Start("git", "commit -m \"Initial Commit\"").WaitForExitAsync();
-        if (!doesRemoteRepoExist)
-        {
-            await Process.Start("git", "branch -m main").WaitForExitAsync();
-        }
         await Process.Start("git", "push -u origin main").WaitForExitAsync();
-#endregion
-
-#endregion
-
     }
+
+    private static async Task<bool> DoesRepoExist(GitHubClient client, string githubUserName, string ideaRepoName)
+    {
+        try
+        {
+            // Check if the remote repository already exists
+            var existingRepo = await client.Repository.Get(githubUserName, ideaRepoName);
+
+            Console.WriteLine($"The repository {existingRepo.Name} already exists with ID {existingRepo.Id}");
+
+            return true;
+        }
+        catch (NotFoundException)
+        {
+            System.Console.WriteLine($"The {ideaRepoName} repository doesn't exist under the user: {githubUserName}");
+            return false;
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return false;
+        }
+    }
+
 }
