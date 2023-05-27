@@ -4,6 +4,8 @@ using System.Diagnostics;
 using Octokit;
 
 /*
+CLI tool to input and store your ideas without leaving the terminal (inspired by the eureka package from rust)
+
 optional nuget packages:
 -DotNetEnv
 
@@ -43,6 +45,7 @@ public class Program
               name: "--username",
               description: "Your github username");
 
+// $EDITOR
         var editorToUse = new Option<string>(
             name: "--editor",
             description: "The editor you would like to use. Defaults to your editor set by your $EDITOR environment variable, if it exists, otherwise defaults to code",

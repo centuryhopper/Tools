@@ -19,4 +19,7 @@ class ActionBot(AbstractBot):
     def waitAndGetAll(self,searchQuery:str,by:str = By.XPATH,seconds=random.uniform(1,2),onDriver=None) -> WebDriverWait:
         return super().waitAndGetAll(searchQuery,by,seconds,onDriver)
 
+    def __str__(self):
+        print('this is the action bot')
+
 
