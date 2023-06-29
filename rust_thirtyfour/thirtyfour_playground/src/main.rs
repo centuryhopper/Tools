@@ -8,17 +8,17 @@ async fn main() -> WebDriverResult<()>
 {
     let mut caps = DesiredCapabilities::firefox();
 
-    let res = caps.set_headless();
+    //let res = caps.set_headless();
 
-    match res {
-        Ok(_) =>{
-            println!("successfully set browser on headless");
-        }
+    //match res {
+    //    Ok(_) =>{
+    //        println!("successfully set browser on headless");
+    //    }
 
-        Err(_) => {
-            println!("failure to set browser on headless");
-        }
-    }
+    //    Err(_) => {
+    //        println!("failure to set browser on headless");
+    //    }
+    //}
 
     let driver = WebDriver::new("http://localhost:4444", caps).await?;
 
