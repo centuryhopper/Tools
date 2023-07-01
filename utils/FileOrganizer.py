@@ -2,6 +2,7 @@ import os
 import shutil
 import filecmp
 import glob
+import requests
 
 # from dotenv import load_dotenv
 # load_dotenv()
@@ -56,6 +57,8 @@ class FileUtils:
             if filecmp.cmp(sourceFile, destinationFile):
                 print('files are the same')
                 return
+        else:
+            open(destinationFile, 'w').close()
 
         print('overwriting destination file with the source')
         # overwrite contents of destinationFile with those of the source
@@ -90,7 +93,16 @@ class FileUtils:
             # print(len(data_into_list))
             return data_into_list
 
-
+    @staticmethod
+    def get_latest_proxies(destinationPath:str,fileName:str) -> None:
+       r = requests.get('https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all')
+       if not fileName.endswith('.txt'):
+           print('please use a .txt file')
+           return
+       dest = os.path.join(destinationPath,fileName)
+       contents = r.content.decode('utf-8')
+       with open(dest,'w') as f:
+           f.write(contents)
 
 
 
