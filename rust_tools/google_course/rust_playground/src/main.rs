@@ -321,86 +321,307 @@ impl Shape {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    fn round_two_digits(x: f64) -> f64 {
-        (x * 100.0).round() / 100.0
+//     fn round_two_digits(x: f64) -> f64 {
+//         (x * 100.0).round() / 100.0
+//     }
+
+//     #[test]
+//     fn test_point_magnitude() {
+//         let p1 = Point::new(12 , 13 );
+//         assert_eq!(round_two_digits(p1.magnitude()), 17.69);
+//     }
+
+//     #[test]
+//     fn test_point_dist() {
+//         let p1 = Point::new(10, 10);
+//         let p2 = Point::new(14, 13);
+//         assert_eq!(round_two_digits(p1.dist(p2)), 5.00);
+//     }
+
+//     #[test]
+//     fn test_point_add() {
+//         let p1 = Point::new(16, 16);
+//         let p2 = p1 + Point::new(-4, 3);
+//         assert_eq!(p2, Point::new(12, 19));
+//     }
+
+//     #[test]
+//     fn test_polygon_left_most_point() {
+//         let p1 = Point::new(12, 13);
+//         let p2 = Point::new(16, 16);
+
+//         let mut poly = Polygon::new();
+//         poly.add_point(p1);
+//         poly.add_point(p2);
+//         assert_eq!(poly.left_most_point(), Some(p1));
+//     }
+
+//     #[test]
+//     fn test_polygon_iter() {
+//         let p1 = Point::new(12, 13);
+//         let p2 = Point::new(16, 16);
+
+//         let mut poly: Polygon = Polygon::new();
+//         poly.add_point(p1);
+//         poly.add_point(p2);
+
+//         let points = poly.iter().cloned().collect::<Vec<_>>();
+//         assert_eq!(points, vec![Point::new(12, 13), Point::new(16, 16)]);
+//     }
+
+//     #[test]
+//     fn test_shape_perimeters()
+//     {
+//         let mut poly = Polygon::new();
+//         poly.add_point(Point::new(12, 13));
+//         poly.add_point(Point::new(17, 11));
+//         poly.add_point(Point::new(16, 16));
+
+//         let shapes = vec![
+//             Shape::from(poly),
+//             Shape::from(Circle::new(Point::new(10, 20), 5)),
+//         ];
+
+//         let perimeters = shapes
+//             .iter()
+//             .map(Shape::perimeter)
+//             .map(round_two_digits)
+//             .collect::<Vec<f64>>();
+//         assert_eq!(perimeters, vec![15.48, 31.42]);
+//     }
+// }
+
+
+pub fn sum_digits<'a>(num: &'a u32) -> u32
+{
+    let mut ans = 0;
+    let mut tmp = *num;
+
+    while tmp > 0 {
+        ans += tmp % 10;
+        tmp /= 10;
     }
 
-    #[test]
-    fn test_point_magnitude() {
-        let p1 = Point::new(12 , 13 );
-        assert_eq!(round_two_digits(p1.magnitude()), 17.69);
-    }
-
-    #[test]
-    fn test_point_dist() {
-        let p1 = Point::new(10, 10);
-        let p2 = Point::new(14, 13);
-        assert_eq!(round_two_digits(p1.dist(p2)), 5.00);
-    }
-
-    #[test]
-    fn test_point_add() {
-        let p1 = Point::new(16, 16);
-        let p2 = p1 + Point::new(-4, 3);
-        assert_eq!(p2, Point::new(12, 19));
-    }
-
-    #[test]
-    fn test_polygon_left_most_point() {
-        let p1 = Point::new(12, 13);
-        let p2 = Point::new(16, 16);
-
-        let mut poly = Polygon::new();
-        poly.add_point(p1);
-        poly.add_point(p2);
-        assert_eq!(poly.left_most_point(), Some(p1));
-    }
-
-    #[test]
-    fn test_polygon_iter() {
-        let p1 = Point::new(12, 13);
-        let p2 = Point::new(16, 16);
-
-        let mut poly: Polygon = Polygon::new();
-        poly.add_point(p1);
-        poly.add_point(p2);
-
-        let points = poly.iter().cloned().collect::<Vec<_>>();
-        assert_eq!(points, vec![Point::new(12, 13), Point::new(16, 16)]);
-    }
-
-    #[test]
-    fn test_shape_perimeters()
-    {
-        let mut poly = Polygon::new();
-        poly.add_point(Point::new(12, 13));
-        poly.add_point(Point::new(17, 11));
-        poly.add_point(Point::new(16, 16));
-
-        let shapes = vec![
-            Shape::from(poly),
-            Shape::from(Circle::new(Point::new(10, 20), 5)),
-        ];
-
-        let perimeters = shapes
-            .iter()
-            .map(Shape::perimeter)
-            .map(round_two_digits)
-            .collect::<Vec<f64>>();
-        assert_eq!(perimeters, vec![15.48, 31.42]);
-    }
+    ans
 }
 
 
+/// The Luhn algorithm is used to validate credit card numbers. The algorithm takes a string as input and does the following to validate the credit card number:
+/// Ignore all spaces. Reject number with less than two digits.
+/// 
+/// Moving from right to left, double every second digit: for the number 1234, we double 3 and 1.
+/// 
+/// After doubling a digit, sum the digits. So doubling 7 becomes 14 which becomes 5.
+/// 
+/// Sum all the undoubled and doubled digits.
+/// 
+/// The credit card number is valid if the sum ends with 0.
+pub fn luhn(cc_number: &str) -> bool {
+    let mut ret_val : Vec<u32> = vec![];
+    let mut digit_counter = 0;
+    
+    // double every second digit from right to left
+    for ch in cc_number.chars().rev()
+    {
+        // skip spaces
+        if !ch.is_digit(10) {
+            continue;
+        }
+
+        digit_counter +=1;
+
+        if digit_counter % 2 == 0 {
+            let mut num = ch as u32 - '0' as u32;
+            num *= 2;
+            num = sum_digits(&num);
+            ret_val.push(num);
+        }
+        else
+        {
+            ret_val.push(ch as u32 - '0' as u32);
+        }
+
+    }
+
+    // println!("{:?}", ret_val);
+
+    // reject all answers with less than 2 digits
+    if ret_val.len() < 2 {
+        return false;
+    }
+
+    // finally, sum all digits
+    let final_val : u32 = ret_val.iter().sum();
+
+    // println!("{final_val}");
+
+    final_val % 10 == 0
+}
+
+
+// #[test]
+// fn test_non_digit_cc_number() {
+//     assert!(!luhn("foo"));
+// }
+
+// #[test]
+// fn test_empty_cc_number() {
+//     assert!(!luhn(""));
+//     assert!(!luhn(" "));
+//     assert!(!luhn("  "));
+//     assert!(!luhn("    "));
+// }
+
+// #[test]
+// fn test_single_digit_cc_number() {
+//     assert!(!luhn("0"));
+// }
+
+// #[test]
+// fn test_two_digit_cc_number() {
+//     assert!(luhn(" 0 0 "));
+// }
+
+// #[test]
+// fn test_valid_cc_number() {
+//     assert!(luhn("4263 9826 4026 9299"));
+//     assert!(luhn("4539 3195 0343 6467"));
+//     assert!(luhn("7992 7398 713"));
+// }
+
+// #[test]
+// fn test_invalid_cc_number() {
+//     assert!(!luhn("4223 9826 4026 9299"));
+//     assert!(!luhn("4539 3195 0343 6476"));
+//     assert!(!luhn("8273 1232 7352 0569"));
+// }
+
+
+
+/// two pointer approach (O(n) time, where n is max(len(prefix), len(request_path), O(1) space)
+/// could also use a vector and split on '/' but that would incur an O(n) space complexity and wouldn't be as space efficient
+pub fn prefix_matches(prefix: &str, request_path: &str) -> bool
+{
+    // request_path must be at least as long as the prefix
+    if request_path.chars().count() < prefix.chars().count() {
+        return false;
+    }
+
+    // compare character by character, the prefix should finish exhausting first
+    let n = prefix.chars().count();
+    let m = request_path.chars().count();
+
+    let (mut i, mut j) = (0,0);
+
+    while i < n || j < m {
+
+        // already looped thru prefix by this point
+        if i == n {
+            if m == n
+            {
+                break;
+            }
+            // println!("{i}");
+            
+            let request_path_c = request_path.chars().nth(j).unwrap();
+            // println!("{request_path_c}");
+            if request_path_c != '/'
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        let request_path_c = request_path.chars().nth(j).unwrap();
+        let prefix_c = prefix.chars().nth(i).unwrap();
+
+        // wildcard cases
+        if request_path_c == '*' {
+            // advance pointers accordingly
+            j+=1;
+            while i < n && prefix.chars().nth(i).unwrap() != '/' {
+                i+=1;
+            }
+            continue;
+        }
+
+        if prefix_c == '*' {
+            // advance pointers accordingly
+            i+=1;
+            while j < m && request_path.chars().nth(j).unwrap() != '/' {
+                j+=1;
+            }
+            continue;
+        }
+
+        // basic character comparison case
+        if prefix_c != request_path_c {
+            return false;
+        }
+
+        i+=1;
+        j+=1;
+    }
+
+    true
+}
+
+// #[test]
+// fn test_matches_without_wildcard() {
+//     assert!(prefix_matches("/v1/publishers", "/v1/publishers"));
+//     assert!(prefix_matches("/v1/publishers", "/v1/publishers/abc-123"));
+//     assert!(prefix_matches("/v1/publishers", "/v1/publishers/abc/books"));
+
+//     assert!(!prefix_matches("/v1/publishers", "/v1"));
+//     assert!(!prefix_matches("/v1/publishers", "/v1/publishersBooks"));
+//     assert!(!prefix_matches("/v1/publishers", "/v1/parent/publishers"));
+// }
+
+// #[test]
+// fn test_matches_with_wildcard() {
+//     assert!(prefix_matches(
+//         "/v1/publishers/*/books",
+//         "/v1/publishers/foo/books"
+//     ));
+//     assert!(prefix_matches(
+//         "/v1/publishers/*/books",
+//         "/v1/publishers/bar/books"
+//     ));
+//     assert!(prefix_matches(
+//         "/v1/publishers/*/books",
+//         "/v1/publishers/foo/books/book1"
+//     ));
+
+//     assert!(!prefix_matches("/v1/publishers/*/books", "/v1/publishers"));
+//     assert!(!prefix_matches(
+//         "/v1/publishers/*/books",
+//         "/v1/publishers/foo/booksByAuthor"
+//     ));
+// }
+
+#[derive(Debug)]
+struct GenericPoint<T,U> {
+    x: T,
+    y: U,
+}
 
 #[allow(dead_code)]
 #[rustfmt::skip]
 fn main()
 {
+
+    let integer = GenericPoint { x: 5, y: 10 };
+    let float = GenericPoint { x: 1.0, y: 4.0 };
+    
+    let p = GenericPoint { x: 5, y: 10.0 };
+    println!("{integer:?} and {float:?} and {p:?}");
+    // println!("{:?}", prefix_matches("/v1/publishers", "/v1/publishers/abc-123"));
+
     // let bob = User::new(String::from("Bob"), 32, 155.2);
     // println!("I'm {} and my age is {}", bob.name(), bob.age());
     
