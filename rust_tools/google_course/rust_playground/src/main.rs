@@ -2,6 +2,7 @@
 // can only convert smaller int types to larger ones but not vice versa or else overflow can happen
 #![allow(unused_variables, dead_code)]
 
+use std::collections::HashSet;
 use std::num;
 
 
@@ -610,16 +611,644 @@ struct GenericPoint<T,U> {
     y: U,
 }
 
+
+#[derive(Debug, Default)]
+struct Derived<'a> {
+    x: u32,
+    y: &'a str,
+    z: Implemented<'a>,
+}
+
+#[derive(Debug)]
+struct Implemented<'a>(&'a str);
+
+impl Default for Implemented<'_> {
+    fn default() -> Self {
+        Self("John Smith".into())
+    }
+}
+
+
+// We will have a number of widgets in our library:
+
+//     Window: has a title and contains other widgets.
+//     Button: has a label and a callback function which is invoked when the button is pressed.
+//     Label: has a label.
+
+// The widgets will implement a Widget trait, see below.
+
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// ANCHOR: setup
+pub trait Widget {
+    /// Natural width of `self`.
+    fn width(&self) -> usize;
+
+    /// Draw the widget into a buffer.
+    fn draw_into(&self, buffer: &mut dyn std::fmt::Write) -> Result<(), std::fmt::Error>;
+
+    /// Draw the widget on standard output.
+    fn draw(&self) {
+        let mut buffer = String::new();
+        self.draw_into(&mut buffer);
+        println!("{buffer}");
+    }
+}
+
+pub struct Label {
+    label: String,
+}
+
+impl Label {
+    fn new(label: &str) -> Label {
+        Label {
+            label: label.to_owned(),
+        }
+    }
+}
+
+pub struct Button {
+    label: Label,
+    callback: Box<dyn FnMut()>,
+}
+
+impl Button {
+    fn new(label: &str, callback: Box<dyn FnMut()>) -> Button {
+        Button {
+            label: Label::new(label),
+            callback,
+        }
+    }
+}
+
+pub struct Window {
+    title: String,
+    widgets: Vec<Box<dyn Widget>>,
+}
+
+impl Window {
+    fn new(title: &str) -> Window {
+        Window {
+            title: title.to_owned(),
+            widgets: Vec::new(),
+        }
+    }
+
+    fn add_widget(&mut self, widget: Box<dyn Widget>) {
+        self.widgets.push(widget);
+    }
+
+    fn inner_width(&self) -> usize {
+        std::cmp::max(
+            self.title.chars().count(),
+            self.widgets.iter().map(|w| w.width()).max().unwrap_or(0),
+        )
+    }
+}
+
+// ANCHOR_END: setup
+
+// ANCHOR: Window-width
+impl Widget for Window {
+    fn width(&self) -> usize {
+        // ANCHOR_END: Window-width
+        // Add 4 paddings for borders
+        self.inner_width() + 4
+    }
+
+    // ANCHOR: Window-draw_into
+    fn draw_into(&self, buffer: &mut dyn std::fmt::Write) -> Result<(), std::fmt::Error>{
+        // ANCHOR_END: Window-draw_into
+        let mut inner = String::new();
+        for widget in &self.widgets {
+            widget.draw_into(&mut inner);
+        }
+
+        let inner_width = self.inner_width();
+
+        // TODO: after learning about error handling, you can change
+        // draw_into to return Result<(), std::fmt::Error>. Then use
+        // the ?-operator here instead of .unwrap().
+        writeln!(buffer, "+-{:-<inner_width$}-+", "").unwrap();
+        writeln!(buffer, "| {:^inner_width$} |", &self.title).unwrap();
+        writeln!(buffer, "+={:=<inner_width$}=+", "").unwrap();
+        for line in inner.lines() {
+            writeln!(buffer, "| {:inner_width$} |", line).unwrap();
+        }
+        writeln!(buffer, "+-{:-<inner_width$}-+", "").unwrap();
+
+        Ok(())
+    }
+}
+
+// ANCHOR: Button-width
+impl Widget for Button {
+    fn width(&self) -> usize {
+        // ANCHOR_END: Button-width
+        self.label.width() + 8 // add a bit of padding
+    }
+
+    // ANCHOR: Button-draw_into
+    fn draw_into(&self, buffer: &mut dyn std::fmt::Write) -> Result<(), std::fmt::Error>{
+        // ANCHOR_END: Button-draw_into
+        let width = self.width();
+        let mut label = String::new();
+        self.label.draw_into(&mut label);
+
+        writeln!(buffer, "+{:-<width$}+", "").unwrap();
+        for line in label.lines() {
+            writeln!(buffer, "|{:^width$}|", &line).unwrap();
+        }
+        writeln!(buffer, "+{:-<width$}+", "").unwrap();
+
+        Ok(())
+    }
+}
+
+// ANCHOR: Label-width
+impl Widget for Label {
+    fn width(&self) -> usize {
+        // ANCHOR_END: Label-width
+        self.label
+            .lines()
+            .map(|line| line.chars().count())
+            .max()
+            .unwrap_or(0)
+    }
+
+    // ANCHOR: Label-draw_into
+    fn draw_into(&self, buffer: &mut dyn std::fmt::Write) -> Result<(), std::fmt::Error> {
+        // ANCHOR_END: Label-draw_into
+        writeln!(buffer, "{}", &self.label)?;
+
+        Ok(())
+    }
+}
+
+
+// structured error handling
+use std::{fs, io};
+use std::io::Read;
+
+
+
+fn read_username(path: &str) -> Result<String, io::Error> {
+    let username_file_result = fs::File::open(path);
+    let mut username_file = match username_file_result {
+        Ok(file) => file,
+        Err(err) => return Err(err),
+    };
+
+    let mut username = String::new();
+    match username_file.read_to_string(&mut username) {
+        Ok(_) => Ok(username),
+        Err(err) => Err(err),
+    }
+}
+
+
+
+mod ffi {
+    use std::os::raw::{c_char, c_int};
+    #[cfg(not(target_os = "macos"))]
+    use std::os::raw::{c_long, c_ulong, c_ushort, c_uchar};
+
+    // Opaque type. See https://doc.rust-lang.org/nomicon/ffi.html.
+    #[repr(C)]
+    pub struct DIR {
+        _data: [u8; 0],
+        _marker: core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
+    }
+
+    // Layout according to the Linux man page for readdir(3), where ino_t and
+    // off_t are resolved according to the definitions in
+    // /usr/include/x86_64-linux-gnu/{sys/types.h, bits/typesizes.h}.
+    #[cfg(not(target_os = "macos"))]
+    #[repr(C)]
+    pub struct dirent {
+        pub d_ino: c_ulong,
+        pub d_off: c_long,
+        pub d_reclen: c_ushort,
+        pub d_type: c_uchar,
+        pub d_name: [c_char; 256],
+    }
+
+    // Layout according to the macOS man page for dir(5).
+    #[cfg(all(target_os = "macos"))]
+    #[repr(C)]
+    pub struct dirent {
+        pub d_fileno: u64,
+        pub d_seekoff: u64,
+        pub d_reclen: u16,
+        pub d_namlen: u16,
+        pub d_type: u8,
+        pub d_name: [c_char; 1024],
+    }
+
+    extern "C" {
+        pub fn opendir(s: *const c_char) -> *mut DIR;
+
+        #[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
+        pub fn readdir(s: *mut DIR) -> *const dirent;
+
+        // See https://github.com/rust-lang/libc/issues/414 and the section on
+        // _DARWIN_FEATURE_64_BIT_INODE in the macOS man page for stat(2).
+        //
+        // "Platforms that existed before these updates were available" refers
+        // to macOS (as opposed to iOS / wearOS / etc.) on Intel and PowerPC.
+        #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+        #[link_name = "readdir$INODE64"]
+        pub fn readdir(s: *mut DIR) -> *const dirent;
+
+        pub fn closedir(s: *mut DIR) -> c_int;
+    }
+}
+
+use std::ffi::{CStr, CString, OsStr, OsString};
+use std::os::unix::ffi::OsStrExt;
+use ffi::readdir;
+
+#[derive(Debug)]
+struct DirectoryIterator {
+    path: CString,
+    dir: *mut ffi::DIR,
+}
+
+impl DirectoryIterator {
+    fn new(path: &str) -> Result<DirectoryIterator, String> {
+        // Call opendir and return a Ok value if that worked,
+        // otherwise return Err with a message.
+        let path = CString::new(path).map_err(|err| format!("Invalid path: {err}"))?;
+
+        let dir = unsafe { ffi::opendir(path.as_ptr()) };
+
+        // null check
+        if dir.is_null() {
+            Err(format!("Could not open {:?}", path))
+        } else {
+            Ok(DirectoryIterator { path, dir })
+        }
+    }
+}
+
+impl Iterator for DirectoryIterator {
+    type Item = OsString;
+    fn next(&mut self) -> Option<OsString> {
+        // Keep calling readdir until we get a NULL pointer back.
+        let dir_entry = unsafe { ffi::readdir(self.dir) };
+        if dir_entry.is_null()
+        {
+            return None;
+        }
+
+        let d_name = unsafe { CStr::from_ptr((*dir_entry).d_name.as_ptr()) };
+        let os_str = OsStr::from_bytes(d_name.to_bytes());
+        Some(os_str.to_owned())
+    }
+}
+
+impl Drop for DirectoryIterator {
+    fn drop(&mut self) {
+        // Call closedir as needed.
+        if !self.dir.is_null() {
+            // SAFETY: self.dir is not NULL.
+            if unsafe { ffi::closedir(self.dir) } != 0 {
+                panic!("Could not close {:?}", self.path);
+            }
+        }
+    }
+}
+
+
+
+use std::thread;
+use std::time::Duration;
+use std::sync::{mpsc, Arc, Mutex};
+
+
+
+struct Fork;
+
+#[derive(Clone)]
+struct Philosopher {
+    name: String,
+    left_fork: Arc<Mutex<Fork>>,
+    right_fork: Arc<Mutex<Fork>>,
+    thoughts: mpsc::SyncSender<String>
+}
+
+impl Philosopher {
+    fn think(&self) -> () {
+        self.thoughts
+            .send(format!("{} has a new idea!", &self.name))
+            .unwrap();
+    }
+
+    fn eat(&self) -> () {
+        println!("{} is trying to eat", &self.name);
+        // Pick up forks...
+        let left = self.left_fork.lock().unwrap();
+        let right = self.right_fork.lock().unwrap();
+
+        println!("{} is eating...", &self.name);
+        thread::sleep(Duration::from_millis(10));
+    }
+}
+
+static PHILOSOPHERS: &[&str] =
+    &["Socrates", "Plato", "Aristotle", "Thales", "Pythagoras"];
+
+/*
+   . | . | . | . | . |
+
+
+   . = philosopher
+   | = fork
+
+   philosopher MUST pick up both forks to eat
+
+ */
+
+
+
+ use reqwest::blocking::{get, Response};
+ use reqwest::Url;
+ use scraper::{Html, Selector};
+ use thiserror::Error;
+ 
+ #[derive(Error, Debug)]
+ enum Error {
+     #[error("request error: {0}")]
+     ReqwestError(#[from] reqwest::Error),
+ }
+ 
+ fn extract_links(response: Response) -> Result<Vec<Url>, Error> {
+     let base_url = response.url().to_owned();
+     let document = response.text()?;
+     let html = Html::parse_document(&document);
+     let selector = Selector::parse("a").unwrap();
+ 
+     let mut valid_urls = Vec::new();
+     for element in html.select(&selector) {
+         if let Some(href) = element.value().attr("href") {
+             match base_url.join(href) {
+                 Ok(url) => valid_urls.push(url),
+                 Err(err) => {
+                     println!("On {base_url}: could not parse {href:?}: {err} (ignored)",);
+                 }
+             }
+         }
+     }
+ 
+     Ok(valid_urls)
+ }
+ 
+
+
+/*
+
+Links: [
+    "www.google.org/",
+    "www.google.org/",
+    "www.google.org/covid-19/",
+    "www.google.org/our-work/",
+    "www.google.org/our-approach/",
+    "www.google.org/opportunities/",
+    "www.google.org/latest/",
+    "www.google.org/",
+    "cybersecurityclinics.org/",
+    "www.google.org/racial-justice/",
+    "www.google.org/covid-19/",
+    "www.google.org/our-approach/",
+    "twitter.com/Googleorg",
+    "www.youtube.com/user/Googleorg",
+    "www.google.org/",
+    "www.google.org/covid-19/",
+    "www.google.org/our-work/",
+    "www.google.org/our-approach/",
+    "www.google.org/opportunities/",
+    "www.google.com/nonprofits/",
+    "edu.google.com/",
+    "grow.google/",
+    "sustainability.google/",
+    "crisisresponse.google/",
+    "ai.google/",
+    "newsinitiative.withgoogle.com/",
+    "www.google.com/",
+    "policies.google.com/privacy",
+    "policies.google.com/terms",
+    "support.google.com/",
+] 
+
+ */
+
+ use futures::executor::block_on;
+ 
+ 
+ async fn count_to(count: i32) {
+     for i in 1..=count {
+         println!("Count is: {i}!");
+         thread::sleep(Duration::from_millis(500));
+     }
+ }
+ 
+ async fn async_main(count: i32) {
+     count_to(count).await;
+ }
+ 
+//  fn main() {
+//      println!("hi");
+//      block_on(async_main(10));
+//      println!("bye");
+//  }
+
+
+
+
 #[allow(dead_code)]
 #[rustfmt::skip]
-fn main()
+fn main() /*-> Result<(), String>*/
 {
+    let start_url = Url::parse("https://www.google.org").unwrap();
+    let response = get(start_url).unwrap();
+    let save_start = response.url().clone();
+    println!("{}",save_start);
+    match extract_links(response) {
+        Ok(links) => {
+            // remove dupes
+            let new_links = links.iter().map(|url| {
+                format!("https://{}{}",url.host().unwrap().to_owned() ,url.path())
+            }).filter(|url| url != save_start.as_str()).collect::<HashSet<_>>();
 
-    let integer = GenericPoint { x: 5, y: 10 };
-    let float = GenericPoint { x: 1.0, y: 4.0 };
+            println!("Links: {new_links:#?} \n number of links: {:?}", new_links.len());
+
+        }
+        Err(err) => println!("Could not extract links: {err:#}"),
+    }
+
+
+
+
+
+
+
+
+
+
+    // let (tx, rx) = mpsc::sync_channel(10);
+
+    // // Create forks (should be number of philosophers since dining table wraps around)
+    // let forks = (0..PHILOSOPHERS.len()).map(|_| Arc::new(Mutex::new(Fork))).collect::<Vec<_>>();
+
+    // // Create philosophers
+    // let mut philosophers = vec![];
+    // for (i, &p) in PHILOSOPHERS.into_iter().enumerate()
+    // {   
+    //     let mut left = forks[i].clone();
+    //     let mut right = forks[(i+1) % forks.len()].clone();
+    //     if i == forks.len() - 1 {
+    //         std::mem::swap(&mut left, &mut right);
+    //     }
+    //     philosophers.push(
+    //         Philosopher
+    //         {
+    //             name: p.to_owned(),
+    //             left_fork: left,
+    //             right_fork: right,
+    //             thoughts: tx.clone(),
+    //         }
+    //     );
+    // }
+    // println!("{:?}", PHILOSOPHERS);
+
+    // let handles = philosophers.into_iter().map(|phil| {
+    //     thread::spawn(move || {
+    //         for _ in 0..100 {
+    //             phil.eat();
+    //             phil.think();
+    //             println!("++++++++++++++++++++++++++++");
+    //         }
+    //     })
+    // }).collect::<Vec<_>>();
+
+    // // Output their thoughts
+    // drop(tx);
+    // for msg in rx.iter() {
+    //     println!("{msg}");
+    // }
     
-    let p = GenericPoint { x: 5, y: 10.0 };
-    println!("{integer:?} and {float:?} and {p:?}");
+    
+    // // clean up
+    // for handle in handles {
+    //     handle.join().unwrap();
+    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // let iter = DirectoryIterator::new(".")?;
+    // println!("files: {:#?}", iter.collect::<Vec<_>>());
+    // Ok(())
+
+    // thread::spawn(|| {
+    //     for i in 1..10 {
+    //         println!("Count in thread: {i}!");
+    //         thread::sleep(Duration::from_millis(5));
+    //     }
+    // });
+
+    // for i in 1..5 {
+    //     println!("Main thread: {i}");
+    //     thread::sleep(Duration::from_millis(5));
+    // }
+
+    // println!("{}", whoami::username());
+    //fs::write("config.dat", "alice").unwrap();
+    // let username = read_username("config.dat");
+    // println!("username or error: {username:?}");
+
+    // let file = fs::File::open("diary.txt");
+    // match file {
+    //     Ok(mut file) => {
+    //         let mut contents = String::new();
+    //         file.read_to_string(&mut contents);
+    //         println!("Dear diary: {contents}");
+    //     },
+    //     Err(err) => {
+    //         println!("The diary could not be opened: {err}");
+    //     }
+    // }
+    // let mut window = Window::new("Rust GUI Demo 1.23");
+    // window.add_widget(Box::new(Label::new("This is a small text GUI demo.")));
+    // window.add_widget(Box::new(Button::new(
+    //     "Click me!",
+    //     Box::new(|| println!("You clicked the button!")),
+    // )));
+    // window.draw();
+
+    // The output of the above program can be something simple like this:
+
+    // ========
+    // Rust GUI Demo 1.23
+    // ========
+    
+    // This is a small text GUI demo.
+    
+    // | Click me! |
+
+
+
+
+    // let default_struct: Derived = Default::default();
+    // println!("{default_struct:#?}");
+
+    // let almost_default_struct = Derived {
+    //     y: "Y is set!".into(),
+    //     ..Default::default()
+    // };
+    // println!("{almost_default_struct:#?}");
+
+    // let nothing: Option<Derived> = None;
+    // println!("{:#?}", nothing.unwrap_or_default());
+
+    // let integer = GenericPoint { x: 5, y: 10 };
+    // let float = GenericPoint { x: 1.0, y: 4.0 };
+    
+    // let p = GenericPoint { x: 5, y: 10.0 };
+
+    // let test = &p;
+    // let test2 = &test;
+    // println!("{integer:?} and {float:?} and {p:?} and {:p} and {:p}", test, test2);
     // println!("{:?}", prefix_matches("/v1/publishers", "/v1/publishers/abc-123"));
 
     // let bob = User::new(String::from("Bob"), 32, 155.2);
