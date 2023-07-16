@@ -57,11 +57,14 @@ async fn download_pic_of_the_day() -> Result<(), Error> {
         std::fs::create_dir(pic_collection_path).unwrap_or_else(|err| panic!("couldn't create {} directory. Error: {}", PIC_COLLECTION_NAME, err));
     }
 
-    // create folder with today's date (if it doesn't exist already) and put into nasa_pic_collection/ directory
-    if !today_folder_name.exists() {
-        std::fs::create_dir(&today_folder_name).unwrap_or_else(|err| panic!("couldn't create {} directory. Error: {}", today_string, err));
+    if today_folder_name.exists() {
+        println!("already gathered today's image");
+        return Ok(())
     }
 
+    // create folder with today's date (if it doesn't exist already) and put into nasa_pic_collection/ directory
+    std::fs::create_dir(&today_folder_name).unwrap_or_else(|err| panic!("couldn't create {} directory. Error: {}", today_string, err));
+    
     let url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY";
     let response = get(url).await?;
     if !response.status().is_success() {
@@ -112,17 +115,24 @@ async fn download_pic_of_the_day() -> Result<(), Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
 
+    env::set_var("RUST_BACKTRACE", "1");
+
     // let parent_dir = Path::new(file!()).parent().unwrap_or_else(|| Path::new(""));
     // let parent_dir_str = parent_dir.to_string_lossy().to_string();
     // println!("Parent directory: {}", parent_dir_str);
 
-    if let Some(parent_dir) = Path::new(file!()).parent() {
-        env::set_current_dir(parent_dir).expect("Failed to change directory");
+    let file_directory = format!("/home/{}/Documents/GitHub/Tools/rust_tools/fetch_nasa_pic/src", std::env::var("USER").unwrap());
 
-        download_pic_of_the_day().await?;
+    // println!("{}",file_directory);
 
+    if !Path::new(&file_directory).exists() {
+        println!("not available");
         return Ok(());
     }
+
+    env::set_current_dir(file_directory).expect("Failed to change directory");
+
+    download_pic_of_the_day().await?;
 
     Ok(())
 }
