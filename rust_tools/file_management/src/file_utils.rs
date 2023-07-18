@@ -1,7 +1,8 @@
 use walkdir::WalkDir;
-use std::fs;
-use std::path::{Path};
-use std::io::{self, ErrorKind};
+use std::fs::{self, File};
+use std::io::{self, BufRead, BufReader, Write, ErrorKind};
+use std::path::Path;
+use std::cmp::PartialEq;
 
 pub fn search_file(filename: &str, dirname: &str) -> ()
 {
@@ -22,7 +23,6 @@ pub fn search_file(filename: &str, dirname: &str) -> ()
         }
     }
 }
-
 
 pub fn organize_files_into_folders(path: &str, extensions_to_skip: &[&str], only_target_these_extensions: &[&str]) -> io::Result<String> {
 
@@ -55,6 +55,7 @@ pub fn organize_files_into_folders(path: &str, extensions_to_skip: &[&str], only
             continue;
         }
 
+        // split once starting from the right and doesn't include 2, so we get the first period from the right, essentially
         let parts: Vec<&str> = file_name.rsplitn(2, ".").collect();
         println!("parts: {:?}", parts);
         if let [ext, _] = parts.as_slice() {
@@ -79,6 +80,51 @@ pub fn organize_files_into_folders(path: &str, extensions_to_skip: &[&str], only
     Ok(format!("successfully organized the files!"))
 }
 
+pub fn copy_over_file(source_file: &str, destination_file: &str) -> io::Result<()> {
+    // Check if source file exists
+    if !Path::new(source_file).exists() {
+        println!("Source file does not exist");
+        return Ok(());
+    }
 
+    // Check if destination file exists
+    if Path::new(destination_file).exists() {
+        // Compare the files
+        if files_are_identical(source_file, destination_file)? {
+            println!("Files are the same");
+            return Ok(());
+        }
+    } else {
+        // Create the destination file
+        // fs::File::create(destination_file)?;
+        fs::create_dir_all(Path::new(destination_file).parent().unwrap())?;
+
+        // Create the file
+        // File::create(destination_file)?;
+    }
+
+    println!("Overwriting destination file with the source");
+
+    // Overwrite contents of destination file with those of the source
+    let source = fs::File::open(source_file)?;
+    let destination = fs::File::create(destination_file)?;
+
+    let reader = BufReader::new(source);
+    let mut writer = io::BufWriter::new(destination);
+
+    for line in reader.lines() {
+        writer.write_all(line?.as_bytes())?;
+        writer.write_all(b"\n")?;
+    }
+
+    Ok(())
+}
+
+fn files_are_identical(file1: &str, file2: &str) -> io::Result<bool> {
+    let contents1 = fs::read(file1)?;
+    let contents2 = fs::read(file2)?;
+
+    Ok(contents1 == contents2)
+}
 
 
