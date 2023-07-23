@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 enigo = "0.1.2"
+indoc = "2.0.3"
 inputbot = "0.5.1"
 walkdir = "2.3.2"
