@@ -2,7 +2,6 @@ use walkdir::WalkDir;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader, Write, ErrorKind};
 use std::path::Path;
-use std::cmp::PartialEq;
 
 pub fn search_file(filename: &str, dirname: &str) -> ()
 {
@@ -106,8 +105,8 @@ pub fn copy_over_file(source_file: &str, destination_file: &str) -> io::Result<(
     println!("Overwriting destination file with the source");
 
     // Overwrite contents of destination file with those of the source
-    let source = fs::File::open(source_file)?;
-    let destination = fs::File::create(destination_file)?;
+    let source = File::open(source_file)?;
+    let destination = File::create(destination_file)?;
 
     let reader = BufReader::new(source);
     let mut writer = io::BufWriter::new(destination);
