@@ -140,6 +140,22 @@ pub fn copy_over_file(source_file: &str, destination_file: &str) -> io::Result<(
     Ok(())
 }
 
+pub fn copy_directory(src: &Path, dest: &Path) -> io::Result<()> {
+    if src.is_file() {
+        fs::copy(src, dest)?;
+    } else if src.is_dir() {
+        fs::create_dir_all(dest)?;
+        for entry in fs::read_dir(src)? {
+            let entry = entry?;
+            let entry_path = entry.path();
+            let dest_path = dest.join(entry.file_name());
+
+            copy_directory(&entry_path, &dest_path)?;
+        }
+    }
+    Ok(())
+}
+
 fn files_are_identical(file1: &str, file2: &str) -> io::Result<bool> {
     let contents1 = fs::read(file1)?;
     let contents2 = fs::read(file2)?;

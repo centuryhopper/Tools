@@ -1,7 +1,8 @@
 mod file_utils;
 use core::panic;
-use std::env;
 use indoc::indoc;
+use std::env;
+use std::path::Path;
 
 fn main() {
     #![allow(unused_variables)]
@@ -11,10 +12,20 @@ fn main() {
     // skip the first arg which is the program name
     let args: Vec<String> = env::args().skip(1).collect();
 
-    match args.iter().map(|s| s.as_str()).collect::<Vec<&str>>().as_slice() {
+    match args
+        .iter()
+        .map(|s| s.as_str())
+        .collect::<Vec<&str>>()
+        .as_slice()
+    {
         ["cp", path1, path2] => {
             file_utils::copy_over_file(path1, path2).expect("");
         }
+
+        ["cpdir", path1, path2] => {
+            file_utils::copy_directory(&Path::new(path1), &Path::new(path2)).expect("");
+        }
+
         ["search", path1, path2] => {
             // test example: cargo run search hyprland.conf /home/leo_zhang
             // .as_str() converts &String to &str
