@@ -67,8 +67,8 @@ SOFTWARE.
         os.system('git commit -m "Initial Commit"')
         os.system('git branch -m main')
         os.system('git push -u origin main')
-        os.system('git checkout -b main_laptop')
-        os.system('git push -u origin main_laptop')
+        #os.system('git checkout -b main_laptop')
+        #os.system('git push -u origin main_laptop')
 
     #endregion
 
