@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.26"
-crate = "0.0.2"
-reqwest = {version="0.11.18",features = ["json"]}
+#crate = "0.0.2"
+reqwest = { version = "0.11.18", features = ["json"] }
 serde = { version = "1.0.171", features = ["derive"] }
 thiserror = "1.0.43"
 tokio = { version = "1.29.1", features = ["full"] }
