@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/home/leo_zhang/miniconda3/envs/web_auto/bin/python
 
 import os
 import requests
@@ -29,36 +29,59 @@ def download_pic_of_the_day():
 
     json_output = response.json()
     # print(json_output)
-    
-    date,explanation,hdurl,media_type,service_version,title,url,copyright = json_output['date'],json_output['explanation'],json_output['hdurl'],json_output['media_type'],json_output['service_version'],json_output['title'],json_output['url'],json_output['copyright']
+
+    date, explanation, hdurl, media_type, service_version, title, url, copyright = (
+        json_output["date"],
+        json_output["explanation"],
+        json_output["hdurl"],
+        json_output["media_type"],
+        json_output["service_version"],
+        json_output["title"],
+        json_output["url"],
+        json_output["copyright"],
+    )
 
     filename = os.path.join(today_folder_name, f"{today_string}.txt")
-    with open(filename, 'w') as file:
-        file.write("Date: {}\n\nExplanation: {}\n\nHdurl: {}\n\nMedia_type: {}\n\nService_version: {}\n\nTitle: {}\n\nUrl: {}\n\nCopyright: {}".format(date
-                        ,explanation
-                        ,hdurl
-                        ,media_type
-                        ,service_version
-                        ,title
-                        ,url
-                        ,copyright))
+    with open(filename, "w") as file:
+        file.write(
+            "Date: {}\n\nExplanation: {}\n\nHdurl: {}\n\nMedia_type: {}\n\nService_version: {}\n\nTitle: {}\n\nUrl: {}\n\nCopyright: {}".format(
+                date,
+                explanation,
+                hdurl,
+                media_type,
+                service_version,
+                title,
+                url,
+                copyright,
+            )
+        )
 
-    image_url = json_output['hdurl']
+    image_url = json_output["hdurl"]
     image_response = requests.get(image_url)
 
     if image_response.status_code == 200:
         pic_filename = f"nasa_pic_{today_string}.jpg"
-        with open(os.path.join(today_folder_name, pic_filename), 'wb') as file:
+        with open(os.path.join(today_folder_name, pic_filename), "wb") as file:
             file.write(image_response.content)
 
+
 if __name__ == "__main__":
-    file_directory = "C:\\Users\\{}\\Documents\\GitHub\\Tools\\python_tools\\fetch_nasa_pic".format(os.environ.get("USERNAME")) if platform.system() == 'Windows' else ("/home/{}/Documents/GitHub/Tools/python_tools/fetch_nasa_pic/".format(os.environ.get("USER")) if platform.system() == 'Linux' else '')
+    file_directory = (
+        "C:\\Users\\{}\\Documents\\GitHub\\Tools\\python_tools\\fetch_nasa_pic".format(
+            os.environ.get("USERNAME")
+        )
+        if platform.system() == "Windows"
+        else (
+            "/home/{}/Documents/GitHub/Tools/python_tools/fetch_nasa_pic/".format(
+                os.environ.get("USER")
+            )
+            if platform.system() == "Linux"
+            else ""
+        )
+    )
 
     if not os.path.exists(file_directory):
         print(f'"{file_directory}" does not exist')
     else:
         os.chdir(file_directory)
         download_pic_of_the_day()
-
-
-
