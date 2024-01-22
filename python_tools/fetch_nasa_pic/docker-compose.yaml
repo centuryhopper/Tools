@@ -1,0 +1,9 @@
+version: "3.0.1"
+services:
+  fetch_nasa_pic:
+    container_name: fetch_nasa_pic
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    restart: always

@@ -5,9 +5,12 @@ import requests
 import platform
 from datetime import datetime
 
+os.chdir(os.path.dirname(__file__))
+
+PIC_COLLECTION_NAME = "nasa_pic_collection"
+
 
 def download_pic_of_the_day():
-    PIC_COLLECTION_NAME = "nasa_pic_collection"
     pic_collection_path = os.path.join(os.getcwd(), PIC_COLLECTION_NAME)
     today_string = datetime.now().strftime("%Y-%m-%d")
     today_folder_name = os.path.join(pic_collection_path, today_string)
@@ -31,14 +34,15 @@ def download_pic_of_the_day():
     # print(json_output)
 
     date, explanation, hdurl, media_type, service_version, title, url, copyright = (
-        json_output["date"],
-        json_output["explanation"],
-        json_output["hdurl"],
-        json_output["media_type"],
-        json_output["service_version"],
-        json_output["title"],
-        json_output["url"],
-        json_output["copyright"],
+        json_output.get("date", "n/a"),
+        json_output.get("explanation", "n/a"),
+        json_output.get("hdurl", "n/a"),
+        json_output.get("media_type", "n/a"),
+        json_output.get("service_version", "n/a"),
+        json_output.get("title", "n/a"),
+        json_output.get("url", "n/a"),
+        # some times there's no copyright available
+        json_output.get("copyright", "n/a"),
     )
 
     filename = os.path.join(today_folder_name, f"{today_string}.txt")
@@ -66,22 +70,14 @@ def download_pic_of_the_day():
 
 
 if __name__ == "__main__":
-    file_directory = (
-        "C:\\Users\\{}\\Documents\\GitHub\\Tools\\python_tools\\fetch_nasa_pic".format(
-            os.environ.get("USERNAME")
-        )
-        if platform.system() == "Windows"
-        else (
-            "/home/{}/Documents/GitHub/Tools/python_tools/fetch_nasa_pic/".format(
-                os.environ.get("USER")
-            )
-            if platform.system() == "Linux"
-            else ""
-        )
-    )
+    # print(os.getcwd())
+    file_directory = os.path.join(os.getcwd(), PIC_COLLECTION_NAME)
 
     if not os.path.exists(file_directory):
-        print(f'"{file_directory}" does not exist')
-    else:
-        os.chdir(file_directory)
-        download_pic_of_the_day()
+        print(f'"{file_directory}" does not exist, so creating it now...')
+        os.makedirs(file_directory)
+
+    print(os.getcwd())
+    # os.chdir(file_directory)
+    download_pic_of_the_day()
+
