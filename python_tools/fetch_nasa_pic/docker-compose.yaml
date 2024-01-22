@@ -1,4 +1,4 @@
-version: "3.0.1"
+version: "3.1"
 services:
   fetch_nasa_pic:
     container_name: fetch_nasa_pic
