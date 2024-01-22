@@ -6,6 +6,8 @@ RUN TZ=America/New_York && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && ech
 
 RUN apt-get -y update && apt-get -y install cron
 
+
+# IMPORTANT: Make sure start.sh is executable 
 COPY files/* /home/
 
 # install any dependencies
