@@ -1,6 +1,18 @@
-# Use the official Python image for ARM64 architecture
-FROM --platform=linux/arm64/v8 python:rc-slim-buster
+FROM --platform=linux/arm64/v8 mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+WORKDIR /App
 
+# Copy everything
+COPY . ./
+# Restore as distinct layers
+RUN dotnet restore
+# Build and publish a release
+RUN dotnet publish -c Release -o out
+
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /App
+COPY --from=build-env /App/out .
+ENTRYPOINT ["dotnet", "DotNet.Docker.dll"]
 
 RUN TZ=America/New_York && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -11,7 +23,6 @@ RUN apt-get -y update && apt-get -y install cron tree vim less
 COPY files/* /home/
 
 # install any dependencies
-RUN pip install --no-cache-dir -r /home/requirements.txt
 
 #RUN chmod 755 /script.sh /entry.sh
 RUN /usr/bin/crontab /home/crontab.txt
