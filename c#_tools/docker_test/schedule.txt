@@ -1,5 +1,5 @@
 * * * * * /app/run_app.sh >> /var/log/cron.log 2>&1
-* * * * * echo "hello" >> /tmp/dummy.txt 2>&1
+#* * * * * echo "hello" >> /tmp/dummy.txt 2>&1
 
 #* * * * * *
 #| | | | | | 

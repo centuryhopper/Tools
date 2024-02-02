@@ -18,3 +18,8 @@ DotNetEnv.Env.Load("secrets.env");
 var secret = Environment.GetEnvironmentVariable("mySecret");
 
 Console.WriteLine($"{DateTime.UtcNow}: Output String: '{secret}'");
+
+Directory.SetCurrentDirectory(Directory.GetCurrentDirectory());
+Directory.CreateDirectory("./test");
+
+File.WriteAllText("./test/hello.txt", $"{DateTime.UtcNow}: Output String: '{secret}'");
