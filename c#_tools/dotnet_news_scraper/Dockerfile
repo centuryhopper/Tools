@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0-buster-rc1-buster-slim-arm32v7 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 ARG BUILDCONFIG=RELEASE
 
@@ -11,7 +11,7 @@ COPY . .
 RUN dotnet publish -c $BUILDCONFIG -o out
 
 # build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-buster-slim-arm32v7
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.1-bookworm-slim-arm64v8
 WORKDIR /app
 COPY --from=build /build/out ./
 
