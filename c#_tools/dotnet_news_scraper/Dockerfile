@@ -1,44 +1,40 @@
-FROM --platform=linux/arm64/v8 mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
-WORKDIR /App
+FROM mcr.microsoft.com/dotnet/sdk:8.0-buster-rc1-buster-slim-arm32v7 AS build
 
-# Copy everything
-COPY . ./
-# Restore as distinct layers
+ARG BUILDCONFIG=RELEASE
+
+# Copy project files to avoid restoring packages if they haven't changed
+COPY *.csproj ./build/
+WORKDIR /build/
 RUN dotnet restore
-# Build and publish a release
-RUN dotnet publish -c Release -o out
 
-# Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
-WORKDIR /App
-COPY --from=build-env /App/out .
-ENTRYPOINT ["dotnet", "DotNet.Docker.dll"]
+COPY . .
+RUN dotnet publish -c $BUILDCONFIG -o out
 
-RUN TZ=America/New_York && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-buster-slim-arm32v7
+WORKDIR /app
+COPY --from=build /build/out ./
 
-RUN apt-get -y update && apt-get -y install cron tree vim less
+# Install Cron
+RUN apt-get update -qq && apt-get -y install cron tree vim less -qq --force-yes
 
+# Add export environment variable script and schedule.txt
+COPY ./files/*.sh ./
+COPY ./files/schedule.txt /etc/cron.d/schedule.txt
 
-# IMPORTANT: Make sure start.sh is executable 
-COPY files/* /home/
+# remove carriage returns to make sure this works on windows machines
+RUN sed -i 's/\r//' export_env.sh \
+  && sed -i 's/\r//' run_app.sh \
+  && sed -i 's/\r//' /etc/cron.d/schedule.txt \
+  && chmod +x export_env.sh run_app.sh \
+  && chmod 0644 /etc/cron.d/schedule.txt
 
-# install any dependencies
+RUN /usr/bin/crontab /etc/cron.d/schedule.txt
 
-#RUN chmod 755 /script.sh /entry.sh
-RUN /usr/bin/crontab /home/crontab.txt
-
-# Run the command on container startup
+# Create log file
 RUN touch /var/log/cron.log
-
-CMD cron && tail -f /var/log/cron.log
-
+RUN chmod 0666 /var/log/cron.log
 
 
-
-
-
-# docker build -t get_nasa_pic_cron .
-# docker push leozhang1/automation:get_nasa_pic_cron
-# docker run leozhang1/automation:get_nasa_pic_cron
-
-# docker run -itd get_nasa_pic_cron
+# Run Cron
+CMD /app/export_env.sh && cron && tail -f /var/log/cron.log

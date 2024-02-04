@@ -6,26 +6,34 @@ using NewsAPI.Constants;
 using NewsAPI.Models;
 using OfficeOpenXml;
 
-var builder = new ConfigurationBuilder()
-    .AddUserSecrets<Program>();
+DotNetEnv.Env.Load("secrets.env");
 
-var config = builder.Build();
-var apiKey = config["apiKey"]!;
+var apiKey = Environment.GetEnvironmentVariable("apiKey");
+var isRunningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
+var targetDir = Convert.ToBoolean(isRunningInDocker) ? "/app/news" : "./news";
+Directory.CreateDirectory(targetDir);
 
-// void print(object? val) => System.Console.WriteLine(val);
-
-Categories[] categories = {Categories.Business, Categories.Entertainment,
-                          Categories.Health, Categories.Science, Categories.Sports, Categories.Technology};
+Categories[] categories =
+{
+    Categories.Business,
+    Categories.Entertainment,
+    Categories.Health,
+    Categories.Science,
+    Categories.Sports,
+    Categories.Technology
+};
 
 async Task<(Categories, List<NewsArticleModel>)> GetNews(Categories category)
 {
     var newsApiClient = new NewsApiClient(apiKey);
-    var articlesResponse = await newsApiClient.GetTopHeadlinesAsync(new TopHeadlinesRequest
-    {
-        Language = Languages.EN,
-        Category = category,
-        Country = Countries.US
-    });
+    var articlesResponse = await newsApiClient.GetTopHeadlinesAsync(
+        new TopHeadlinesRequest
+        {
+            Language = Languages.EN,
+            Category = category,
+            Country = Countries.US
+        }
+    );
     List<NewsArticleModel> news = new();
 
     if (articlesResponse.Status == Statuses.Ok)
@@ -53,31 +61,25 @@ async Task<(Categories, List<NewsArticleModel>)> GetNews(Categories category)
     return (category, news);
 }
 
-string assemblyPath = Assembly.GetExecutingAssembly().Location;
-string programPath = Path.GetDirectoryName(assemblyPath)!;
-
-Directory.SetCurrentDirectory(programPath);
-
-// print(Directory.GetCurrentDirectory());
-
 var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = 6 };
 
 List<(Categories, List<NewsArticleModel>)> results = new();
 
-await Parallel.ForEachAsync(categories, parallelOptions, async (category, _) =>
-{
-    results.Add(await GetNews(category));
-});
+await Parallel.ForEachAsync(
+    categories,
+    parallelOptions,
+    async (category, _) =>
+    {
+        results.Add(await GetNews(category));
+    }
+);
 
-var outputPath = "news";
+var outputPath = targetDir;
 var fileName = DateTime.Now.ToString("yyyy_MM_dd") + ".xlsx";
-Directory.CreateDirectory(outputPath);
-
 var fileCompletePath = Path.Combine(outputPath, fileName);
 
-// print(fileCompletePath);
-
-if (!Directory.Exists(fileCompletePath))
+//Console.WriteLine(fileCompletePath);
+if (!File.Exists(fileCompletePath))
 {
     // export to excel
     foreach (var (category, result) in results)
@@ -92,8 +94,7 @@ if (!Directory.Exists(fileCompletePath))
         await pck.SaveAsync();
     }
 }
-
-
-
-
-
+else
+{
+    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd")}: Already retrieved today's news");
+}

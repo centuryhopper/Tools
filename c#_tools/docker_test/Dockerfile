@@ -36,7 +36,7 @@ RUN touch /var/log/cron.log
 RUN chmod 0666 /var/log/cron.log
 
 # Volume required for tail command
-VOLUME /var/log
+#VOLUME /var/log
 
 # Run Cron
 CMD /app/export_env.sh && cron && tail -f /var/log/cron.log
