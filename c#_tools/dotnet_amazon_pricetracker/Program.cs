@@ -49,21 +49,22 @@ firefoxOptions.AddArgument("--headless");
         "B0BZRKRBHP",
         "ROVE R2-4K PRO Dash Cam, Built-in GPS, 5G WiFi Dash Camera for Cars, 2160P UHD 30fps Dashcam with APP, 2.4\" IPS Screen, Night Vision, WDR, 150° Wide Angle, 24-Hr Parking Mode, Supports 512GB Max"
     ),
-    ("wilson-evo-basketball-29_5", "wilson_evolution", "WILSON Evolution Indoor Game Basketballs - Size 5, Size 6 and Size 7")
+    (
+        "wilson-evo-basketball-29_5",
+        "wilson_evolution",
+        "WILSON Evolution Indoor Game Basketballs - Size 5, Size 6 and Size 7"
+    )
 };
 
-ProductRecord? Extract(
-    HtmlNode? node,
-    int rowNumber,
-    string titleDescription
-)
+ProductRecord? Extract(HtmlNode? node, int rowNumber, string titleDescription)
 {
     // find all the anchor nodes within each search section
     var anchorNodes = node?.SelectNodes(".//a");
     if (anchorNodes is null || !anchorNodes.Any())
         return null;
 
-    string desc = "", url = "";
+    string desc = "",
+        url = "";
     foreach (var anchorNode in anchorNodes)
     {
         string href = anchorNode.GetAttributeValue("href", "");
@@ -133,9 +134,9 @@ async Task ProcessQuery((string, string, string) query)
     DateTime lastDateTime = DateTime.ParseExact(lastReadDateTime.Trim(), fmt, null);
     TimeSpan diff = DateTime.Now - lastDateTime;
     double diffInHours = diff.TotalSeconds / 3600;
-    bool isConnectedToWifi = await IsConnectedToWifi();
+    //bool isConnectedToWifi = await IsConnectedToWifi();
 
-    if (diffInHours < 24 || !isConnectedToWifi)
+    if (diffInHours < 24)
     {
         return;
     }
@@ -206,7 +207,8 @@ void AlertMeOfPriceDrops(List<ProductRecord> records)
     {
         switch (record.Description)
         {
-            case string s when s.Contains("ROVE R2-4K PRO Dash Cam", StringComparison.OrdinalIgnoreCase):
+            case string s
+                when s.Contains("ROVE R2-4K PRO Dash Cam", StringComparison.OrdinalIgnoreCase):
                 if (float.Parse(record.PriceText.Replace("$", "")) < 100f)
                 {
                     Helpers.SendEmail(
@@ -218,7 +220,11 @@ void AlertMeOfPriceDrops(List<ProductRecord> records)
                     );
                 }
                 break;
-            case string s when s.Contains("WILSON Evolution Indoor Game Basketballs", StringComparison.OrdinalIgnoreCase):
+            case string s
+                when s.Contains(
+                    "WILSON Evolution Indoor Game Basketballs",
+                    StringComparison.OrdinalIgnoreCase
+                ):
                 if (float.Parse(record.PriceText.Replace("$", "")) < 70f)
                 {
                     Helpers.SendEmail(

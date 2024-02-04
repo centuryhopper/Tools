@@ -13,11 +13,12 @@ RUN dotnet publish -c $BUILDCONFIG -o out
 # build runtime image
 # arm64v8 for Raspberry PIs
 FROM mcr.microsoft.com/dotnet/aspnet:8.0.1-bookworm-slim-arm64v8
+#FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /build/out ./
 
 # Install Cron
-RUN apt-get update -qq && apt-get -y install cron tree vim less -qq --force-yes
+RUN apt-get update -qq && apt-get -y install cron tree vim less firefox-esr -qq --force-yes
 
 # Add export environment variable script and schedule.txt
 COPY ./files/*.sh ./

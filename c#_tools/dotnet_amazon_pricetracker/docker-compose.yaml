@@ -10,5 +10,5 @@ services:
     network_mode: host
     restart: always
     volumes:
-      - /home/leozhang1/projects/Tools/files_from_docker/amazon_products_output/:/app/amazon_products_output
+      - /home/leozhang1/projects/Tools/files_from_docker/amazon_products_outputs/:/app/amazon_products_outputs
 # The provided Docker Compose file, with version 3.1, defines a service named docker_test. This service, represented by the container named docker_test, is built using the Dockerfile in the current directory. The service runs in host network mode, allowing it to share the host's network namespace. Additionally, the container is set to restart always, ensuring automatic restart in case of any exit.
