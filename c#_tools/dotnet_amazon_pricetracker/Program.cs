@@ -27,6 +27,11 @@ var targetDir = Convert.ToBoolean(isRunningInDocker)
     : "./amazon_products_outputs";
 Directory.CreateDirectory(targetDir);
 
+var timeStampDir = Convert.ToBoolean(isRunningInDocker)
+    ? "/app/script_execution_records"
+    : "./script_execution_records";
+Directory.CreateDirectory(timeStampDir);
+
 // 200.143.75.194:8080
 
 FirefoxOptions firefoxOptions = new FirefoxOptions();
@@ -268,10 +273,10 @@ async Task<bool> IsConnectedToWifi()
 
 string? ReadLastDateTimeFromTxt()
 {
-    string filePath = $"{Environment.CurrentDirectory}/script_execution_records/time_stamp.txt";
-    if (File.Exists(filePath))
+    string timeStampPath = Path.Combine(timeStampDir, "time_stamp.txt");
+    if (File.Exists(timeStampPath))
     {
-        return File.ReadAllText(filePath);
+        return File.ReadAllText(timeStampPath);
     }
 
     return null;
@@ -304,13 +309,9 @@ await Parallel.ForEachAsync(
     }
 );
 
-var timeStampPath = $"{Environment.CurrentDirectory}/script_execution_records/";
+var timeStampPath = Path.Combine(timeStampDir, "time_stamp.txt");
 
-Directory.CreateDirectory(timeStampPath);
-
-var fullTimeStampPath = Path.Combine(timeStampPath, "time_stamp.txt");
-
-using var sw = new StreamWriter(path: fullTimeStampPath, append: false);
+using var sw = new StreamWriter(path: timeStampPath, append: false);
 
 // mark time stamp to avoid re-running on the same day
 sw.WriteLine(DateTime.Now.ToString(fmt));

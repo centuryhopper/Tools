@@ -1,0 +1,14 @@
+version: "3.1"
+services:
+  custom_named_service:
+    container_name: custom_named_container
+    env_file:
+      - secrets.env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    restart: always
+    volumes:
+      - path/to/host:path/to/container
+# The provided Docker Compose file, with version 3.1, defines a service. This service, represented by the container, is built using the Dockerfile in the current directory. The service runs in host network mode, allowing it to share the host's network namespace. Additionally, the container is set to restart always, ensuring automatic restart in case of any exit.
