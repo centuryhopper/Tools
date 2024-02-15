@@ -18,11 +18,12 @@ WORKDIR /app
 COPY --from=build /build/out ./
 
 # Install Cron
-RUN apt-get update -qq && apt-get -y install cron tree vim less firefox-esr -qq --force-yes
+RUN apt-get update -qq && apt-get -y install cron tree vim less firefox-esr
 
 # Add export environment variable script and schedule.txt
 COPY ./files/*.sh ./
 COPY ./files/schedule.txt /etc/cron.d/schedule.txt
+COPY ./geckodriver ./
 
 # remove carriage returns to make sure this works on windows machines
 RUN sed -i 's/\r//' export_env.sh \

@@ -3,6 +3,7 @@ __pycache__
 secrets.py
 *.env
 secrets.json
+**/script_execution_records/*
 
 
 *.swp

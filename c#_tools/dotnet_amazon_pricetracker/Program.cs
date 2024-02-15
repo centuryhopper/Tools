@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.Reflection;
 using CsvHelper;
@@ -12,10 +13,10 @@ using OpenQA.Selenium.Firefox;
 
 string fmt = "yyyy-MM-dd-HH:mm:ss";
 
-void print(object msg) => System.Console.WriteLine(msg);
+void print(params object[] msg) => System.Console.WriteLine(string.Join(",", msg));
 
-var proxyServer = ProxySharp.Proxy.GetSingleProxy();
-ProxySharp.Proxy.PopProxy();
+//var proxyServer = ProxySharp.Proxy.GetSingleProxy();
+//ProxySharp.Proxy.PopProxy();
 
 DotNetEnv.Env.Load("secrets.env");
 
@@ -32,18 +33,21 @@ var timeStampDir = Convert.ToBoolean(isRunningInDocker)
     : "./script_execution_records";
 Directory.CreateDirectory(timeStampDir);
 
-// 200.143.75.194:8080
+var geckoDriverPath = Convert.ToBoolean(isRunningInDocker) ? "/app/geckodriver" : "./geckodriver";
 
 FirefoxOptions firefoxOptions = new FirefoxOptions();
-firefoxOptions.AddArgument("--proxy-server=" + proxyServer);
 
-firefoxOptions.AddArgument("--disable-blink-features=AutomationControlled");
-firefoxOptions.AddArgument("--ignore-ssl-errors=yes");
-firefoxOptions.AddArgument("--ignore-certificate-errors");
-firefoxOptions.AddArgument("--disable-infobars");
-firefoxOptions.AddArgument("--disable-popup-blocking");
-firefoxOptions.AddArgument("--disable-extensions");
+//firefoxOptions.AddArgument("--proxy-server=" + proxyServer);
 
+//firefoxOptions.AddArgument("--disable-blink-features=AutomationControlled");
+//firefoxOptions.AddArgument("--ignore-ssl-errors=yes");
+//firefoxOptions.AddArgument("--ignore-certificate-errors");
+//firefoxOptions.AddArgument("--disable-infobars");
+//firefoxOptions.AddArgument("--disable-popup-blocking");
+//firefoxOptions.AddArgument("--disable-extensions");
+
+firefoxOptions.SetPreference("webdriver.gecko.driver", geckoDriverPath);
+firefoxOptions.BrowserExecutableLocation = "/usr/bin/firefox";
 firefoxOptions.AddArgument("--headless");
 
 // first tuple item should be a unique value
@@ -54,31 +58,34 @@ firefoxOptions.AddArgument("--headless");
         "B0BZRKRBHP",
         "ROVE R2-4K PRO Dash Cam, Built-in GPS, 5G WiFi Dash Camera for Cars, 2160P UHD 30fps Dashcam with APP, 2.4\" IPS Screen, Night Vision, WDR, 150° Wide Angle, 24-Hr Parking Mode, Supports 512GB Max"
     ),
-    (
-        "wilson-evo-basketball-29_5",
-        "wilson_evolution",
-        "WILSON Evolution Indoor Game Basketballs - Size 5, Size 6 and Size 7"
-    )
+    ("wilson-evo-basketball-29_5", "B00KXVPN8A", "Evolution Indoor Game Basketballs")
 };
 
 ProductRecord? Extract(HtmlNode? node, int rowNumber, string titleDescription)
 {
     // find all the anchor nodes within each search section
-    var anchorNodes = node?.SelectNodes(".//a");
-    if (anchorNodes is null || !anchorNodes.Any())
+    var titleSections = node?.SelectNodes("//div[@data-cy='title-recipe']");
+    if (titleSections is null || !titleSections.Any())
         return null;
 
     string desc = "",
         url = "";
-    foreach (var anchorNode in anchorNodes)
+    foreach (var titleSection in titleSections)
     {
-        string href = anchorNode.GetAttributeValue("href", "");
-        desc = anchorNode.InnerText.Trim();
-        if (!desc.Contains(titleDescription))
+        var anchors = titleSection.SelectNodes(".//a");
+        foreach (var anchor in anchors)
         {
-            continue;
+            var hrefLink = anchor.GetAttributeValue("href", "");
+            desc = titleSection.InnerText.Trim();
+            if (desc.Contains(titleDescription))
+            {
+                url = $"https://www.amazon.com{hrefLink}";
+            }
         }
-        url = $"https://www.amazon.com{href}";
+        if (!string.IsNullOrEmpty(url))
+        {
+            break;
+        }
     }
 
     if (string.IsNullOrEmpty(url))
@@ -151,6 +158,7 @@ async Task ProcessQuery((string, string, string) query)
 
     // Initialize FirefoxDriver
     using IWebDriver driver = new FirefoxDriver(firefoxOptions);
+    driver.Manage().Window.Size = new Size(1920, 1080);
 
     var completeFilePath = Path.Combine(targetDir, filename) + ".csv";
 
@@ -184,6 +192,8 @@ async Task ProcessQuery((string, string, string) query)
             if (record is not null)
             {
                 records.Add(record);
+                // first one is probably it
+                break;
             }
         }
     }
