@@ -53,39 +53,41 @@ firefoxOptions.AddArgument("--headless");
 // first tuple item should be a unique value
 (string, string, string)[] queries =
 {
-    (
-        "rove-r2-4k-pro-dashcam",
-        "B0BZRKRBHP",
-        "ROVE R2-4K PRO Dash Cam, Built-in GPS, 5G WiFi Dash Camera for Cars, 2160P UHD 30fps Dashcam with APP, 2.4\" IPS Screen, Night Vision, WDR, 150° Wide Angle, 24-Hr Parking Mode, Supports 512GB Max"
-    ),
+    ("rove-r2-4k-pro-dashcam","B0BZRKRBHP","ROVE R2-4K PRO Dash Cam"),
     ("wilson-evo-basketball-29_5", "B00KXVPN8A", "Evolution Indoor Game Basketballs")
 };
+
+// inclusive of both bounds
+float RandomRange(float min, float max)
+{
+    max += float.Epsilon;
+    return min + (float) new Random().NextDouble() * (max - min);
+}
 
 ProductRecord? Extract(HtmlNode? node, int rowNumber, string titleDescription)
 {
     // find all the anchor nodes within each search section
-    var titleSections = node?.SelectNodes("//div[@data-cy='title-recipe']");
-    if (titleSections is null || !titleSections.Any())
-        return null;
+    var titleSection = node?.SelectSingleNode(".//div[@data-cy='title-recipe']");
 
-    string desc = "",
-        url = "";
-    foreach (var titleSection in titleSections)
+    string desc = "";
+    string url = "";
+
+
+    var anchor = titleSection?.SelectSingleNode(
+        ".//a[@class='a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal']"
+    );
+
+    if (anchor is null)
     {
-        var anchors = titleSection.SelectNodes(".//a");
-        foreach (var anchor in anchors)
-        {
-            var hrefLink = anchor.GetAttributeValue("href", "");
-            desc = titleSection.InnerText.Trim();
-            if (desc.Contains(titleDescription))
-            {
-                url = $"https://www.amazon.com{hrefLink}";
-            }
-        }
-        if (!string.IsNullOrEmpty(url))
-        {
-            break;
-        }
+        return null;
+    }
+
+    var hrefLink = anchor.GetAttributeValue("href", "");
+    desc = titleSection?.InnerText.Trim() ?? "";
+    if (desc.Contains(titleDescription))
+    {
+        url = $"https://www.amazon.com{hrefLink}";
+        // if url is found, then we stop searching for more
     }
 
     if (string.IsNullOrEmpty(url))
@@ -96,7 +98,8 @@ ProductRecord? Extract(HtmlNode? node, int rowNumber, string titleDescription)
     // Console.WriteLine("Anchor Href: " + href);
     // Console.WriteLine("Anchor Content: " + desc);
 
-    var priceParent = node?.SelectSingleNode(".//span[@class='a-price']");
+    var priceSection = node?.SelectSingleNode(".//div[@data-cy='price-recipe']");
+    var priceParent = priceSection?.SelectSingleNode(".//span[@class='a-price']");
     var price = priceParent?.SelectSingleNode(".//span[@class='a-offscreen']");
 
     if (price is null)
@@ -180,7 +183,7 @@ async Task ProcessQuery((string, string, string) query)
             .DocumentNode.Descendants("div")
             .Where(div =>
                 div.GetAttributeValue("class", "")
-                    .Contains(
+                    .Equals(
                         "a-section a-spacing-small puis-padding-left-small puis-padding-right-small"
                     )
             );
@@ -196,6 +199,8 @@ async Task ProcessQuery((string, string, string) query)
                 break;
             }
         }
+    
+        Thread.Sleep(TimeSpan.FromSeconds(RandomRange(0.1f, 1f)));
     }
 
     bool hasCsvAlready = Path.Exists(completeFilePath);
@@ -255,30 +260,6 @@ void AlertMeOfPriceDrops(List<ProductRecord> records)
                 break;
         }
     }
-}
-
-async Task<bool> IsConnectedToWifi()
-{
-    ProcessStartInfo startInfo = new ProcessStartInfo
-    {
-        FileName = "curl",
-        Arguments = $"-Is \"https://www.google.com\"",
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
-    };
-
-    using Process process = new Process();
-    process.StartInfo = startInfo;
-    process.Start();
-
-    string standardOutput = await process.StandardOutput.ReadToEndAsync();
-    string standardError = await process.StandardError.ReadToEndAsync();
-
-    await process.WaitForExitAsync();
-
-    return standardOutput.Contains("HTTP/2 200");
 }
 
 string? ReadLastDateTimeFromTxt()

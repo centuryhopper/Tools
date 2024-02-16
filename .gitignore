@@ -4,6 +4,8 @@ secrets.py
 *.env
 secrets.json
 **/script_execution_records/*
+**/amazon_products_outputs/*
+
 
 
 *.swp
