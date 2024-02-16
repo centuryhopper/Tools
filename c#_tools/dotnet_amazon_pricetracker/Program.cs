@@ -53,7 +53,7 @@ firefoxOptions.AddArgument("--headless");
 // first tuple item should be a unique value
 (string, string, string)[] queries =
 {
-    ("rove-r2-4k-pro-dashcam","B0BZRKRBHP","ROVE R2-4K PRO Dash Cam"),
+    ("rove-r2-4k-pro-dashcam", "B0BZRKRBHP", "ROVE R2-4K PRO Dash Cam"),
     ("wilson-evo-basketball-29_5", "B00KXVPN8A", "Evolution Indoor Game Basketballs")
 };
 
@@ -61,7 +61,7 @@ firefoxOptions.AddArgument("--headless");
 float RandomRange(float min, float max)
 {
     max += float.Epsilon;
-    return min + (float) new Random().NextDouble() * (max - min);
+    return min + (float)new Random().NextDouble() * (max - min);
 }
 
 ProductRecord? Extract(HtmlNode? node, int rowNumber, string titleDescription)
@@ -71,7 +71,6 @@ ProductRecord? Extract(HtmlNode? node, int rowNumber, string titleDescription)
 
     string desc = "";
     string url = "";
-
 
     var anchor = titleSection?.SelectSingleNode(
         ".//a[@class='a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal']"
@@ -149,7 +148,6 @@ async Task ProcessQuery((string, string, string) query)
     DateTime lastDateTime = DateTime.ParseExact(lastReadDateTime.Trim(), fmt, null);
     TimeSpan diff = DateTime.Now - lastDateTime;
     double diffInHours = diff.TotalSeconds / 3600;
-    //bool isConnectedToWifi = await IsConnectedToWifi();
 
     if (diffInHours < 24)
     {
@@ -199,7 +197,7 @@ async Task ProcessQuery((string, string, string) query)
                 break;
             }
         }
-    
+
         Thread.Sleep(TimeSpan.FromSeconds(RandomRange(0.1f, 1f)));
     }
 
