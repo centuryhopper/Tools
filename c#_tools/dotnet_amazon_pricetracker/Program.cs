@@ -146,11 +146,10 @@ async Task ProcessQuery((string, string, string) query)
     }
 
     DateTime lastDateTime = DateTime.ParseExact(lastReadDateTime.Trim(), fmt, null);
-    TimeSpan diff = DateTime.Now - lastDateTime;
-    double diffInHours = diff.TotalSeconds / 3600;
 
-    if (diffInHours < 24)
+    if (lastDateTime.Date == DateTime.Today)
     {
+        //print(lastDateTime.Date, DateTime.Today);
         return;
     }
 
