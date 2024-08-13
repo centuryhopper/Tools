@@ -39,6 +39,7 @@ def setup_firefox_driver():
 
     driver = webdriver.Firefox(
         options=options,
+        service=service,
     )
 
     # Hide WebDriver attribute
