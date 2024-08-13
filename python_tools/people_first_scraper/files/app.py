@@ -17,6 +17,8 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
 
 os.chdir(os.path.dirname(__file__))
+output = Path.cwd() / "PeopleFirstCareersOutput"
+output.mkdir(exist_ok=True)
 
 
 def human_delay(seconds=random.uniform(2, 5)):
