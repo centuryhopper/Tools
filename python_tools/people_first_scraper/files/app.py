@@ -38,7 +38,7 @@ def setup_firefox_driver():
     print(os.getcwd())
     print(os.listdir())
 
-    service = Service(executable_path="./geckodriver")
+    service = Service(executable_path="./geckodriver_for_arm")
 
     driver = webdriver.Firefox(
         options=options,
