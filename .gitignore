@@ -6,6 +6,7 @@ secrets.json
 **/script_execution_records/*
 **/amazon_products_outputs/*
 **/PeopleFirstCareersOutput/*
+**/test/*
 
 
 *.swp
