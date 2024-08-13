@@ -36,6 +36,7 @@ def setup_firefox_driver():
     options.set_preference("useAutomationExtension", False)
 
     print(os.getcwd())
+    print(os.listdir())
 
     service = Service(executable_path="geckodriver")
 
