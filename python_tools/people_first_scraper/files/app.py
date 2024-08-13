@@ -35,6 +35,8 @@ def setup_firefox_driver():
     options.set_preference("dom.webdriver.enabled", False)
     options.set_preference("useAutomationExtension", False)
 
+    print(os.getcwd())
+
     service = Service(executable_path="/home/geckodriver")
 
     driver = webdriver.Firefox(
