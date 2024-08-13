@@ -10,6 +10,9 @@ RUN apt-get -y update && apt-get -y install cron tree vim less
 # IMPORTANT: Make sure start.sh is executable 
 COPY files/* /home/
 
+# Ensure pip is up-to-date
+RUN pip install --upgrade pip
+
 # install any dependencies
 RUN pip install --no-cache-dir -r /home/requirements.txt
 
