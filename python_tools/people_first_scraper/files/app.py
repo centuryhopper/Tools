@@ -218,8 +218,8 @@ def main():
         result = pd.concat(list_of_dfs, ignore_index=True)
         # pprint.pprint(result)
 
-        if os.path.exists("./PeopleFirstCareersOutput/"):
-            os.mkdir("./PeopleFirstCareersOutput/")
+        # if os.path.exists("./PeopleFirstCareersOutput/"):
+        #    os.mkdir("./PeopleFirstCareersOutput/")
 
         clean_up_people_job_results(PATH="./PeopleFirstCareersOutput/")
 
