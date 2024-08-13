@@ -25,6 +25,7 @@ def human_delay(seconds=random.uniform(2, 5)):
 
 def setup_firefox_driver():
     options = Options()
+    options.binary_location = "/usr/bin/firefox"
     options.add_argument("--headless")
 
     # Random User-Agent
