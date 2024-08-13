@@ -4,7 +4,7 @@ FROM --platform=linux/arm64/v8 python:rc-slim-buster
 
 RUN TZ=America/New_York && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt-get -y update && apt-get -y install cron tree vim less curl
+RUN apt-get -y update && apt-get -y install cron tree vim less curl firefox-esr
 
 
 # IMPORTANT: Make sure start.sh is executable 
