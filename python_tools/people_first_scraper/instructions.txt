@@ -1,0 +1,7 @@
+
+copy docker vm files to raspberry pi:
+docker cp people_first_scraper:/home/PeopleFirstCareersOutput/. ~/projects/Tools/python_tools/people_first_scraper/PeopleFirstCareersOutput/
+
+
+copy raspberry pi files to host:
+scp leozhang@192.168.1.88:/home/leozhang/projects/Tools/python_tools/people_first_scraper/PeopleFirstCareersOutput/'*' ~/Documents/GitHub/Tools/python_tools/people_first_scraper/PeopleFirstCareersOutput/
