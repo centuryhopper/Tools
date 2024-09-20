@@ -1,0 +1,103 @@
+@{
+    ViewData["Title"] = "Index";
+
+    IEnumerable<ProjectCardModel> ProjectList = ViewBag.ProjectList;
+}
+
+<div class="container py-5">
+    <div class="row pt-5">
+        <div class="text-center col-12">
+            <h3 class="text-uppercase border-bottom mb-4">List of projects</h3>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label for="txtSearch" class="form-label">Search by title</label>
+        <input type="text" class="form-control m-3" placeholder="Search project by title" id="txtSearch"/>
+    </div>
+
+    @if (ProjectList is null || !ProjectList.Any())
+    {
+        <div class="d-flex justify-content-center" style="display: none;">
+            <div id="loadingIndicator" class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div id="projects_render" class="row g-3">
+            @foreach (var info in ProjectList)
+            {
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                    <div class="card">
+                        <img src="@info.ImgUrl" class="card-img-top" alt="Card Image" />
+                        <div class="card-body">
+                            <h5 class="card-title text-center">@info.Title</h5>
+                            <p class="card-text mb-4">@info.Description</p>
+                            <div class="text-center">
+                                <a class="card-link btn btn-primary" target="_blank" rel="noopener noreferrer"
+                                    href="@info.ProjectLink">Link to project
+                                </a>
+                                <a class="card-link btn btn-primary" target="_blank" rel="noopener noreferrer"
+                                    href="@info.SourceCodeLink">Source code</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function ()
+        {
+            $('#txtSearch').keyup(function(){
+                $.ajax({
+                    type: "GET",
+                    url: '@Url.Action("GetFilteredProjectLst", "Projects")' + '?searchTerm=' + $(this).val(),
+                    success: function (response) {
+                        //console.log(response);
+                        const projectsLst = response.map(project => `
+                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                            <div class="card">
+                                <img src="${project.imgUrl}" class="card-img-top" alt="Card Image" />
+                                <div class="card-body">
+                                    <h5 class="card-title text-center">${project.title}</h5>
+                                    <p class="card-text mb-4">${project.description}</p>
+                                    <div class="text-center">
+                                        <a class="card-link btn btn-primary" target="_blank" rel="noopener noreferrer"
+                                            href="${project.projectLink}">Link to project
+                                        </a>
+                                        <a class="card-link btn btn-primary" target="_blank" rel="noopener noreferrer"
+                                            href="${project.sourceCodeLink}">Source code</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        `)
+
+                        //console.log(projectsLst.length);
+
+                        // clear the previously rendered list
+                        $('#projects_render').html('')
+
+                        $.each(projectsLst, function(idx, elem) {
+                            $('#projects_render').append(elem)
+                        });
+
+                    },
+                    error: function (response) {
+                        //alert(response.responseText);
+                        //swal.fire("", response.responseText, "error");
+                    }
+                });
+            });
+        });
+    </script>
+}

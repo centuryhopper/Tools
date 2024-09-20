@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Index";
+
+    IEnumerable<SkillModel> SkillsLst = ViewBag.SkillsLst;
+}
+
+@if (SkillsLst is null || !SkillsLst.Any())
+{
+    <div class="d-flex justify-content-center" style="display: none;">
+        <div id="loadingIndicator" class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    @foreach (var (i, skill) in SkillsLst.Select((skill, idx) => (idx, skill)))
+    {
+
+        <h2>@skill.Title</h2>
+        <ul>
+    @foreach (var desc in skill.Descriptions)
+            {
+                <li>
+                    @desc
+                </li>
+            }
+        </ul>
+        if (i != SkillsLst.Count() - 1)
+        {
+            <hr>
+        }
+    }
+}

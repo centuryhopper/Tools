@@ -8,7 +8,8 @@ secrets.json
 **/PeopleFirstCareersOutput/*
 **/test/*
 **/PeopleFirstCareersOutput/*
-
+gmail_delete_service_secrets.json
+**/token files/*
 
 
 *.swp

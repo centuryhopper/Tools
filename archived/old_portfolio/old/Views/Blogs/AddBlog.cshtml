@@ -1,0 +1,49 @@
+@model BlogModel
+
+@{
+    ViewData["Title"] = "AddBlog";
+}
+
+<div class="text-center">
+    @Html.ActionLink("Back to Blogs", "Index", "Blogs", null, new { @class = "btn btn-primary" })
+</div>
+
+
+<form method="post" asp-action="AddBlog" asp-controller="Blogs">
+    <div class="m-3">
+        @Html.LabelFor(m=>m.Title)
+        @Html.TextBoxFor(m => m.Title, new {@class="form-control"})
+    </div>
+    <div class="m-3">
+        @Html.LabelFor(m=>m.Date)
+        @Html.EditorFor(m => m.Date)
+    </div>
+    <div class="m-3">
+        @Html.LabelFor(m=>m.FullDesc)
+        @Html.TextAreaFor(m => m.FullDesc, rows: 10, columns: 10, new {@class="form-control"})
+    </div>
+    <div id="videoUrls">
+    </div>
+
+    <input type="submit" value="Submit" class="btn btn-primary">
+</form>
+
+<div class="m-3">
+    <input class="form-control" type="number" placeholder="Enter number of videos you want to add">
+    <button class="btn btn-secondary m-2" id="add_videos">Add</button>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function ()
+        {
+            $('#add_videos').click(function ()
+            {
+                const num = Number($(this).closest('div').find('input').val())
+                for (let i = 0; i < num;i++) $('#videoUrls').append(`<input class="form-control m-4" type="text" name=VideoUrls[${i}].url>`)
+            });
+        });
+    </script>
+}

@@ -1,0 +1,65 @@
+@model ContactMeModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1 class="text-center">Contact Me</h1>
+
+<div class="text-center">
+    <p>
+        I am excited to meet and work with you! We progress better together so please don't hesitate to contact me using
+        the form below.
+    </p>
+</div>
+
+<div class="container-fluid">
+    <form id="contact_form" method="post" action="@Url.Action("Index", "Contacts")">
+        <div class="card">
+            <h4 class="text-center card-header">
+                Contact Form
+            </h4>
+            <div class="card-body">
+                <p class="form-group">
+                    @Html.LabelFor(m=>m.Name)
+                    @Html.TextBoxFor(m=>m.Name, null, new {@class="form-control"})
+                    @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
+                </p>
+                <p class="form-group">
+                    @Html.LabelFor(m=>m.Email)
+                    @Html.TextBoxFor(m=>m.Email, null, new {@class="form-control"})
+                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
+                </p>
+                <p class="form-group">
+                    @Html.LabelFor(m=>m.Subject)
+                    @Html.TextBoxFor(m=>m.Subject, null, new {@class="form-control"})
+                    @Html.ValidationMessageFor(m => m.Subject, "", new { @class = "text-danger" })
+                </p>
+                <p class="form-group">
+                    @Html.LabelFor(m=>m.Message)
+                    @Html.TextAreaFor(m=>m.Message, rows: 10, columns: 10, new {@class="form-control"})
+                    @Html.ValidationMessageFor(m => m.Message, "", new { @class = "text-danger" })
+                    <p id="word_count"></p>
+                </p>
+            </div>
+            <div class="m-3">               
+                <button class="btn btn-primary btn-with-shadow">Submit</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+  <script>
+    $(function ()
+    {
+        $('#Message').keydown(function(){
+            //const minLen = $(this).attr('data-val-minlength-min')
+            //console.log(minLen);
+            $('#word_count').html('current character count: ' + $(this).val().length)
+        });
+    });
+  </script>
+}

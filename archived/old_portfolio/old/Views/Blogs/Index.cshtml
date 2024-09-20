@@ -1,0 +1,112 @@
+@model BlogModel
+
+@{
+    ViewData["Title"] = "Blogs";
+    const string BLOG_GRID_ID = "blog_grid";
+}
+
+<div class="text-center m-5">
+    <h2><b>All Blogs</b></h2>
+</div>
+<hr />
+<div class="d-flex justify-content-center" style="display: none;">
+  <div id="loadingIndicator" class="spinner-border" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+<div class="text-center overflow-auto m-3">
+    <table id="@BLOG_GRID_ID" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Blog Title</th>
+                <th>Blog Date</th>
+                <th>Blog Preview</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in ViewBag.BlogsList as IEnumerable<BlogModel>)
+            {
+                <tr>
+                    <td>@Html.ActionLink(b.Title, "BlogCard", "Blogs", new {title = b.Title})</td>
+                    <td>@b.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@b.PreviewDesc</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Blog Title</th>
+                <th>Blog Date</th>
+                <th>Blog Preview</th>
+            </tr>
+        </tfoot>
+    </table>
+
+
+</div>
+@if (User.IsInRole("Admin"))
+{
+    @Html.ActionLink("Add New Blog", "AddBlog", "Blogs", null, new {@class="btn btn-primary"})
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+ 
+            // Hide the original table
+            $('#@BLOG_GRID_ID').hide();
+ 
+            // Show the loading indicator
+            $('#loadingIndicator').show();
+ 
+            // dataTable is old version
+            // DataTable is new version
+            var arrayDataTable = $('#@BLOG_GRID_ID').DataTable({
+                "initComplete": function(settings, json) {                   
+                    // Hide the loading indicator and show the DataTable
+                    $('#loadingIndicator').hide();
+                    $('#@BLOG_GRID_ID').show();
+                }
+            });
+ 
+            // create search boxes for every column
+            $('#@BLOG_GRID_ID thead th').each(function() {
+                var title = $('#@BLOG_GRID_ID tfoot th').eq($(this).index()).text()
+ 
+                $(this).html(`<input type="text" placeholder="Search ${title}" />`)
+            });
+ 
+            arrayDataTable.columns().every(function() {
+                var datatableColumn = this
+ 
+                var searchTextBox = $(this.header()).find('input')
+ 
+                searchTextBox.on('keyup change', function() {
+                    datatableColumn.search(this.value).draw()
+                })
+ 
+                searchTextBox.on('click', function(e) {
+                    e.stopPropagation()
+                })
+            });
+        });
+    </script>
+}
+@*
+    INSERT INTO BLOG (
+    title,
+    date,
+    preview_desc,
+    route_name,
+    full_desc)
+    VALUES (
+    'My New Site',
+    '2022-04-22',
+    'Hello there! Welcome to my website!',
+    'welcomeBlog',
+    'Hello there! Welcome to my website! Everything you see is created by me from scratch using ASP.Net Core and Razor
+    pages! My previous website was made in Vue.js but I wanted to learn how to use Razor pages since that was I needed to
+    learn on the job as a .Net developer. I will most likely write mainly about programming and programming-adjacent topics,
+    but I may occasionally dip into other subjects if something catches my attention.'
+    );
+*@

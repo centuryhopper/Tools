@@ -1,0 +1,40 @@
+
+@{
+    ViewData["Title"] = "BlogCard";
+
+    BlogModel blogCard = ViewBag.BlogCard;
+}
+
+@if (blogCard is null)
+{
+    <div class="d-flex justify-content-center" style="display: none;">
+        <div id="loadingIndicator" class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center">
+        @Html.ActionLink("Back to Blogs", "Index", "Blogs", new{}, new {@class="btn btn-primary"})
+        <h2 class="m-5">
+            <b>@blogCard.Title</b>
+        </h2>
+        <hr />
+        <div class="m-5">
+            @blogCard.FullDesc
+        </div>
+        @if (blogCard.VideoUrls is not null)
+        {
+            @foreach (var videoUrlModel in blogCard.VideoUrls)
+            {
+                <div class="video-player">
+                    <iframe class="embedded-video" src="@videoUrlModel.url" title="@videoUrlModel.title" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+                </div>
+            }
+        }
+        <hr />
+    </div>
+}
