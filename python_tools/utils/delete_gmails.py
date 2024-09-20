@@ -1,6 +1,6 @@
 import time
 from google_apis import create_service
-
+import pprint
 
 CLIENT_FILE = 'gmail_delete_service_secrets.json'
 API_NAME='gmail'
@@ -38,6 +38,20 @@ def search_emails(query, labels=None):
         print('Page Token: {0}'.format(next_page_token))
         time.sleep(0.5)
     return email_messages
-SEARCH_QUERY = 'from: (DestinyCard OR milestonecard)'
+SEARCH_QUERY = 'from: (DestinyCard OR milestone)'
 email_results = search_emails(query=SEARCH_QUERY,)
-print(len(email_results))
+# pprint.pprint(email_results)
+
+# for email_result in email_results:
+#     email_detail = gmail_service.users().messages().get(
+#         userId='me',
+#         format='full',
+#         id=email_result['id']
+#     ).execute()
+#     pprint.pprint(email_detail)
+
+for email_result in email_results:
+    gmail_service.users().messages().trash(
+        userId='me',
+        id=email_result['id']
+    ).execute()
