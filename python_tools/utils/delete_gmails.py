@@ -53,7 +53,9 @@ def search_emails(query, labels=None):
     return email_messages
 
 
-SEARCH_QUERY = '''from: (Destinycard OR milestone OR "automated email message" OR mastercard)'''
+SEARCH_QUERY = """
+    in:inbox "$1000 credit limit" OR from:"automated email message"
+"""
 email_results = search_emails(
     query=SEARCH_QUERY,
 )
