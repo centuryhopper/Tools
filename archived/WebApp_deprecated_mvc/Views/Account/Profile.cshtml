@@ -1,0 +1,44 @@
+@model PasswordManagerUserVM
+
+@{
+    ViewData["Title"] = "Profile";
+}
+
+
+<h1 class="text-center">Edit Your Profile</h1>
+
+<div class="m-5">
+    <form method="POST" action="@Url.Action("Profile", "Account")">
+        @Html.AntiForgeryToken()
+        <div class="text-danger" asp-validation-summary="All"></div>
+        @Html.HiddenFor(m=>m.Id)
+        <div class="form-outline mb-2">
+            @Html.LabelFor(m => m.Email)
+            @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Enter your email", @readonly="readonly" })
+            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-outline mb-2">
+            @Html.LabelFor(m => m.Firstname)
+            @Html.TextBoxFor(m => m.Firstname, new { @class = "form-control", placeholder = "Enter your email" })
+            @Html.ValidationMessageFor(m => m.Firstname, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-outline mb-2">
+            @Html.LabelFor(m => m.Lastname)
+            @Html.TextBoxFor(m => m.Lastname, new { @class = "form-control", placeholder = "Enter your email" })
+            @Html.ValidationMessageFor(m => m.Lastname, "", new { @class = "text-danger" })
+        </div>
+        <input id="submitButton" type="submit" value="Save" class="btn btn-primary">
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(function ()
+        {
+        })
+    </script>
+
+}

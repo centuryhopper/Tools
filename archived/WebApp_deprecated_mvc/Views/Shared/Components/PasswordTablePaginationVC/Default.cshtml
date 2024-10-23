@@ -1,0 +1,40 @@
+@model PaginationParameters
+
+
+<div class="container">
+    @if (Model.pager.TotalPages > 0)
+    {
+        <div class="d-flex flex-row-reverse">
+            <p>Page Number</p>
+        </div>
+        <ul class="pagination justify-content-end">
+            @{
+                var firstPageDisabled = (Model.pager.CurrentPage > 1 ? "" : "disabled");
+                var firstPageColored = (Model.pager.CurrentPage > 1 ? "color: blue;" : "");
+            }
+            <li class="@($"page-item {firstPageDisabled}")">
+                @Html.ActionLink("First", Model.ActionName, Model.ControllerName, new {pg=1}, new {@class="page-link", style=firstPageColored})
+            </li>
+            <li class="@($"page-item {firstPageDisabled}")">
+                @Html.ActionLink("Previous", Model.ActionName, Model.ControllerName, new {pg=Model.pager.CurrentPage-1}, new {@class="page-link", style=firstPageColored})
+            </li>
+            @for (int pge = Model.pager.StartPage; pge <= Model.pager.EndPage; pge++)
+            {
+                <li class="page-item @(pge == Model.pager.CurrentPage ? "active" : "")">
+                    @Html.ActionLink(pge.ToString(), Model.ActionName, Model.ControllerName, new {pg=pge}, new {@class="page-link"})
+                </li>
+            }
+
+            @{
+                var lastPageDisabled = (Model.pager.CurrentPage < Model.pager.TotalPages ? "" : "disabled");
+                var lastPageColored = (Model.pager.CurrentPage < Model.pager.TotalPages ? "color: blue;" : "");
+            }
+            <li class="@($"page-item {lastPageDisabled}")">
+                @Html.ActionLink("Next", Model.ActionName, Model.ControllerName, new {pg=Model.pager.CurrentPage+1}, new {@class="page-link", style=lastPageColored})
+            </li>
+            <li class="@($"page-item {lastPageDisabled}")">
+                @Html.ActionLink("Last", Model.ActionName, Model.ControllerName, new {pg=Model.pager.TotalPages}, new {@class="page-link", style=lastPageColored})
+            </li>
+        </ul>
+    }
+</div>

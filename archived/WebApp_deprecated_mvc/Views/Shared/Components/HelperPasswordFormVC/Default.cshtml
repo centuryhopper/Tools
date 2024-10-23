@@ -1,0 +1,31 @@
+
+ 
+
+<input id="@ViewBag.AddRowFieldId" class="form-control" placeholder="Enter Number of Rows" type="number" step="any" onkeypress="ValidateNumber(event);">
+
+<input id="@ViewBag.AddRowId" type="button" class="btn btn-primary mt-3 mb-3 shadow_on_hover" value="Add Rows">
+
+@using (Html.BeginForm("AddCoralRows", "Home", FormMethod.Post, new {id=ViewBag.FormId as string, style="display: none;" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="submit" class="btn btn-primary mt-3 mb-3 shadow_on_hover" value="Save">
+
+    <table class="table-container table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th class="freeze_header" scope="col" style="@Constants.ROW_INDEX_COLUMN_STYLE">@Html.DisplayName("Row #")</th>
+                <th class="freeze_header" scope="col" >@Html.DisplayName(Constants.CREATED_AT)</th>
+                <th class="freeze_header" scope="col" >@Html.DisplayName(Constants.LAST_UPDATED_AT)</th>
+                <th class="freeze_header" scope="col" >@Html.DisplayName(Constants.TITLE)</th>
+                <th class="freeze_header" scope="col" >@Html.DisplayName(Constants.USERNAME)</th>
+                <th class="freeze_header" scope="col" >@Html.DisplayName(Constants.PASSWORD)</th>
+                <th scope="col" style="width: 50px; @Constants.DELETE_COLUMN_STYLE">@Html.DisplayName("Delete")</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <input type="submit" class="btn btn-primary mt-3 mb-3 shadow_on_hover" value="Save">
+
+}

@@ -1,3 +1,5 @@
+#!/home/leo_zhang/miniconda3/envs/web_auto/bin/python
+
 import time
 from google_apis import create_service
 import pprint
@@ -55,6 +57,7 @@ def search_emails(query, labels=None):
 
 SEARCH_QUERY = """
     in:inbox "$1000 credit limit" OR from:"automated email message"
+    OR from: (destinycard OR milestone OR milestonecard OR mastercard OR indigo OR IndigoCard OR Destiny)
 """
 email_results = search_emails(
     query=SEARCH_QUERY,
