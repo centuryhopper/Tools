@@ -23,6 +23,11 @@ if __name__ == "__main__":
     if not os.path.exists(file_path):
         raise Exception("path doesn't exist")
 
+    if not any(pattern_to_remove in file for file in os.listdir(file_path)):
+        raise Exception(
+            "no images have been generated from the fawkes exe file. Please make sure images have been generated first"
+        )
+
     for file in os.listdir(file_path):
         abs_path = os.path.join(file_path, file)
         if os.path.isdir(abs_path):
@@ -31,9 +36,8 @@ if __name__ == "__main__":
             os.remove(abs_path)
             continue
         print(abs_path)
-        
+
         # remove the pattern so that fawkes can process the image again
         file = file.replace(pattern_to_remove, "")
         new_abs_path = os.path.join(file_path, file)
         os.rename(abs_path, new_abs_path)
-
