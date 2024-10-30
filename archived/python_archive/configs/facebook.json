@@ -1,0 +1,22 @@
+[
+    {
+        "title": "skateboard",
+        "price": "100",
+        "category": "Skateboards & Longboards",
+        "condition": "New",
+        "description": "Brand new skateboard with 23.5 in x 6 in dimensions. We would trade in a safe public place. Feel free to message me for questions :)",
+        "photoFilePath": "/product_imgs/skateboard/",
+        "videoFilePath": "/product_vids/skateboard/"
+    },
+
+    {
+        "title": "Samsung 860 Evo 1TB SSD",
+        "price": "$50",
+        "category": "Electronics & Accessories",
+        "condition": "New",
+        "description": "Fully functional solid state drive for your pc",
+        "photoFilePath": "/product_imgs/samsung_860_evo_1tb/",
+        "videoFilePath": "/product_vids/samsung_860_evo_1tb/"
+    }
+
+]

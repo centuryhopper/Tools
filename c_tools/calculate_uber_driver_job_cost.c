@@ -45,7 +45,12 @@ Earnings calculate_net_uber_delivery_earnings(int carMpg)
     printf("monthly fuel cost: $%f, monthly earnings: $%f\n", monthlyFuelCost, monthlyEarnings);
     printf("annual fuel cost: $%f, annual earnings: $%f\n", annualFuelCost, annualEarnings);
     printf("total mileage per week: %f miles\n", weekDayMileage + weekendDayMileage);
-    Earnings earnings = {weeklyEarnings - weeklyFuelCost, monthlyEarnings - monthlyFuelCost, annualEarnings - annualFuelCost};
+    
+    Earnings earnings = {
+        weeklyEarnings - weeklyFuelCost, 
+        monthlyEarnings - monthlyFuelCost, 
+        annualEarnings - annualFuelCost
+    };
 
     return earnings;
 }
@@ -59,6 +64,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Usage: %s <number>\n", argv[0]);
         return EXIT_FAILURE; // Exit with an error code
     }
+
+    // printf("argc: %d\n", argc);
 
     /*
         strtol allows better error handling than atoi because it accepts an endptr pointer (for tracking where the conversion stops) and sets errno if it encounters a range error.

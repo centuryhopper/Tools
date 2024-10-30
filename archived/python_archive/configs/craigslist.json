@@ -1,0 +1,31 @@
+[
+    {
+        "posting-type": "for sale by owner",
+        "category": "sporting goods - by owner",
+        "title": "skateboard",
+        "zip-code":"32835",
+        "price":"100",
+        "city": "",
+        "description": "Brand new skateboard with 23.5 in x 6 in dimensions. We would trade in a safe public place. Feel free to message me for questions :)",
+        "condition": "new",
+        "dimensions": "23.5 x 6",
+        "my-email": "werfreeze@gmail.com",
+        "photoFilePath": "/product_imgs/skateboard/"
+    },
+
+    {
+        "posting-type": "for sale by owner",
+        "category": "sporting goods - by owner",
+        "title": "Samsung 860 Evo 1TB SSD",
+        "zip-code":"32835",
+        "price":"50",
+        "city": "Orlando",
+        "description": "Fully functional solid state drive for your pc. Feel free to message me for questions :)",
+        "condition": "new",
+        "dimensions": "23.5 x 6",
+        "my-email": "werfreeze@gmail.com",
+        "photoFilePath": "/product_imgs/samsung_860_evo_1tb/"
+    }
+
+
+]
