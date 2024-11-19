@@ -1,0 +1,5 @@
+
+#$Logger: Started logging @ Tue Nov 19 17:32:39 2024
+[ESC]
+#$Logger: Started logging @ Tue Nov 19 17:33:03 2024
+HELLO[SPACE]THIS[SPACE]IS[SPACE]ME[SPACE]TESTING[SPACE]THE[SPACE]KEY[SPACE]LOGGER
