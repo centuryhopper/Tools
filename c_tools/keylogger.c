@@ -16,39 +16,40 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#define ctrl(x) (x & 0x1F)
 
-#define PATH                                                                   \
+//#define PATH                                                                   \
   "/home/your_username/Desktop/test-log.txt" // Change this path as needed
 
 int main() {
 
   // PATH_MAX from limits.h
   char currentDir[PATH_MAX];
-    char logFilePath[PATH_MAX + 20]; // Buffer for directory + filename
+  char logFilePath[PATH_MAX + 20]; // Buffer for directory + filename
 
-    // Get the current working directory
-    if (getcwd(currentDir, sizeof(currentDir)) != NULL) {
-        printf("Current working directory: %s\n", currentDir);
+  // Get the current working directory
+  if (getcwd(currentDir, sizeof(currentDir)) != NULL) {
+    printf("Current working directory: %s\n", currentDir);
 
-        // Combine directory path with the filename
-        snprintf(logFilePath, sizeof(logFilePath), "%s/log.txt", currentDir);
+    // Combine directory path with the filename
+    snprintf(logFilePath, sizeof(logFilePath), "%s/log.txt", currentDir);
 
-        printf("Log file path: %s\n", logFilePath);
+    printf("Log file path: %s\n", logFilePath);
 
-        // Open the log file in append mode
-        FILE *logFile = fopen(logFilePath, "a");
-        if (logFile == NULL) {
-            perror("Error opening log file");
-            return 1;
-        }
-
-        // Write to the log file
-        //fprintf(logFile, "This is a log entry.\n");
-        fclose(logFile);
-        printf("Log entry written to %s\n", logFilePath);
-    } else {
-        perror("getcwd() error");
+    // Open the log file in append mode
+    FILE *logFile = fopen(logFilePath, "a");
+    if (logFile == NULL) {
+      perror("Error opening log file");
+      return 1;
     }
+
+    // Write to the log file
+    // fprintf(logFile, "This is a log entry.\n");
+    fclose(logFile);
+    printf("Log entry written to %s\n", logFilePath);
+  } else {
+    perror("getcwd() error");
+  }
 
   char capture;
   FILE *file;
@@ -78,6 +79,13 @@ int main() {
     capture = getch(); // Get the pressed key (non-blocking)
 
     if (capture != ERR) { // ERR indicates no key was pressed
+      // detect ctrl keys
+      // source: https://www.youtube.com/watch?v=J9lJ6aabuos
+      if (capture == ctrl(capture)) {
+        // mvprintw(0, 0, "%c pressed", keyname(capture));
+        fprintf(file, keyname(capture));
+      }
+      fprintf(file, keyname(capture));
       switch ((int)capture) {
       case ' ': // Space key
         fprintf(file, "[SPACE]");
@@ -95,6 +103,9 @@ int main() {
         return 0;
       case 0x7F: // Backspace key
         fprintf(file, "[BACKSPACE]");
+        break;
+      case KEY_UP:
+        fprintf(file, "[LEFT]");
         break;
       default:
         fputc(capture, file); // Write other keys directly

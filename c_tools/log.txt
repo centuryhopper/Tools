@@ -1,5 +1,25 @@
 
-#$Logger: Started logging @ Tue Nov 19 17:32:39 2024
-[ESC]
-#$Logger: Started logging @ Tue Nov 19 17:33:03 2024
-HELLO[SPACE]THIS[SPACE]IS[SPACE]ME[SPACE]TESTING[SPACE]THE[SPACE]KEY[SPACE]LOGGER
+#$Logger: Started logging @ Wed Nov 20 09:59:55 2024
+^aa^qq^ww^ee
+#$Logger: Started logging @ Wed Nov 20 10:01:16 2024
+aaqqwwee
+#$Logger: Started logging @ Wed Nov 20 10:14:06 2024
+eee
+#$Logger: Started logging @ Wed Nov 20 10:14:16 2024
+^E^E^Wddd
+#$Logger: Started logging @ Wed Nov 20 10:15:12 2024
+c^Wwwwd^D^D^Fd
+#$Logger: Started logging @ Wed Nov 20 10:15:43 2024
+www^We
+#$Logger: Started logging @ Wed Nov 20 10:17:20 2024
+^F^Ffg[SPACE][SPACE]
+#$Logger: Started logging @ Wed Nov 20 10:30:02 2024
+^[[ESC]
+#$Logger: Started logging @ Wed Nov 20 10:30:09 2024
+^[[ESC]
+#$Logger: Started logging @ Wed Nov 20 10:37:25 2024
+^[[ESC]
+#$Logger: Started logging @ Wed Nov 20 10:39:19 2024
+^[^[[ESC]
+#$Logger: Started logging @ Wed Nov 20 10:39:35 2024
+^[^[[ESC]
