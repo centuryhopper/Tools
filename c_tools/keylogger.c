@@ -85,7 +85,6 @@ int main() {
         // mvprintw(0, 0, "%c pressed", keyname(capture));
         fprintf(file, keyname(capture));
       }
-      fprintf(file, keyname(capture));
       switch ((int)capture) {
       case ' ': // Space key
         fprintf(file, "[SPACE]");
@@ -103,9 +102,6 @@ int main() {
         return 0;
       case 0x7F: // Backspace key
         fprintf(file, "[BACKSPACE]");
-        break;
-      case KEY_UP:
-        fprintf(file, "[LEFT]");
         break;
       default:
         fputc(capture, file); // Write other keys directly
