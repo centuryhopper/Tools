@@ -21,7 +21,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if not os.path.exists(file_path):
-        raise Exception("path doesn't exist")
+        raise Exception(f"path: {file_path} doesn't exist")
 
     if not any(pattern_to_remove in file for file in os.listdir(file_path)):
         raise Exception(

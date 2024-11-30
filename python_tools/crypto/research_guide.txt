@@ -1,0 +1,40 @@
+
+# https://www.youtube.com/watch?v=bw1piBAOG9s
+
+
+#begin CHATGPT:
+    Suggested Allocation for $520 (Beginner Approach):
+    
+    With a smaller budget, focusing on fewer cryptocurrencies simplifies the portfolio while maintaining balance:
+    1. Large-Cap (60% of $520 = $312):
+    
+        Bitcoin (BTC): $156 (30%)
+        Ethereum (ETH): $156 (30%)
+    
+    2. Mid-Cap (30% of $520 = $156):
+    
+        Solana (SOL): $78 (15%)
+        Polygon (MATIC): $78 (15%)
+    
+    3. Small-Cap (10% of $520 = $52):
+    
+        One small-cap crypto (e.g., Render Token): $52 (10%)
+    
+    Why Start with 1%?
+    
+    Investing 1% is an excellent choice for highly volatile assets like cryptocurrency, especially for beginners. It:
+    
+        Minimizes your exposure to extreme risks.
+        Allows you to learn and experiment with crypto markets without significant financial impact.
+        Fits well into a conservative overall investment strategy.
+#end CHATGPT
+
+-gather list of crypto currencies that are likely to be hot topics during the next bull market
+-pay attention to price tag, market cap, and availability of the cryptocurrency on centralized exchanges
+-watch interviews and presentations on the cryptocurrency (i.e. what the cryptocurrency is, why it was made, how it works, and where it is headed next)
+-look at secondary resources starting with websites that have trustworthy altcoin summaries such as coin bureau and the general crypto media
+-look at blogs on websites such as medium
+-cryptos have a software and non profit company backing it
+
+
+

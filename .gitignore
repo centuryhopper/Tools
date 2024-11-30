@@ -1,7 +1,7 @@
 .DS_Store
 __pycache__
 secrets.py
-*.env
+**/*.env
 secrets.json
 **/script_execution_records/*
 **/amazon_products_outputs/*

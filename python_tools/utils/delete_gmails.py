@@ -56,8 +56,8 @@ def search_emails(query, labels=None):
 
 
 SEARCH_QUERY = """
-    in:inbox "$1000 credit limit" OR from:"automated email message"
-    OR from: (destinycard OR milestone OR milestonecard OR mastercard OR indigo OR IndigoCard OR Destiny)
+    in:inbox "$1000" OR from:"automated email message"
+    OR from: (destinycard OR milestone OR milestonecard OR mastercard OR indigo OR Indigo OR IndigoCard OR Indigo_Card OR Destiny OR True-Card OR First Access Visa OR TrueCard OR True Card)
 """
 email_results = search_emails(
     query=SEARCH_QUERY,
