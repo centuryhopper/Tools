@@ -1,3 +1,5 @@
+#! /home/leo_zhang/miniconda3/envs/web_auto/bin/python
+
 # import numpy as np
 # from PIL import Image
 # import scipy.fftpack as fft
@@ -43,6 +45,10 @@
 
 from PIL import Image
 import imagehash
+import os
+
+# force working directory to be where the file is located
+os.chdir(os.path.dirname(__file__))
 
 def rotate_image(image_path, save_path, angle=-5):
     """
@@ -55,26 +61,28 @@ def rotate_image(image_path, save_path, angle=-5):
     rotated_image.save(save_path)
 
 # Paths
-image_path = "test.jpg"
-rotated_image_path = "rotated_image.jpg"
-# test_path = "md5_changed_test.png"
+source = './images'
+output = "./outputs"
 
-# Apply rotation
-rotate_image(image_path, rotated_image_path,)
+for (i,img) in enumerate(os.listdir('./images')):
+    rotated_image_path = os.path.join(output, f'{i}_modded.png')
+    image_path = os.path.join(source, img)
+    # Apply rotation to each image
+    rotate_image(image_path, rotated_image_path,)
+    # Compute and compare pHashes
+    original_phash = imagehash.phash(Image.open(image_path))
+    # tested_hash = imagehash.phash(Image.open(test_path))
+    rotated_phash = imagehash.phash(Image.open(rotated_image_path))
+    print(f"Original pHash: {original_phash}")
+    print(f"Rotated pHash: {rotated_phash}")
+    print(f"Hamming Distance: {original_phash - rotated_phash}")
 
-# Compute and compare pHashes
-original_phash = imagehash.phash(Image.open(image_path))
-# tested_hash = imagehash.phash(Image.open(test_path))
-rotated_phash = imagehash.phash(Image.open(rotated_image_path))
+    # Visual Similarity
+    if original_phash - rotated_phash == 0:
+        print("Images are perceptually identical.")
+    elif original_phash - rotated_phash < 10:
+        print("Images are perceptually similar.")
+    else:
+        print("Images are perceptually different.")
 
-print(f"Original pHash: {original_phash}")
-print(f"Rotated pHash: {rotated_phash}")
-print(f"Hamming Distance: {original_phash - rotated_phash}")
 
-# Visual Similarity
-if original_phash - rotated_phash == 0:
-    print("Images are perceptually identical.")
-elif original_phash - rotated_phash < 10:
-    print("Images are perceptually similar.")
-else:
-    print("Images are perceptually different.")
