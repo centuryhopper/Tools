@@ -81,14 +81,6 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
         self.size += 1;
     }
 
-    // pub fn peek(&self) -> Option<&T> {
-    //     self.head.as_ref().map(|head_node| {
-    //         // Borrow the RefCell and return a reference to the data
-    //         &head_node.borrow().data
-    //     })
-        
-    // }
-
     pub fn peek(&self) -> Option<T>
     where
         T: Clone, // Ensure T can be cloned to return a copy
@@ -175,11 +167,11 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
         let mut cur = self.head.clone();
         let mut idxCnt = 0;
         let newNode = Rc::new(RefCell::new(ListNode::new(value)));
-        while let Some(ref node) = cur {
+        while cur.is_some() {
+            let node = cur.clone().unwrap();
             if idxCnt < idx {
-                idxCnt+=1;
-            }
-            else {
+                idxCnt += 1;
+            } else {
                 // put newNode right before it
                 if let Some(prev) = node.borrow_mut().prev.take() {
                     prev.borrow_mut().next = Some(newNode.clone());
@@ -188,19 +180,17 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
 
                 newNode.borrow_mut().next = Some(node.clone());
                 node.borrow_mut().prev = Some(newNode.clone());
-                
+                break;
             }
-
+            cur = node.borrow().next.clone();
         }
 
-        self.size+=1;
+        self.size += 1;
     }
-
 
     pub fn delete_at_index(&mut self, idx: u32) {
         if self.size == 0 {
-            println!(
-                "cannot delete from an empty list");
+            println!("cannot delete from an empty list");
             return;
         }
         if idx == self.size() {
@@ -215,23 +205,36 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
 
         let mut cur = self.head.clone();
         let mut idxCnt = 0;
-        while let Some(ref node) = cur {
-            if idxCnt < idx {
-                idxCnt+=1;
-            }
-            else {
-                // link node's prev's next to node's next
-                // link node's next's prev to node's prev
-                if let Some(prev) = node.borrow_mut().prev.take() {
-                    if let Some(node_next) = node.borrow_mut().next.take() {
-                        prev.borrow_mut().next = Some(node_next.clone());
-                        node_next.borrow_mut().prev = Some(prev);
-                    }   
+        while cur.is_some() {
+            let mut node = cur.clone().unwrap();
+            if idxCnt == idx {
+                let mut node = node.borrow_mut(); // Borrow the node mutably
+
+                // First, take the `next` and `prev` pointers so we don't borrow the node twice
+                let prev = node.prev.take();
+                let next = node.next.take();
+
+                // If there's a previous node, link it to the next node
+                if let Some(prev_node) = prev {
+                    if let Some(next_node) = next.clone() {
+                        prev_node.borrow_mut().next = Some(next_node.clone());
+                        next_node.borrow_mut().prev = Some(prev_node);
+                    } else {
+                        prev_node.borrow_mut().next = None; // If no next node, it's the tail
+                    }
+                } else if let Some(next_node) = next {
+                    next_node.borrow_mut().prev = None; // If no previous node, it's the head
+                    self.head = Some(next_node); // Move the head
                 }
+
+                break; // Exit the loop after deletion
             }
+
+            cur = node.borrow().next.clone();
+            idxCnt += 1;
         }
 
-        self.size-=1;
+        self.size -= 1;
     }
 
     // size()
@@ -247,7 +250,6 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::Borrow;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
@@ -260,21 +262,23 @@ mod tests {
             assert_eq!(value, 3);
         }
     }
-
 }
-
 
 fn main() {
     let mut list = DoublyLinkedList::new(3);
-    list.peek();
+    println!("{:?}", list.peek().unwrap());
     list.tailInsert(4);
     list.tailInsert(5);
     list.tailInsert(6);
     list.tailInsert(7);
-    
+
     list.show();
 
     list.insert_at_index(2, 10);
+
+    list.show();
+
+    list.delete_at_index(1);
 
     list.show();
 }
