@@ -4,19 +4,30 @@
 import os
 from PIL import Image, ImageStat
 import time
+import sys
 
 
 start = time.perf_counter()
-image_folder = input("enter your full image directory path: ")
+image_folder = ""
+try:
+    image_folder = sys.argv[1]
+    if not os.path.exists(image_folder):
+        raise Exception("The path you provided does not exist")
+except Exception as e:
+    print(e)
+    sys.exit(1)
 image_files = [
-    _ for _ in os.listdir(image_folder) if _.endswith("jpg") or _.endswith("png")
+    _
+    for _ in os.listdir(image_folder)
+    if _.lower().endswith("jpg") or _.lower().endswith("png")
 ]
+
 
 duplicate_files = []
 
 # O(n^2) runtime
 for file_org in image_files:
-    if not file_org in duplicate_files:
+    if file_org not in duplicate_files:
         image_org = Image.open(os.path.join(image_folder, file_org))
         pix_mean1 = ImageStat.Stat(image_org).mean
         for file_check in image_files:

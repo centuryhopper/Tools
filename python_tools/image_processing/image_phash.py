@@ -46,11 +46,17 @@
 from PIL import Image
 import imagehash
 import os
+import sys
+from pathlib import Path
 
 # force working directory to be where the file is located
 os.chdir(os.path.dirname(__file__))
+# Paths
+source = './more_images'
+output = Path.cwd() / "outputs"
+output.mkdir(exist_ok=True)
 
-def rotate_image(image_path, save_path, angle=-5):
+def rotate_image(image_path, save_path, angle):
     """
     Rotate the image slightly and save the result.
     """
@@ -60,15 +66,19 @@ def rotate_image(image_path, save_path, angle=-5):
     rotated_image = image.rotate(angle, resample=Image.BICUBIC, fillcolor=(255, 255, 255))
     rotated_image.save(save_path)
 
-# Paths
-source = './images'
-output = "./outputs"
 
-for (i,img) in enumerate(os.listdir('./images')):
-    rotated_image_path = os.path.join(output, f'{i}_modded.png')
+
+
+for (i,img) in enumerate(os.listdir(source)):
+    rotated_image_path = os.path.join(output, f'{i+1}_modded.png')
     image_path = os.path.join(source, img)
+    angle_to_rotate = -3
+    try:
+        angle_to_rotate = int(sys.argv[1])
+    except:
+        pass
     # Apply rotation to each image
-    rotate_image(image_path, rotated_image_path,)
+    rotate_image(image_path, rotated_image_path, angle_to_rotate)
     # Compute and compare pHashes
     original_phash = imagehash.phash(Image.open(image_path))
     # tested_hash = imagehash.phash(Image.open(test_path))
@@ -84,5 +94,6 @@ for (i,img) in enumerate(os.listdir('./images')):
         print("Images are perceptually similar.")
     else:
         print("Images are perceptually different.")
+    print()
 
 
