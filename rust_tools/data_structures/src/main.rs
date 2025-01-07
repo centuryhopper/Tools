@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use std::cell::{Ref, RefCell};
 use std::rc::Rc;
 
@@ -27,7 +29,7 @@ struct DoublyLinkedList<T> {
     size: u32,
 }
 
-impl<T: std::fmt::Debug> DoublyLinkedList<T> {
+impl<T: std::fmt::Debug + Clone + std::cmp::Ord> DoublyLinkedList<T> {
     pub fn new(data: T) -> Self {
         let newNode = Rc::new(RefCell::new(ListNode::new(data)));
         DoublyLinkedList {
@@ -81,18 +83,27 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
         self.size += 1;
     }
 
-    pub fn peek(&self) -> Option<T>
+    pub fn peek_head(&self) -> Option<T>
     where
         T: Clone, // Ensure T can be cloned to return a copy
     {
         self.head.as_ref().map(|node| node.borrow().data.clone())
     }
 
-    pub fn show(&self) {
+    pub fn peek_tail(&self) -> Option<T>
+    where
+        T: Clone, // Ensure T can be cloned to return a copy
+    {
+        self.tail.as_ref().map(|node| node.borrow().data.clone())
+    }
+
+    pub fn show(&self) -> Vec<T> {
         if self.size == 0 {
             println!("List is empty.");
-            return;
+            return vec![];
         }
+
+        let mut result : Vec<T> = vec![];
 
         let mut current = self.head.clone();
         while let Some(node) = current {
@@ -100,15 +111,21 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
             let node_ref: Ref<'_, ListNode<T>> = node.borrow();
 
             // Print the data
-            print!("{:?} ", node_ref.data);
+            // print!("{:?} ", node_ref.data);
+            result.push(node_ref.data.clone());
 
             // Move to the next node
             current = node_ref.next.clone();
         }
         println!();
+
+        return result;
     }
 
     pub fn tailRemove(&mut self) {
+        if self.size() == 0 {
+            return;
+        }
         // move tail to tail's prev
 
         match self.tail.take() {
@@ -128,6 +145,9 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
     }
 
     pub fn headRemove(&mut self) {
+        if self.size() == 0 {
+            return;
+        }
         // move head to head next
 
         match self.head.take() {
@@ -237,8 +257,29 @@ impl<T: std::fmt::Debug> DoublyLinkedList<T> {
         self.size -= 1;
     }
 
+    pub fn sort_list(&mut self) {
+        if self.size == 0 {
+            println!("{:?}", self.peek_head().unwrap());
+            return;
+        }
+
+        let mut results = Vec::with_capacity(self.size() as usize);
+
+        let mut tmp = self.head.clone();
+        while tmp.is_some() {
+            let cur = tmp.take().unwrap();
+            results.push(cur.borrow().data.clone());
+            tmp = cur.borrow().next.clone();
+        }
+
+
+        results.sort();
+
+        println!("{:?}", results);
+    }
+
     // size()
-    // peek()
+    // peekHead()
     // tailInsert()
     // headInsert()
     // show()
@@ -255,30 +296,95 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_peek() {
+    fn test_peek_head() {
         let mut list = DoublyLinkedList::new(3);
-        assert!(!list.peek().is_none());
-        if let Some(value) = list.peek() {
+        assert!(!list.peek_head().is_none());
+        if let Some(value) = list.peek_head() {
             assert_eq!(value, 3);
         }
+    }
+
+    #[test]
+    fn test_peek_tail() {
+        let mut list = DoublyLinkedList::new(3);
+        list.tailInsert(7);
+        assert!(!list.peek_tail().is_none());
+        if let Some(value) = list.peek_tail() {
+            assert_eq!(value, 7);
+        }
+    }
+
+    #[test]
+    fn test_size() {
+        let mut list = DoublyLinkedList::new(3);
+        list.tailInsert(4);
+        list.tailInsert(5);
+        list.tailInsert(6);
+        list.tailInsert(7);
+        list.headInsert(11);
+        assert_eq!(list.size(), 6);
+        list.headRemove();
+        assert_eq!(list.size(), 5);
+        list.tailRemove();
+        assert_eq!(list.size(), 4);
+    }
+
+    #[test]
+    pub fn overall_test()
+    {
+        let mut list = DoublyLinkedList::new(3);
+        list.tailInsert(4);
+        list.tailInsert(5);
+        list.tailInsert(6);
+        list.tailInsert(7);
+        list.headInsert(11);
+
+        assert_eq!(list.show(), vec![11,3,4,5,6,7]);
+
+        list.insert_at_index(2, 10);
+
+        assert_eq!(list.show(), vec![11,3,10,4,5,6,7]);
+
+        list.delete_at_index(3);
+
+        assert_eq!(list.show(), vec![11,3,10,5,6,7]);
+
+        list.headRemove();
+        list.tailRemove();
+
+        assert_eq!(list.show(), vec![3,10,5,6,]);
     }
 }
 
 fn main() {
     let mut list = DoublyLinkedList::new(3);
-    println!("{:?}", list.peek().unwrap());
+    // println!("{:?}", list.peek_head().unwrap());
     list.tailInsert(4);
     list.tailInsert(5);
     list.tailInsert(6);
     list.tailInsert(7);
+    list.headInsert(11);
 
-    list.show();
+    // list.show();
 
     list.insert_at_index(2, 10);
 
-    list.show();
+    // list.show();
 
-    list.delete_at_index(1);
+    list.delete_at_index(3);
 
-    list.show();
+    // list.show();
+
+    list.headRemove();
+    list.tailRemove();
+
+    // list.show();
+
+    // println!("{:?}", list.peek_tail().unwrap());
+    list.sort_list();
+
+    println!("{:?}", list.peek_head().unwrap());
+
+
+
 }
