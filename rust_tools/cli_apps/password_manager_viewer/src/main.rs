@@ -1,7 +1,10 @@
-
+use std::io::{self, Write};
 use color_eyre::Result;
 use crossterm::event::KeyModifiers;
 use itertools::Itertools;
+use chrono::{DateTime, Utc};
+use rpassword::read_password;
+use serde_with::{serde_as, DisplayFromStr};
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Constraint, Layout, Margin, Rect},
@@ -15,9 +18,11 @@ use ratatui::{
 };
 
 use serde::{Serialize, Deserialize, Deserializer};
+use serde_json::json;
 use style::palette::tailwind;
 use unicode_width::UnicodeWidthStr;
 use reqwest::Error;
+use reqwest::header::{AUTHORIZATION, HeaderValue};
 
 const PALETTES: [tailwind::Palette; 4] = [
     tailwind::BLUE,
@@ -33,19 +38,102 @@ const INFO_TEXT: [&str; 2] = [
 
 const ITEM_HEIGHT: usize = 4;
 
-fn deserialize_id_from_int<'de, D>(deserializer: D) -> Result<String, D::Error>
+fn deserialize_from_int<'de, D>(deserializer: D) -> Result<String, D::Error>
 where
     D: Deserializer<'de>,
 {
     // Deserialize the ID as an integer
-    let id_int = u32::deserialize(deserializer)?;
+    let int = u32::deserialize(deserializer)?;
     // Convert the integer to a String
-    Ok(id_int.to_string())
+    Ok(int.to_string())
+}
+
+fn get_user_input(prompt: &str) -> String {
+    print!("{}", prompt);
+    io::stdout().flush().unwrap(); // Ensure prompt is printed immediately
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    input.trim().to_string() // Trim to remove newline
+}
+
+fn get_hidden_input(prompt: &str) -> String {
+    print!("{}", prompt);
+    io::stdout().flush().unwrap(); // Ensure prompt is printed immediately
+    read_password().unwrap().trim().to_string()
+}
+
+
+#[derive(Serialize, Debug, Deserialize)]
+struct LoginResponse {
+    pub flag: bool,
+    pub token: Option<String>,
+    pub message: String,
+}
+
+impl LoginResponse {
+    pub fn new(flag: bool, token: impl Into<String>, message: impl Into<String>) -> Self {
+        Self {
+            flag,
+            token: Some(token.into()),
+            message: message.into(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Deserialize, Clone)]
+struct PasswordAccountDTO {
+    #[serde(deserialize_with = "deserialize_from_int")]
+    id: String,
+    #[serde(rename="userId", deserialize_with = "deserialize_from_int")]
+    user_id: String,
+    title: String,
+    username: String,
+    password: String,
+    #[serde(rename="createdAt")]
+    created_at: String,
+    #[serde(rename="lastUpdatedAt")]
+    last_updated_at: String,
+}
+
+impl PasswordAccountDTO {
+    const fn ref_array(&self) -> [&String; 7] {
+        [&self.id,
+        &self.user_id,
+        &self.title,
+        &self.username,
+        &self.password,
+        &self.created_at,
+        &self.last_updated_at,]
+    }
+
+    fn id(&self) -> &str {
+        &self.id
+    }
+
+    fn user_id(&self) -> &str {
+        &self.user_id
+    }
+    fn title(&self) -> &str {
+        &self.title
+    }
+    fn username(&self) -> &str {
+        &self.username
+    }
+    fn password(&self) -> &str {
+        &self.password
+    }
+    fn created_at(&self) -> &str {
+        &self.created_at
+    }
+    fn last_updated_at(&self) -> &str {
+        &self.last_updated_at
+    }
 }
 
 #[derive(Serialize, Debug, Deserialize)]
 struct User {
-    #[serde(deserialize_with = "deserialize_id_from_int")]
+    #[serde(deserialize_with = "deserialize_from_int")]
     id: String,
     name: String,
     username: String,
@@ -74,9 +162,37 @@ impl User {
     }
 }
 
+async fn fetch_passwords(jwt: &str) -> Result<Vec<PasswordAccountDTO>, Error> {
+    let url = "https://mypasswordmanager-production-b6be.up.railway.app/api/PasswordManager/passwords";
+    let client = reqwest::Client::new();
+    let response = client
+        .get(url)
+        .header(AUTHORIZATION, HeaderValue::from_str(&format!("Bearer {}", jwt)).unwrap(),)
+        .send()
+        .await?;
+    let password_accounts: Vec<PasswordAccountDTO> = response.json().await?;
+    Ok(password_accounts)
+}
+
+async fn try_login(email: String, password: String) -> Result<LoginResponse, Error> {
+    let url = "https://mypasswordmanager-production-b6be.up.railway.app/api/Account/login";
+    let request_body = json!({
+        "email": email,
+        "password": password,
+    });
+    let client = reqwest::Client::new();
+    let response = client.post(url)
+    .json(&request_body)
+    .send()
+    .await?
+    .json()
+    .await?;
+    Ok(response)
+}
+
 // Fetch users from the API
 async fn fetch_users() -> Result<Vec<User>, Error> {
-    let url = "https://jsonplaceholder.typicode.com/users";
+    let url = "https://mypasswordmanager-production-b6be.up.railway.app/api/PasswordManager/test";
     let response = reqwest::get(url).await?;
     let users: Vec<User> = response.json().await?;
     Ok(users)
@@ -84,18 +200,28 @@ async fn fetch_users() -> Result<Vec<User>, Error> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    color_eyre::install()?;
-    let terminal = ratatui::init();
-    let users = fetch_users().await?;
-    // let mappedUsers = users.iter().map(|x| {
-    //     serde_json::to_string_pretty(x).unwrap()
-    // }).collect::<String>();
-    // println!("{mappedUsers}");
-    // Ok(())
-    let app_result = App::new(users).run(terminal);
-    ratatui::restore();
-    app_result
+    
+    let email = get_user_input("Enter your email: ");
+    let password = get_hidden_input("Enter your password: ");
+    let login_response = try_login(email, password).await?;
+    // println!("{login_response:?}");
+
+    if login_response.flag {
+        color_eyre::install()?;
+        let terminal = ratatui::init();
+        let passwords = fetch_passwords(&login_response.token.unwrap()).await?;
+        let passwords_clone = passwords.clone();
+        let app_result = App::new(passwords).run(terminal);
+        ratatui::restore();
+        let mapped_passwords = passwords_clone.iter().map(|x| {
+            serde_json::to_string_pretty(x).unwrap()
+        }).collect::<String>();
+        println!("{mapped_passwords}");
+        return app_result;
+    }
+    Ok(())
 }
+
 struct TableColors {
     buffer_bg: Color,
     header_bg: Color,
@@ -128,16 +254,16 @@ impl TableColors {
 
 struct App {
     state: TableState,
-    items: Vec<User>,
-    longest_item_lens: (u16, u16, u16, u16), // order is (name, address, email)
+    items: Vec<PasswordAccountDTO>,
+    longest_item_lens: (u16, u16, u16, u16, u16, u16, u16 ), // order is (name, address, email)
     scroll_state: ScrollbarState,
     colors: TableColors,
     color_index: usize,
 }
 
 impl App {
-    fn new(users: Vec<User>) -> Self {
-        let data_vec = users;
+    fn new(passwords: Vec<PasswordAccountDTO>) -> Self {
+        let data_vec = passwords;
         Self {
             state: TableState::default().with_selected(0),
             longest_item_lens: constraint_len_calculator(&data_vec),
@@ -245,7 +371,17 @@ impl App {
             .add_modifier(Modifier::REVERSED)
             .fg(self.colors.selected_cell_style_fg);
 
-        let header = ["Id", "Name", "Username", "Email"]
+        /*
+            id
+            user_id
+            title
+            username
+            password
+            created_at
+            last_updated_at
+        */
+
+        let header = ["Id", "UserId", "Title", "Username", "Password", "Created At", "Last Updated At"]
             .into_iter()
             .map(Cell::from)
             .collect::<Row>()
@@ -273,6 +409,9 @@ impl App {
                 Constraint::Min(self.longest_item_lens.1 + 1),
                 Constraint::Min(self.longest_item_lens.2),
                 Constraint::Min(self.longest_item_lens.3),
+                Constraint::Min(self.longest_item_lens.4),
+                Constraint::Min(self.longest_item_lens.5),
+                Constraint::Min(self.longest_item_lens.6),
             ],
         )
         .header(header)
@@ -322,35 +461,53 @@ impl App {
 }
 
 
-fn constraint_len_calculator(items: &[User]) -> (u16, u16, u16, u16) {
-    let name_len = items
-        .iter()
-        .map(User::name)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
+fn constraint_len_calculator(items: &[PasswordAccountDTO]) -> (u16, u16, u16, u16, u16, u16, u16) {
     let id_len = items
         .iter()
-        .map(User::id)
-        .flat_map(str::lines)
+        .map(PasswordAccountDTO::id)
         .map(UnicodeWidthStr::width)
         .max()
         .unwrap_or(0);
-    let email_len = items
+    let user_id_len = items
         .iter()
-        .map(User::email)
+        .map(PasswordAccountDTO::user_id)
+        .map(UnicodeWidthStr::width)
+        .max()
+        .unwrap_or(0);
+    let title_len = items
+        .iter()
+        .map(PasswordAccountDTO::title)
         .map(UnicodeWidthStr::width)
         .max()
         .unwrap_or(0);
     let username_len = items
         .iter()
-        .map(User::username)
+        .map(PasswordAccountDTO::username)
+        .map(UnicodeWidthStr::width)
+        .max()
+        .unwrap_or(0);
+    let password_len = items
+        .iter()
+        .map(PasswordAccountDTO::password)
+        .flat_map(str::lines)
+        .map(UnicodeWidthStr::width)
+        .max()
+        .unwrap_or(0);
+    let created_at_len = items
+        .iter()
+        .map(PasswordAccountDTO::created_at)
+        .map(UnicodeWidthStr::width)
+        .max()
+        .unwrap_or(0);
+    let last_updated_at_len = items
+        .iter()
+        .map(PasswordAccountDTO::last_updated_at)
         .map(UnicodeWidthStr::width)
         .max()
         .unwrap_or(0);
 
     #[allow(clippy::cast_possible_truncation)]
-    (name_len as u16, id_len as u16, email_len as u16, username_len as u16)
+    (id_len as u16, user_id_len as u16, title_len as u16, username_len as u16, password_len as u16, created_at_len as u16, last_updated_at_len as u16)
 }
 
 
