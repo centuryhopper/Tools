@@ -1,50 +1,63 @@
-use std::fs::{metadata, read_dir};
+use std::fs::{self, metadata, read_dir};
 use std::io::{self, BufRead, BufReader, ErrorKind, Write, Error, Result};
+use std::path::{Path};
+use chrono::{Datelike, Utc};
+use chrono::prelude::*;
+use chrono_tz::US::Eastern;
+use std::process::Command;
 
 
-pub fn copy_contents(src: &str, dest: &str) -> Result<String>
-{
-    if !metadata(src).unwrap().is_dir()
+// have an argument for journal (store private journal in journal github folder)
+
+
+
+fn main() -> io::Result<()>{
+
+    let JOURNAL_DIR = "/home/leo_zhang/Documents/GitHub/Journal".to_string();
+    let root_path = Path::new(&JOURNAL_DIR);
+
+    if !root_path.try_exists()?
     {
-        return Err(Error::new(ErrorKind::Other, format!("{:?} is not a directory", src)));
-    }
-    
-    if !metadata(dest).unwrap().is_dir()
-    {
-        return Err(Error::new(ErrorKind::Other, format!("{:?} is not a directory", dest)));
-    }
-    
-    // copy each file from src to dest unless file is already in dest
-    let srcFiles = read_dir(src)?;
-    let destFiles: Vec<_> = read_dir(dest)?
-        .filter_map(Result::ok)
-        .map(|entry| entry.path())
-        .collect();
-
-    for file in srcFiles {
-        let file = file?;
-        let file_path = file.path();
-
-        if !file_path.is_file() {
-            continue;
-        }
-
-        let file_name = file_path.file_name().unwrap();
-        let exists_in_dest = destFiles.iter().any(|dest_path| dest_path.file_name() == Some(file_name));
-
-        if 
-
-        
-
+        let msg = format!("The root_path: {:?} doesn't exist", root_path.as_os_str());
+        return Err(Error::new(ErrorKind::NotFound, msg));
     }
 
+    // Get the current date and time in UTC
+    let now_utc = Utc::now();
 
-    Ok("success!".to_string())
-}
+    // Convert the UTC time to Eastern Time
+    let now_est = now_utc.with_timezone(&Eastern).format("%Y-%m-%d");
 
+    println!("{:?}", &now_est.to_string());
 
+    // Extract the year, month, and day
+    let now_est_string = now_est.to_string();
+    let year = now_est_string.split("-").nth(0);
+    let month = now_est_string.split("-").nth(1);
+    let day = now_est_string.split("-").nth(2);
+    // println!("{}, {}, {}", year.unwrap(), month.unwrap(), day.unwrap());
 
+    let year_month_dir = root_path.join(&year.unwrap()).join(&month.unwrap());
 
-fn main() {
-    println!("Hello, world!");
+    if !year_month_dir.try_exists()? {
+        fs::create_dir_all(&year_month_dir)?;
+        println!("Directories created successfully: {:?}", year_month_dir.as_os_str());
+    }
+
+    let final_path = year_month_dir.join(format!("{}.md", &day.unwrap()));
+
+     // Check if the file already exists
+     if !final_path.try_exists()? {
+        // Create the file if it doesn't exist
+        fs::write(&final_path, "# New Journal Entry\n")?;
+        println!("File created successfully: {:?}", final_path.as_os_str());
+    } else {
+        println!("File already exists: {:?}", final_path.as_os_str());
+    }
+
+    Command::new("nvim")
+        .arg(final_path.to_str().unwrap())
+        .status()?;
+
+    Ok(())
 }

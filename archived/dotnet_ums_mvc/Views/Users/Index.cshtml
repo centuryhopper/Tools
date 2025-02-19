@@ -1,0 +1,95 @@
+@{
+    ViewData["Title"] = "Index";
+    const string USER_GRID_ID = "user_grid";
+    Dictionary<string,IEnumerable<string>> userRoles = ViewBag.UserRoles;
+}
+
+<div class="text-center m-5">
+    <h2><b>All Users</b></h2>
+</div>
+<hr />
+<div class="d-flex justify-content-center" style="display: none;">
+    <div id="loadingIndicator" class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+<div class="text-center overflow-auto m-3">
+    <table id="@USER_GRID_ID" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in ViewBag.Users as IEnumerable<ApplicationUser>)
+            {
+                <tr>
+                    <td>@Html.ActionLink(user.UserName, "EditUser", "Users", new { userId = user.Id })</td>
+                    <td>@user.Email</td>
+                    <td>@(string.Join(",", userRoles[user.Id]))</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+        </tfoot>
+    </table>
+
+
+</div>
+
+@section Scripts {
+    <script>
+        $(function ()
+        {
+
+            // Hide the original table                                                             
+            $('#@USER_GRID_ID').hide();
+
+            // Show the loading indicator                                                          
+            $('#loadingIndicator').show();
+
+            // dataTable is old version                                                            
+            // DataTable is new version                                                            
+            var arrayDataTable = $('#@USER_GRID_ID').DataTable({
+                "initComplete": function (settings, json)
+                {
+                    // Hide the loading indicator and show the DataTable                           
+                    $('#loadingIndicator').hide();
+                    $('#@USER_GRID_ID').show();
+                }
+            });
+
+            // create search boxes for every column                                                
+            $('#@USER_GRID_ID thead th').each(function ()
+            {
+                var title = $('#@USER_GRID_ID tfoot th').eq($(this).index()).text()
+
+                $(this).html(`<input type="text" placeholder="Search ${title}" />`)
+            });
+
+            arrayDataTable.columns().every(function ()
+            {
+                var datatableColumn = this
+
+                var searchTextBox = $(this.header()).find('input')
+
+                searchTextBox.on('keyup change', function ()
+                {
+                    datatableColumn.search(this.value).draw()
+                })
+
+                searchTextBox.on('click', function (e)
+                {
+                    e.stopPropagation()
+                })
+            });
+        });                                                                                        
+    </script>
+}

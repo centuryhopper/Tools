@@ -1,0 +1,34 @@
+@model RoleVM
+
+@{
+    ViewData["Title"] = "AddRole";
+}
+
+<div class="text-center">
+    @Html.ActionLink("Back to Roles", "Index", "Roles", null, new { @class = "btn btn-primary" })
+</div>
+
+
+<form method="post" action="@Url.Action("AddRole", "Roles")">
+    @Html.AntiForgeryToken()
+    <div class="m-3">
+        @Html.LabelFor(m=>m.RoleName)
+        @Html.TextBoxFor(m => m.RoleName, new {@class="form-control"})
+    </div>
+    <div class="m-3">
+        @Html.LabelFor(m=>m.IsActive)
+        @Html.CheckBoxFor(m => m.IsActive, new {@class="form-check"})
+    </div>
+    <input type="submit" value="Submit" class="btn btn-primary">
+</form>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function ()
+        {
+            
+        });
+    </script>
+}

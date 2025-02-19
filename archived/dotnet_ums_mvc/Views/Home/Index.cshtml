@@ -1,0 +1,15 @@
+﻿@inject IConfiguration configuration
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment env
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to my personal user management system</h1>
+    <p>All my hobby applications with an authentication system will use this as the base storage for user and role management.</p>
+    
+    @* <p>@(env.EnvironmentName)</p>
+    <p>@(env.IsDevelopment() ? "dev" : env.IsProduction() ? "production" : "n/a")</p> *@
+    
+</div>

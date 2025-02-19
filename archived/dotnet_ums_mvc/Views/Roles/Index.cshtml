@@ -1,0 +1,312 @@
+@{
+    ViewData["Title"] = "Index";
+    const string ROLE_GRID_ID = "role_grid";
+
+    var roles = ViewBag.Roles as IEnumerable<ApplicationRole>;
+}
+
+<div class="text-center m-5">
+    <h2><b>All Roles</b></h2>
+</div>
+<hr />
+<div class="d-flex justify-content-center" style="display: none;">
+    <div id="loadingIndicator" class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+<div class="text-center overflow-auto m-3">
+    <table id="@ROLE_GRID_ID" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Row #</th>
+                <th>Edit</th>
+                <th>Name</th>
+                <th>Is Actively Used?</th>
+                <th>Update</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (i,role) in roles.Select((role,i) => (i,role)))
+            {
+                <tr>
+                    <td class="row_index">
+                        <span>@(i + 1)</span>
+                        <input type="hidden" value="@role.Id">
+                    </td>
+                    <td>
+                        <a class="Edit" href="javascript:;">EDIT</a>
+                        <a class="Cancel" href="javascript:;" style="display:none">CANCEL</a>
+                    </td>
+                    <td class="role_name">
+                        <span>
+                            @role.Name
+                        </span>
+                        <input type="text" style="display: none;" placeholder="Enter Role Name">
+                    </td>
+                    <td class="role_status">
+                        <span>
+                            @(role.IsActive ?  "Active" : "Inactive")
+                        </span>
+                        <input type="checkbox" style="display: none;">
+                    </td>
+                    <td>
+                        <a class="Update" style="pointer-events: none; color: gray; text-decoration: none;">UPDATE</a>
+                    </td>
+                    <td style="background-color: red;">
+                        <a class="Delete" href="javascript:;">DELETE</a>
+                        <a class="ConfirmDelete" href="javascript:;" style="display:none">CONFIRM</a>
+                        <a class="CancelDelete" href="javascript:;" style="display:none">CANCEL</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Row #</th>
+                <th>Edit</th>
+                <th>Name</th>
+                <th>Is Actively Used?</th>
+                <th>Update</th>
+                <th>Delete</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+
+<div class="m-3">
+    @if (User.IsInRole("Admin"))
+    {
+        @Html.ActionLink("Add New Role", "AddRole", "Roles", null, new {@class="btn btn-primary"})
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(function ()
+        {
+            $('.Update').click(function() {
+                let row = $(this).closest("tr")
+
+                const roleNameInput = row.find('.role_name').find('input')
+                const roleStatusInput = row.find('.role_status').find('input')
+                const roleNameSpan = row.find('.role_name').find('span')
+                const roleStatusSpan = row.find('.role_status').find('span')
+                roleNameInput.hide()
+                roleStatusInput.hide()
+                roleNameSpan.show()
+                roleStatusSpan.show()
+
+                // console.log(row.find("[class^='row_index']").find('input').val().trim());
+
+                var roleModel = {
+                    RoleName: roleNameInput.val().trim()
+                    ,IsActive: roleStatusInput.is(':checked')
+                    ,Id: row.find("[class^='row_index']").find('input').val().trim()
+                }
+
+                //console.log(roleModel);
+
+                // visual update
+                roleNameSpan.html(roleNameInput.val().trim())
+                roleStatusSpan.html(roleStatusInput.is(':checked') ? "Active" : "Inactive")
+
+                // reorganize action buttons for update
+                row.find('.Edit').show()
+                row.find('.Delete').show()
+                row.find('.Cancel').hide()
+
+                // disable update button
+                $(this).attr('style', 'pointer-events: none; color: gray; text-decoration: none;')
+                $(this).removeAttr('href')
+
+                // server update
+                $.ajax({
+                    url: "@Url.Action("UpdateRoleDetail", "Roles")",
+                    type: 'POST',
+                    data: JSON.stringify(roleModel),
+                    contentType: "application/json",
+                    datatype: "json",
+                    success: function (res)
+                    {
+                        //console.log(res);
+                        swal.fire("Successfully updated the role detail!", "", "success")
+                            .then((value) =>
+                            {
+                                //swal.fire(`The returned value is: ${value}`);
+                                //location.reload()
+                            });
+                    },
+                    error: function (req, status, error)
+                    {
+                        swal.fire("Failed to update the role detail :/", "", "error")
+                            .then((value) =>
+                            {
+                                //swal.fire(`The returned value is: ${value}`);
+                                //location.reload()
+                            });
+                        console.log(req);
+                        console.log(status);
+                        console.log(error);
+                    }
+                });
+            });
+
+            $('.ConfirmDelete').click(function ()
+            {
+                let row = $(this).closest("tr")
+
+                // get the hidden value
+                let roleId = row.find("[class^='row_index']").find('input').val().trim()
+                
+                // console.log(roleId);
+
+                // make ajax call to delete that row in the server so we can re-render the page
+
+                $.ajax({
+                    url: "@Url.Action("DeleteRole", "Roles")?"+'roleId='+roleId,
+                    type: 'POST',
+                    success: function (res)
+                    {
+                        // console.log(res);
+                        swal.fire("Successfully deleted the role detail!", "", "success")
+                        .then((value) =>
+                        {
+                            location.reload()
+                        });
+                    },
+                    error: function (req, status, error)
+                    {
+                        swal.fire("Failed to delete the role detail :/", "", "error")
+                            .then((value) =>
+                            {
+                                //swal.fire(`The returned value is: ${value}`);
+                                location.reload()
+                            });
+                        console.log(req);
+                        console.log(status);
+                        console.log(error);
+                    }
+                });
+
+            });
+
+
+            $('.Delete').click(function ()
+            {
+                let row = $(this).closest("tr")
+
+                // reorganize action buttons
+                // row.find('.Update').css('color', '#ccc').prop('disabled', true);
+                row.find('.CancelDelete').show()
+                row.find('.ConfirmDelete').show()
+                //row.find('.Edit').hide()
+                $(this).hide()
+            });
+
+            $('.CancelDelete').click(function ()
+            {
+                let row = $(this).closest("tr")
+                row.find('.Delete').show()
+                row.find('.ConfirmDelete').hide()
+                $(this).hide()
+            });
+
+            $('.Cancel').click(function() {
+                const row = $(this).closest("tr")
+
+                row.find("td").each(function ()
+                {
+                    if ($(this).find("input").length > 0)
+                    {
+                        $(this).find('input').hide()
+                        $(this).find('span').show()
+                    }
+                });
+
+                // reorganize action buttons
+                row.find('.Update').attr('style', 'pointer-events: none; color: gray; text-decoration: none;');
+                row.find('.Update').removeAttr('href')
+                row.find('.Edit').show()
+                $(this).hide()
+            });
+
+            $('.Edit').click(function() {
+                const row = $(this).closest("tr")
+
+                // hide span and show input fields
+                const roleName = row.find('.role_name')
+                const roleNameSpan = roleName.find('span')
+                const roleStatus = row.find('.role_status')
+                const roleStatusSpan = roleStatus.find('span')
+
+                roleStatusSpan.hide()
+                roleNameSpan.hide()
+                roleName.find('input').show()
+                roleName.find('input').val(roleNameSpan.text().trim())
+                roleStatus.find('input').show()
+                roleStatus.find('input').prop('checked', roleStatusSpan.text().trim() === 'Active')
+
+                // reorganize action buttons
+                row.find('.Update').removeAttr('style')
+                row.find('.Update').attr('href', 'javascript:;')
+                row.find('.Cancel').show()
+                $(this).hide()
+            });
+
+
+
+
+
+
+
+
+            // Hide the original table
+            $('#@ROLE_GRID_ID').hide();
+
+            // Show the loading indicator
+            $('#loadingIndicator').show();
+
+            // dataTable is old version
+            // DataTable is new version
+            var arrayDataTable = $('#@ROLE_GRID_ID').DataTable({
+                "initComplete": function (settings, json)
+                {
+                    // Hide the loading indicator and show the DataTable
+                    $('#loadingIndicator').hide();
+                    $('#@ROLE_GRID_ID').show();
+                }
+            });
+
+            // create search boxes for every column
+            $('#@ROLE_GRID_ID thead th').each(function ()
+            {
+                var title = $('#@ROLE_GRID_ID tfoot th').eq($(this).index()).text()
+
+                $(this).html(`<input type="text" placeholder="Search ${title}" />`)
+            });
+
+            arrayDataTable.columns().every(function ()
+            {
+                var datatableColumn = this
+
+                var searchTextBox = $(this.header()).find('input')
+
+                searchTextBox.on('keyup change', function ()
+                {
+                    datatableColumn.search(this.value).draw()
+                })
+
+                searchTextBox.on('click', function (e)
+                {
+                    e.stopPropagation()
+                })
+            });
+
+
+
+
+        });
+    </script>
+}

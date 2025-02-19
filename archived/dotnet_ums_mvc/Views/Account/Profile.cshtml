@@ -1,0 +1,101 @@
+@model ProfileVM
+
+@{
+    ViewData["Title"] = "Profile";
+    const string OLD_PASSWORD = "OLD_PASSWORD";
+    const string NEW_PASSWORD = "NEW_PASSWORD";
+    const string CONFIRM_NEW_PASSWORD = "CONFIRM_NEW_PASSWORD";
+}
+
+<h1 class="text-center">Edit Your Profile</h1>
+
+<div class="m-5">
+    <form method="POST" asp-action="Profile" asp-controller="Account">
+        @Html.AntiForgeryToken()
+        <div class="text-danger" asp-validation-summary="All"></div>
+        <div class="form-outline mb-2">
+            @Html.LabelFor(m => m.CurrentEmail)
+            @Html.TextBoxFor(m => m.CurrentEmail, new { @class = "form-control", placeholder = "Enter your email" })
+            @Html.ValidationMessageFor(m => m.CurrentEmail, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-outline mb-2">
+            @Html.LabelFor(m => m.CurrentPassword, new { @class = "form-label", @for = OLD_PASSWORD })
+            <div class="input-group" id="@OLD_PASSWORD">
+                @Html.EditorFor(m => m.CurrentPassword, new {
+                    htmlAttributes = new
+                    {
+                        @type = "password",
+                        @name =
+                        "password",
+                        @class = "form-control",
+                        @placeholder = "Current Password"
+                    }
+                })
+                <div class="input-group-addon">
+                    <span class="input-group-text">
+                    <a style="color: black;"><i class="fa fa-eye-slash field-icon m-1" aria-hidden="true"></i></a>
+                    </span>
+                </div>
+            </div>
+            @Html.ValidationMessageFor(m => m.CurrentPassword, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-outline mb-2">
+            @Html.LabelFor(m => m.NewPassword, new { @class = "form-label", @for = OLD_PASSWORD })
+            <div class="input-group" id="@NEW_PASSWORD">
+                @Html.EditorFor(m => m.NewPassword, new {
+                    htmlAttributes = new
+                    {
+                        @type = "password",
+                        @name =
+                        "password",
+                        @class = "form-control",
+                        @placeholder = "New Password"
+                    }
+                })
+                <div class="input-group-addon">
+                    <span class="input-group-text">
+                    <a style="color: black;"><i class="fa fa-eye-slash field-icon m-1" aria-hidden="true"></i></a>
+                    </span>
+                </div>
+            </div>
+            @Html.ValidationMessageFor(m => m.NewPassword, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-outline mb-2">
+            @Html.LabelFor(m => m.ConfirmPassword, new { @class = "form-label", @for = OLD_PASSWORD })
+            <div class="input-group" id="@CONFIRM_NEW_PASSWORD">
+                @Html.EditorFor(m => m.ConfirmPassword, new {
+                    htmlAttributes = new
+                    {
+                        @type = "password",
+                        @name =
+                        "password",
+                        @class = "form-control",
+                        @placeholder = "Confirm New Password"
+                    }
+                })
+                <div class="input-group-addon">
+                    <span class="input-group-text">
+                    <a style="color: black;"><i class="fa fa-eye-slash field-icon m-1" aria-hidden="true"></i></a>
+                    </span>
+                </div>
+            </div>
+            @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger" })
+        </div>
+        <input id="submitButton" type="submit" value="Save" class="btn btn-primary">
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(function ()
+        {
+            showHidePasswordField('@OLD_PASSWORD')
+            showHidePasswordField('@NEW_PASSWORD')
+            showHidePasswordField('@CONFIRM_NEW_PASSWORD')
+        })
+    </script>
+
+}
