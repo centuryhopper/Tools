@@ -1,0 +1,3 @@
+
+dotnet build -o Debug
+./dotnet_bmbl_bot

@@ -1,0 +1,61 @@
+{
+  "firefox": {
+    "aboutMe": "Hi there! I am an easy going stud looking for a good time. If you're open minded and polite, we're gonna get along just fine. Lets skip the small talk and have some fun ;)",
+    "passions": ["Self Care", "Spotify", "Jetski", "Paddle Boarding", "DIY"],
+    "prompts": {
+      "I want someone who...": "is open minded",
+      "Life's too short to...": "not get what you want",
+      "The hottest thing you can do is...": "Ask me ;)"
+    },
+    "job_title": "Application Developer",
+    "company": "Home",
+    "institution": "UCF",
+    "Pets": "Want a pet",
+    "Drinking": "On special occasions",
+    "Smoking": "Non-smoker",
+    "Cannabis": "Never",
+    "Workout": "Everyday",
+    "Dietary Preference": "Omnivore",
+    "Social Media": "Passive scroller",
+    "Sleeping Habits": "Early bird",
+    "phone": "2622085085",
+    "latitude": "29.901243",
+    "longitude": "-81.312431"
+  },
+  "brave": {
+    "aboutMe": "dommy dude looking fulfill your wildest fantasies. You'll what I say when I say it. Not looking for pen pals. Good vibes and kink friendlies welcome. No I won't be your onlyfans subscriber.",
+    "passions": ["Spa", "Sports", "Coffee", "boba", "Investing"],
+    "job_title": "fitness trainer",
+    "company": "employer",
+    "institution": "Valencia",
+    "Pets": "Want a pet",
+    "Drinking": "On special occasions",
+    "Smoking": "Non-smoker",
+    "Cannabis": "Never",
+    "Workout": "Everyday",
+    "Dietary Preference": "Omnivore",
+    "Social Media": "Passive scroller",
+    "Sleeping Habits": "Early bird",
+    "phone": "4074986639",
+    "latitude": "29.901243",
+    "longitude": "-81.312431"
+  },
+  "edge": {
+    "aboutMe": "6' 3\" 200lbs, Actively 🏋,Kink friendly, I am looking for someone I can be friends and also have fun with. I love to travel and enjoy life. Let's skip the small talk and make some memorable moments together💗",
+    "passions": ["Spa", "Sports", "Coffee", "Jetski", "Investing"],
+    "job_title": "software developer",
+    "company": "home",
+    "institution": "UCF",
+    "Pets": "Want a pet",
+    "Drinking": "On special occasions",
+    "Smoking": "Non-smoker",
+    "Cannabis": "Never",
+    "Workout": "Everyday",
+    "Dietary Preference": "Omnivore",
+    "Social Media": "Passive scroller",
+    "Sleeping Habits": "Early bird",
+    "phone": "8137980686",
+    "latitude": "29.901243",
+    "longitude": "-81.312431"
+  }
+}

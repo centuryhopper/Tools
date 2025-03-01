@@ -1,6 +1,8 @@
 #! /home/leo_zhang/miniconda3/envs/web_auto/bin/python
 
+import sys
 
+sys.dont_write_bytecode = True
 from github import Github
 import datetime
 import pwd

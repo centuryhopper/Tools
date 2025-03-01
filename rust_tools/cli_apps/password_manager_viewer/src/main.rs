@@ -94,17 +94,22 @@ struct PasswordAccountDTO {
     created_at: String,
     #[serde(rename="lastUpdatedAt")]
     last_updated_at: String,
+    row_idx: Option<String>,
 }
 
 impl PasswordAccountDTO {
-    const fn ref_array(&self) -> [&String; 7] {
-        [&self.id,
-        &self.user_id,
-        &self.title,
-        &self.username,
-        &self.password,
-        &self.created_at,
-        &self.last_updated_at,]
+    fn ref_array(&mut self, row_idx: usize) -> [&String; 4] {
+        self.row_idx = Some(row_idx.to_string());
+        [
+            &self.row_idx.as_ref().unwrap(),
+            // &self.id,
+            // &self.user_id,
+            &self.title,
+            &self.username,
+            &self.password,
+            // &self.created_at,
+            // &self.last_updated_at,
+        ]
     }
 
     fn id(&self) -> &str {
@@ -128,37 +133,6 @@ impl PasswordAccountDTO {
     }
     fn last_updated_at(&self) -> &str {
         &self.last_updated_at
-    }
-}
-
-#[derive(Serialize, Debug, Deserialize)]
-struct User {
-    #[serde(deserialize_with = "deserialize_from_int")]
-    id: String,
-    name: String,
-    username: String,
-    email: String,
-}
-
-impl User {
-    const fn ref_array(&self) -> [&String; 4] {
-        [&self.id, &self.name, &self.username, &self.email]
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn username(&self) -> &str {
-        &self.username
-    }
-
-    fn id(&self) -> &str {
-        &self.id
-    }
-
-    fn email(&self) -> &str {
-        &self.email
     }
 }
 
@@ -190,14 +164,6 @@ async fn try_login(email: String, password: String) -> Result<LoginResponse, Err
     Ok(response)
 }
 
-// Fetch users from the API
-async fn fetch_users() -> Result<Vec<User>, Error> {
-    let url = "https://mypasswordmanager-production-b6be.up.railway.app/api/PasswordManager/test";
-    let response = reqwest::get(url).await?;
-    let users: Vec<User> = response.json().await?;
-    Ok(users)
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     
@@ -219,6 +185,7 @@ async fn main() -> Result<()> {
         println!("{mapped_passwords}");
         return app_result;
     }
+    println!("Error: {:?}", login_response.message);
     Ok(())
 }
 
@@ -255,7 +222,7 @@ impl TableColors {
 struct App {
     state: TableState,
     items: Vec<PasswordAccountDTO>,
-    longest_item_lens: (u16, u16, u16, u16, u16, u16, u16 ), // order is (name, address, email)
+    longest_item_lens: (u16, u16, u16, u16),
     scroll_state: ScrollbarState,
     colors: TableColors,
     color_index: usize,
@@ -371,28 +338,18 @@ impl App {
             .add_modifier(Modifier::REVERSED)
             .fg(self.colors.selected_cell_style_fg);
 
-        /*
-            id
-            user_id
-            title
-            username
-            password
-            created_at
-            last_updated_at
-        */
-
-        let header = ["Id", "UserId", "Title", "Username", "Password", "Created At", "Last Updated At"]
+        let header = ["Row #", "Title", "Username", "Password",]
             .into_iter()
             .map(Cell::from)
             .collect::<Row>()
             .style(header_style)
             .height(1);
-        let rows = self.items.iter().enumerate().map(|(i, data)| {
+        let rows = self.items.iter_mut().enumerate().map(|(i, data)| {
             let color = match i % 2 {
                 0 => self.colors.normal_row_color,
                 _ => self.colors.alt_row_color,
             };
-            let item = data.ref_array();
+            let item = data.ref_array(i);
             item.into_iter()
                 .map(|content| Cell::from(Text::from(format!("\n{content}\n"))))
                 .collect::<Row>()
@@ -405,13 +362,14 @@ impl App {
             // columns
             [
                 // + 1 is for padding.
-                Constraint::Length(self.longest_item_lens.0 + 1),
-                Constraint::Min(self.longest_item_lens.1 + 1),
+                // Constraint::Length(self.longest_item_lens.0 + 1),
+                Constraint::Min(self.longest_item_lens.0 + 3),
+                Constraint::Min(self.longest_item_lens.1),
                 Constraint::Min(self.longest_item_lens.2),
                 Constraint::Min(self.longest_item_lens.3),
-                Constraint::Min(self.longest_item_lens.4),
-                Constraint::Min(self.longest_item_lens.5),
-                Constraint::Min(self.longest_item_lens.6),
+                // Constraint::Min(self.longest_item_lens.4),
+                // Constraint::Min(self.longest_item_lens.5),
+                // Constraint::Min(self.longest_item_lens.6),
             ],
         )
         .header(header)
@@ -461,7 +419,7 @@ impl App {
 }
 
 
-fn constraint_len_calculator(items: &[PasswordAccountDTO]) -> (u16, u16, u16, u16, u16, u16, u16) {
+fn constraint_len_calculator(items: &[PasswordAccountDTO]) -> (u16, u16, u16, u16) {
     let id_len = items
         .iter()
         .map(PasswordAccountDTO::id)
@@ -507,7 +465,7 @@ fn constraint_len_calculator(items: &[PasswordAccountDTO]) -> (u16, u16, u16, u1
         .unwrap_or(0);
 
     #[allow(clippy::cast_possible_truncation)]
-    (id_len as u16, user_id_len as u16, title_len as u16, username_len as u16, password_len as u16, created_at_len as u16, last_updated_at_len as u16)
+    (id_len as u16, title_len as u16, username_len as u16, password_len as u16,)
 }
 
 

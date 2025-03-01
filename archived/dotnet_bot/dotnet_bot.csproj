@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- this makes sure the .env file is included in the build folder -->
+  <Target Name="CopyFiles" AfterTargets="Build;Publish">
+    <Message Importance="high" Text="Copying secrets.env and configs..." />
+    <MakeDir Directories="$(OutputPath)/configs" />
+    <MakeDir Directories="$(PublishDir)/configs" />
+    <Copy SourceFiles="./secrets.env" DestinationFolder="$(OutputPath)" />
+    <Copy SourceFiles="./secrets.env" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="./configs/config.json" DestinationFolder="$(OutputPath)/configs" />
+    <Copy SourceFiles="./configs/config.json" DestinationFolder="$(PublishDir)/configs" />
+  </Target>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>64a5028c-22e7-4d6c-887e-e66e0661445e</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.0.0" />
+    <PackageReference Include="MailKit" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="ProxySharp" Version="1.0.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.10.0" />
+    <PackageReference Include="WebDriverManager" Version="2.17.0" />
+  </ItemGroup>
+
+</Project>

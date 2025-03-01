@@ -1,3 +1,3 @@
 
 merge sort the doubly linked list
-write a cli app for interfacing with your .net password manager. Make api calls to it
+---write a cli app for interfacing with your .net password manager. Make api calls to it--- DONE

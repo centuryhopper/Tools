@@ -1,0 +1,65 @@
+{
+  "firefox": {
+    "aboutMe": "Hi, nice to meet you :) I am an open minded individual looking for good vibes and lots of fun. I love traveling and exploring new places. Girlfriend applications are open ;)",
+    "christmas_holiday": "Seeking a partner for a magical mix of Disney enchantment and holiday cheer! Let’s uncover twinkling lights, gingerbread dreams, and craft our own fairy-tale within the festive spirit. Ready for a merry blend of Disney magic and Christmas charm? Let's make this season sparkle! 🎄✨✨",
+    "prompt1": {
+      "header": "quickest way to my heart",
+      "description": "Vibing with me"
+    },
+    "prompt2": {
+      "header": "great +1",
+      "description": "You can pull on my pony tail"
+    },
+    "prompt3": {
+      "header": "get along",
+      "description": "You are a nice lady"
+    },
+    "job_title": "employee",
+    "company": "employer",
+    "institution": "UCF",
+    "latitude": "29.901243",
+    "longitude": "-81.312431"
+  },
+  "brave": {
+    "christmas_holiday": "Trying to not be alone this holiday season. Looking for kind-hearted ppl to bond with",
+    "aboutMe": "I am looking for new friends and cool ppl to hang out with. Lets skip the small talk and have some fun <3",
+    "prompt1": {
+      "header": "I'll know we vibe on a date if",
+      "description": "we vibe on here"
+    },
+    "prompt2": {
+      "header": "Swipe right",
+      "description": "want someone fun"
+    },
+    "prompt3": {
+      "header": "I get way too excited about",
+      "description": "your kindness and affection"
+    },
+    "job_title": "employee",
+    "company": "employer",
+    "institution": "UCF",
+    "latitude": "30.332184",
+    "longitude": "-81.655647"
+  },
+  "edge": {
+    "aboutMe": "hello there! I'm open to genuine connections that are fun, honest, and a little spicy. I value effective communication and maturity. I am kink friendly, curious, and always up for exploring what makes us click. Swipe right and let's see where this goes <3",
+    "christmas_holiday": "26. Passionate about cozying up with holiday movies, savoring festive treats, and sharing the magic of the season with you. Let's sip hot cocoa and create our own winter wonderland. If you're up for making merry memories and embracing the spirit of the holidays, let's jingle all the way together! 🎄",
+    "prompt1": {
+      "header": "get along if",
+      "description": "you're an amazing communicator"
+    },
+    "prompt2": {
+      "header": "hidden gem in the city",
+      "description": "Ask me :)"
+    },
+    "prompt3": {
+      "header": "quote too much from",
+      "description": "star wars"
+    },
+    "job_title": "IT guy",
+    "company": "Company",
+    "institution": "UCF",
+    "latitude": "29.207060",
+    "longitude": "-81.020737"
+  }
+}

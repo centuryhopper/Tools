@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- this makes sure the .env file is included in the build folder -->
+  <Target Name="CopyFiles" AfterTargets="Build;Publish">
+    <Message Importance="high" Text="Copying secrets.env and configs..." />
+    <MakeDir Directories="$(OutputPath)/configs" />
+    <MakeDir Directories="$(PublishDir)/configs" />
+    <Copy SourceFiles="./secrets.env" DestinationFolder="$(OutputPath)" />
+    <Copy SourceFiles="./secrets.env" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="./configs/config.json" DestinationFolder="$(OutputPath)/configs" />
+    <Copy SourceFiles="./configs/config.json" DestinationFolder="$(PublishDir)/configs" />
+    <Copy SourceFiles="./configs/left_swipes.json" DestinationFolder="$(OutputPath)/configs" />
+    <Copy SourceFiles="./configs/left_swipes.json" DestinationFolder="$(PublishDir)/configs" />
+  </Target>
+
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>ecda34b2-0425-43eb-9080-0959865e3ed2</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.0.0" />
+    <PackageReference Include="MailKit" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
+    <PackageReference Include="NewtonSoft.Json" Version="13.0.3" />
+    <PackageReference Include="ProxySharp" Version="1.0.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.10.0" />
+    <PackageReference Include="WebDriverManager" Version="2.17.0" />
+    <PackageReference Include="RandomUserAgent" Version="1.1.2" />
+  </ItemGroup>
+
+</Project>
