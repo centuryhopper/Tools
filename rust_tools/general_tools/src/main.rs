@@ -1,8 +1,13 @@
 use std::env;
-use uber_calculator::{calculate_net_uber_delivery_earnings, Earnings};
+use uber_calculator::{Earnings};
 use concurrency_primes::{get_primes};
 use keylogger::{keylog};
 
+
+fn test(x: &str) {
+
+    println!("{x}");
+}
 
 fn main() {
 
@@ -33,7 +38,11 @@ fn main() {
     
     // mileage per gallon
     let car_mpg = args[0].parse::<u32>().unwrap(); 
-    let earnings = calculate_net_uber_delivery_earnings(car_mpg);
+    let earnings = Earnings::calculate_net_uber_delivery_earnings(&car_mpg);
+
+    // let test_string = "test".to_string();
+    // test(&test_string);
+    // test(&test_string);
 
     println!(
          "(weekly net earnings: ${:.2}, monthly net earnings: ${:.2}, annual net earnings: ${:.2})",
