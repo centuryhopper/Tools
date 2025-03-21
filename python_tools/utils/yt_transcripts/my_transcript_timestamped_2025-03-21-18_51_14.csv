@@ -1,0 +1,710 @@
+timestamp,text
+0:00,Transcript
+0:01,here a list of all basic machine
+0:04,learning terms in 22 minutes artificial
+0:06,intelligence refers to the capability of
+0:08,machines to perform tasks that typically
+0:10,require human intelligence this can
+0:11,include understanding language
+0:13,recognizing images solving problems or
+0:16,making decisions AI aims to mimic human
+0:17,cognitive functions through various
+0:19,techniques including machine learning
+0:22,but not all AI is machine learning for
+0:23,example rule-based systems can use
+0:25,predefined logical rules to analyze
+0:27,medical data and provide diagnostic
+0:29,recommendations without needing to learn
+0:31,from data patterns typical chess playing
+0:33,engines would be considered AI but not
+0:34,machine learning because they follow
+0:36,specific rules in search algorithms and
+0:38,don't always learn from data machine
+0:39,learning is a branch of artificial
+0:40,intelligence that enables computers to
+0:42,learn from data and improve their
+0:44,performance on tasks over time without
+0:45,being explicitly programmed for each
+0:48,task in machine learning algorithms
+0:49,identify patterns and relationships
+0:51,within data making predictions or
+0:53,decisions based on new unseen
+0:55,information for example a spam filter in
+0:57,an email system uses machine learning to
+0:59,identify and block spam emails it is
+1:01,trained on thousands of examples of both
+1:03,spam and non-spam emails learning which
+1:05,words phrases or patterns are typically
+1:08,found in spam messages over time it can
+1:09,accurately flag new emails of spam or
+1:11,legitimate based on these learned
+1:13,patterns even if the specific content of
+1:15,each new email varies in many ways this
+1:16,is similar to how animals and humans
+1:18,learn to recognize patterns over time
+1:20,after seeing many examples of something
+1:22,for example a human child might not be
+1:23,able to tell the difference between a
+1:26,cat and a dog but after years of having
+1:27,someone point out cats and dogs it will
+1:29,learn to recognize the features that
+1:31,determine what a cat cat and a dog is an
+1:32,algorithm is a set of well-defined
+1:34,instructions or rules that a computer
+1:36,follows to solve a problem or perform a
+1:38,task algorithms are used in almost every
+1:40,aspect of computing from sorting lists
+1:42,and searching data to more complex
+1:43,processes like encryption and data
+1:45,analysis they provide step-by-step
+1:47,procedures to achieve a specific goal
+1:49,efficiently think for example of a
+1:51,step-by-step recipe like this sandwich
+1:54,making algorithm an example is dy stress
+1:55,algorithm used in mapping applications
+1:57,to find the shortest path between two
+1:59,points by systematically evaluating
+2:01,possible paths backstress algorithm
+2:02,helps determine the quickest route for
+2:04,navigation which is at the base of most
+2:07,navigation apps like Google Maps data is
+2:08,information that can be collected
+2:10,analyzed and used to make decisions
+2:12,predictions or provide insights than
+2:14,spreadsheets in Computing and machine
+2:16,learning data typically consists of
+2:19,numbers text images or any form of input
+2:21,that can be processed by algorithms for
+2:23,example customer purchase histories are
+2:24,a type of data that e-commerce companies
+2:26,analyze to recommend products likely to
+2:28,interest each user another example is
+2:30,weather data which includes temperature
+2:32,humidity and wind speed measurements
+2:34,this data is used to predict future
+2:36,weather patterns in the case of images
+2:38,data refers to a list of pixel
+2:40,intensities and possibly colors used by
+2:42,image recognition algorithms in the case
+2:44,of text Data could simply be a list of
+2:46,words and a text in their frequencies
+2:49,data can come in many forms a model in
+2:50,machine learning is a mathematical
+2:52,representation that is trained to
+2:53,recognize patterns in data and make
+2:55,predictions or classifications based on
+2:57,those patterns the most common type of
+2:59,model is simply a mapping function
+3:01,between a an input and an output in
+3:03,linear regression for example the model
+3:04,is simply the equation of the final
+3:07,regression line in its simplest form we
+3:08,might have a model that predicts a
+3:10,linear relationship between square
+3:12,footage of the house and the price of
+3:15,the house for example if we plot all
+3:16,house prices and their square footage
+3:18,against each other we might find that on
+3:20,average each additional square foot adds
+3:23,$200 to the house price the number 200
+3:24,comes from the fitting of a line to the
+3:27,data which is now our train model the
+3:28,train model is the intersection and
+3:30,slope of the line the slope being 200
+3:32,model fitting also called training or
+3:34,learning is the process of adjusting a
+3:36,model's parameters to find the best
+3:37,match between the model's predictions
+3:39,and the actual data if you think of
+3:41,linear regression model fitting would be
+3:43,trying out different lines until you
+3:45,find the line with the best fit training
+3:47,data is a carefully selected subset of
+3:48,data used to teach machine learning
+3:50,models how to make predictions it
+3:52,consists of input examples paired with
+3:54,their correct outputs allowing the model
+3:56,to learn patterns and relationships for
+3:58,instance in an email spam filter the
+3:59,training data would include thousands of
+4:01,emails labeled as either spam or not
+4:04,spam teaching the system to recognize
+4:05,the characteristics of unwanted messages
+4:07,similarly for an image recognition
+4:09,system that identifies cats and dogs the
+4:11,training data would contain numerous
+4:14,images labeled as either cat or dog
+4:15,helping the model learn the visual
+4:17,patterns that Define what cats and dogs
+4:20,look like test data or test set is a
+4:21,separate collection of data used to
+4:23,evaluate how well a machine learning
+4:25,model performs on examples it hasn't
+4:27,seen during training like training data
+4:29,it includes both inputs and their
+4:30,correct answers
+4:31,but these examples are kept completely
+4:33,separate from the training process this
+4:35,testing process helps verify whether the
+4:37,model has truly learned to make good
+4:39,predictions rather than just memorizing
+4:41,its training examples importantly the
+4:42,test and training data are separated
+4:44,randomly before beginning the modeling
+4:46,process so that the model can never see
+4:48,the test data in any way before running
+4:50,the final test any inadvertent inclusion
+4:52,of even parts of the test data in model
+4:54,training is called Data leakage
+4:56,supervised learning is a foundational
+4:57,approach in machine learning where
+4:59,models learn from labeled examples
+5:01,meaning the true outcomes or targets are
+5:02,known and provided much like a student
+5:03,learning from problems with their
+5:06,answers provided each example in the
+5:08,training data includes both of the input
+5:09,and the correct output allowing the
+5:11,model to learn the relationship between
+5:13,them for instance an image recognition
+5:15,system would train on images that have
+5:17,been pre-labeled with their contents
+5:19,such as dog or cat this is arguably the
+5:21,most common type of machine learning
+5:23,probably making up around 70% of machine
+5:25,learning applications unsupervised
+5:27,learning is a type of machine learning
+5:28,where models learn to find patterns and
+5:30,structure in data without being given
+5:32,labeled examples or correct answers
+5:33,rather than being taught what to look
+5:36,for these algorithms discover natural
+5:37,groupings and relationships within the
+5:39,data on their own for example an
+5:41,unsupervised learning algorithm might
+5:43,analyze customer purchase data to
+5:45,identify groups of customers with
+5:47,similar buying habits or examine social
+5:49,media posts to discover trending topics
+5:51,all without being told in advance what
+5:53,patterns to look for this approach is
+5:54,particularly valuable when we want to
+5:56,explore data to uncover hidden patterns
+5:57,but don't know exactly what we're
+5:59,looking for No Labels or outcomes are
+6:01,provided to the model during training
+6:03,reinforcement learning is a newer branch
+6:04,of machine learning that has recently
+6:06,been accepted as a third main branch of
+6:08,machine learning and has gain momentum
+6:10,in the late 2010s particularly with the
+6:11,success of deep Minds chess engine
+6:15,alphago in 2016 it's distinct from both
+6:16,supervised and unsupervised learning
+6:18,because it operates on a fundamentally
+6:20,different principle instead of learning
+6:22,from pre-labeled examples supervised or
+6:24,finding patterns in unlabeled data
+6:26,unsupervised it learns from interaction
+6:28,and feedback unlike supervised learning
+6:30,where examples have clear right answers
+6:32,reinforcement learning is more like
+6:34,training a pet the agent learns through
+6:35,trial and error getting rewarded for
+6:37,good decisions and penalized for poor
+6:39,ones for example a reinforcement
+6:40,learning algorithm can learn to play
+6:42,chess by playing thousands of games
+6:44,against itself receiving positive
+6:45,rewards for winning moves and negative
+6:47,rewards for losing ones this approach is
+6:49,particularly powerful for tasks
+6:51,involving sequential decision-making
+6:52,like gam playing robotic control or
+6:54,optimizing business strategies when
+6:56,there are no clear labels but an idea of
+6:58,what is a good or bad outcome many basic
+7:00,machine learning courses don't cover
+7:01,reinforcement learning as a basic
+7:03,machine learning Branch but as an
+7:04,advanced topic since it is still fairly
+7:07,Niche a feature also called a predictive
+7:09,variable input variable independent
+7:11,variable or attribute is a specific
+7:13,piece of information or characteristic
+7:14,used as input for a machine learning
+7:16,model essentially it's any measurable
+7:17,property that helps the model make
+7:20,predictions for example in a house price
+7:22,prediction model features might include
+7:23,the square footage number of bedrooms
+7:25,location and age of the house for an
+7:27,email spam detector features could
+7:29,include the number of capitalized words
+7:31,the number of URLs in the text or
+7:33,whether the sender is in your contacts
+7:34,the selection and Engineering of
+7:36,relevant features sometimes called
+7:38,feature extraction or feature design is
+7:41,often crucial to a model success as they
+7:43,need to capture the important aspects of
+7:44,the data that relate to the prediction
+7:46,task feature engineering is the process
+7:48,of creating new more informative
+7:50,features from existing raw data to
+7:52,improve a model's performance feature
+7:54,engineering involves using domain
+7:56,knowledge and creativity to transform or
+7:58,combine original features into more
+8:00,meaningful ones for for example instead
+8:01,of just using raw date values you might
+8:03,create features like day of the week or
+8:05,is holiday which will probably explain
+8:07,fluctuations of sales much better good
+8:09,feature engineering often makes the
+8:10,difference between an average model and
+8:12,an excellent one as it helps the model
+8:14,focus on the most relevant patterns in
+8:16,the data feature scaling also called
+8:18,normalization or standardization is the
+8:20,process of transforming numeric features
+8:22,to a similar scale typically to prevent
+8:24,features with larger ranges from
+8:25,dominating the learning process for
+8:27,example here the numbers for salary are
+8:29,much larger than those for age and
+8:31,dominate the model fitting common
+8:32,scaling methods include minmax
+8:34,normalization thus scaling to a 0 to one
+8:36,range as seen here or standardization
+8:38,transforming to mean zero and standard
+8:40,deviation one proper scaling is
+8:41,particularly important for many
+8:43,algorithms like gradient descent and
+8:45,neural networks which can perform poorly
+8:47,or converge slowly when features are on
+8:49,vastly different scales dimensionality
+8:51,refers to the number of features also
+8:52,called Dimensions variables or
+8:54,attributes in a data set for example in
+8:56,a house price prediction model if each
+8:58,house is described by square footage
+9:01,number of bedrooms location age number
+9:03,of bathrooms and distance from the city
+9:05,center the data has six dimensions High
+9:08,dimensional data having many features
+9:10,can pose unique challenges often called
+9:12,The Curse of dimensionality as
+9:14,Dimensions increase data becomes more
+9:15,sparse and patterns become harder to
+9:17,find much like trying to find a needle
+9:20,in an increasingly large Hast stack this
+9:21,is why dimensionality reduction
+9:22,techniques are often crucial in machine
+9:24,learning helping to compress many
+9:26,features into a smaller set while
+9:28,preserving important information feature
+9:29,engineering feature scale and
+9:31,dimensionality reduction are all part of
+9:33,data pre-processing along with other
+9:35,techniques a Target also called the
+9:37,dependent variable output variable
+9:39,response variable or label is what a
+9:40,machine learning model is trying to
+9:42,predict based on the features for
+9:43,example in a house price prediction
+9:45,model the target would be the actual
+9:47,sale price of the house while in an
+9:49,email spam detector the target would be
+9:52,whether an email is Spam or not spam in
+9:54,supervised learning the training data
+9:55,must include both features and their
+9:57,corresponding Target values allowing the
+9:59,model to learn the relationship between
+10:02,them an instance also called a sample
+10:05,example record data point or observation
+10:06,is a single complete unit of data that
+10:09,includes all features and in supervised
+10:10,learning it's Target value in this
+10:12,example it's one person with their name
+10:14,age income and marital status for house
+10:16,prediction it might be a single house
+10:17,with all its characteristics like square
+10:20,footage and price a typical machine
+10:22,learning data set consists of many such
+10:23,instances which together form the
+10:25,training or test data think of an
+10:27,instance as one row in a data table or
+10:29,spreadsheet with the columns being the
+10:30,feature features and the target the
+10:32,entire table would be called your data
+10:36,set a label also called a class Target
+10:38,value ground truth or correct answer is
+10:40,the known correct output associated with
+10:42,an instance in supervised learning it is
+10:44,the value that the target variable takes
+10:46,for each instance in an image
+10:48,recognition system where the target
+10:49,variable is the type of animal in the
+10:52,picture the label is the actual animal's
+10:55,name like cat or dog for each image
+10:56,labels are crucial for training
+10:57,supervised learning models as they
+10:59,provide the right answers that the model
+11:01,learns from to obtaining accurate labels
+11:03,often require significant human effort
+11:05,such as experts manually categorizing
+11:07,thousands of examples this process is
+11:09,called labeling which often is a major
+11:11,bottleneck in supervised learning
+11:13,well-labeled data is a hot commodity and
+11:15,many creative ways exist to generate it
+11:17,including crowdsourcing model complexity
+11:19,refers to how sophisticated a machine
+11:20,learning model is in terms of its
+11:22,ability to capture patterns in the data
+11:25,a more complex model has more parameters
+11:26,and can learn more complicated
+11:28,relationships like a neural network with
+11:30,many layers conversely a simple model
+11:32,has fewer parameters and can only
+11:34,capture basic patterns like a linear
+11:36,regression finding the right level of
+11:39,complexity is crucial too simple and the
+11:40,model fails to capture important
+11:42,patterns which is called underfitting
+11:44,too complex and it learns to fit to
+11:46,noise in the training data rather than
+11:49,true patterns also called overfitting a
+11:50,simple way to think about model
+11:52,complexity is by thinking about the
+11:54,polinomial order of a regression line a
+11:56,simple linear regression only has to
+11:57,estimate the intercept and the slope of
+12:00,the line so two parameters a quadratic
+12:01,regression has to estimate the intercept
+12:04,and two parameters and so on each
+12:05,polinomial can potentially fit more
+12:07,complicated data this relationship
+12:09,between polinomial order and complexity
+12:11,provides a clear example of the
+12:12,trade-off between a model's ability to
+12:15,capture complex patterns and its risk of
+12:17,fitting to noise bias in terms of model
+12:19,complexity refers to how limited or
+12:21,inflexible a model's assumptions are
+12:22,about the underlying patterns in the
+12:25,data a model with high bias like a
+12:27,linear regression makes strong simple
+12:29,assumptions in this case that the
+12:31,relationship is purely linear as we
+12:33,increase the polinomial order the bias
+12:35,decreases a second order polinomial has
+12:38,more flexibility to fit curves low bias
+12:39,means fewer built-in assumptions about
+12:41,the data structure this doesn't mean
+12:43,lower bias is always better a very high
+12:45,order polinomial might have such low
+12:47,bias that it fits the training data
+12:49,perfectly but fails to generalize well
+12:50,leading to
+12:53,overfitting variance refers to how much
+12:54,a model's predictions would change if it
+12:56,were trained on different subsets of the
+12:58,training data a model with high variance
+12:59,is very sensitive to small changes in
+13:01,the training data producing
+13:03,significantly different predictions when
+13:05,trained on slightly different data sets
+13:07,models with low variance like linear
+13:09,regression produce more consistent
+13:10,predictions across different training
+13:12,sets High variance often indicates
+13:14,overfitting where the model is learning
+13:16,the random noise and the training data
+13:18,rather than the true underlying
+13:20,patterns there's typically a trade-off
+13:21,between bias and variance where reducing
+13:24,one tends to increase the other the bias
+13:25,variance trade-off is a fundamental
+13:27,Concept in machine learning that
+13:28,describes the tension between a model's
+13:30,ability to minimize bias and variance at
+13:32,the same time as model complexity
+13:34,increases bias typically decreases
+13:36,because the model can capture more
+13:38,complex patterns but variance increases
+13:40,because the model becomes more sensitive
+13:42,to changes in the training data
+13:45,conversely as model complexity decreases
+13:47,bias increases because the model makes
+13:49,more rigid assumptions but variance
+13:51,decreases because the model becomes more
+13:52,stable finding The Sweet Spot in this
+13:54,tradeoff is crucial the goal is to
+13:55,create a model that's complex enough to
+13:57,capture true patterns in the data but
+13:59,not so complex that it fits to noise
+14:01,this balance typically produces the best
+14:03,generalization to new data this concept
+14:04,is one of the most Central and important
+14:07,concepts of machine learning truly
+14:08,understanding this concept on all levels
+14:10,will make you a great data scientist and
+14:12,machine learning engineer noise refers
+14:14,to random variations or errors in data
+14:15,that don't represent true underlying
+14:17,patterns like random fluctuations in
+14:19,sensor readings or errors in data
+14:21,collection in machine learning we want
+14:23,to find the true patterns while ignoring
+14:25,this noise noise is what's left over
+14:27,after perfect fitting of the data with a
+14:29,perfect model capturing all the signal
+14:31,in the data overfitting occurs when a
+14:33,machine learning model learns the noise
+14:35,and random fluctuations in the training
+14:36,data rather than learning the true
+14:39,underlying patterns like a student who
+14:41,memorizes test answers without
+14:43,understanding the concepts an overfitted
+14:45,model performs well on training data but
+14:47,fails to generalize to new examples this
+14:49,typically happens when a model is too
+14:51,complex for the task or when it trains
+14:53,for too long on too little data causing
+14:55,it to mistake random noise for
+14:57,Meaningful patterns the model has high
+15:00,variance under fitting occurs when a
+15:01,machine learning model is too simple to
+15:03,capture the important patterns in the
+15:05,data resulting in poor performance on
+15:08,both training and test data like using a
+15:09,straight line to model clearly curved
+15:11,data an underfitted model makes
+15:12,oversimplified assumptions about the
+15:15,underlying patterns this typically
+15:17,happens when a model has high bias for
+15:18,example using a linear model to capture
+15:20,relationships that are clearly nonlinear
+15:22,one way to estimate bias and variance
+15:23,during training and thus avoid
+15:25,underfitting and overfitting before
+15:26,applying your model to real world data
+15:29,is validation validation is the practice
+15:31,of evaluating a model's performance on
+15:32,data it hasn't been trained on by
+15:34,setting aside a portion of the training
+15:36,data called the validation set to
+15:38,simulate how well the model will perform
+15:41,on new unseen data cross validation
+15:43,extends this concept by repeatedly
+15:44,training and validating the model on
+15:47,different splits of the data for example
+15:49,in five-fold Cross validation the data
+15:51,is divided into five parts and the model
+15:54,is trained five times each time using a
+15:56,different part as the validation set and
+15:58,the remaining parts for training this
+16:00,practice provides a more robust estimate
+16:01,of the model's True Performance and
+16:03,helps detect potential issues like
+16:05,overfitting or underfitting while
+16:07,validation sets are used during the
+16:08,model development process to make
+16:10,decisions about hyperparameters and
+16:12,model selection the test set is kept
+16:14,completely separate and used only once
+16:16,at the very end to evaluate the final
+16:18,model's performance using the test set
+16:20,repeatedly would risk overfitting to it
+16:22,regularization refers to techniques used
+16:24,to prevent overfitting by adding
+16:25,constraints or penalties that discourage
+16:27,a model from becoming too complex or
+16:28,fitting too closely to the train
+16:30,training data it keeps the model
+16:32,parameters small you can think of it as
+16:34,squeezing the regression lens so it
+16:36,doesn't become too wild the strength of
+16:38,the regularization is a hyperparameter
+16:40,too much regularization leads to
+16:42,underfitting a batch is a subset of
+16:44,training data that is processed together
+16:46,in a single step of model training
+16:47,rather than processing the entire data
+16:50,set at once for example instead of using
+16:51,"all 10,000 training images"
+16:53,simultaneously a model might process
+16:55,batches of 32 images at a time updating
+16:57,its parameters after each batch the
+16:59,batch size is an important typer
+17:01,parameter that affects training larger
+17:03,batches provide more stable parameter
+17:05,updates but require more memory while
+17:07,smaller batches update more frequently
+17:08,and can help the model Escape local
+17:10,Optima an iteration is a single pass
+17:12,through one batch of data leading to an
+17:14,update of the parameters of the model an
+17:15,Epoch is a complete pass through the
+17:17,entire training data set during model
+17:19,training this means each batch and thus
+17:21,each training example has been seen and
+17:23,learned from Once models typically need
+17:25,multiple epochs to learn effectively
+17:26,with each pass refining its
+17:28,understanding however too many epochs
+17:30,can lead to overfitting where the model
+17:32,starts memorizing the training data
+17:34,rather than learning General patterns
+17:36,these things only come into play for
+17:37,very large data sets that need to be
+17:39,split into batches small data sets are
+17:42,not split a parameter also called a
+17:44,model parameter or weight is a value
+17:45,that the model learns during training
+17:47,from the data unlike hyperparameters
+17:49,which are set before training begins
+17:51,finding the parameters of a model is the
+17:53,goal of the training process for example
+17:55,in a linear regression model the slope M
+17:57,and intercept B are parameters that the
+17:59,model adjusts to fit the data
+18:01,in more complex models like neural
+18:03,networks parameters include all the
+18:04,weights and biases that are
+18:06,automatically adjusted during training
+18:07,to minimize prediction
+18:10,errors weights and biases correspond to
+18:11,the slope and intercept of linear
+18:13,regression while a typical linear
+18:15,regression might have just a few
+18:17,parameters modern deep learning models
+18:18,can have millions or even billions of
+18:20,parameters each being fine-tuned through
+18:21,the training process to capture patterns
+18:23,in the data a hyperparameter is a
+18:25,configuration setting used to control
+18:27,the learning process set before training
+18:30,begins unlike model parameters which are
+18:32,learned during training examples include
+18:34,the learning rate batch size number of
+18:36,epochs or the number of layers in a
+18:38,neural network these are like the knobs
+18:41,and dials that data scientists adjust to
+18:44,optimize how a model learns finding the
+18:45,right hyperparameter values often
+18:47,requires experimentation as their
+18:49,optimal settings can vary significantly
+18:51,between different problems and data sets
+18:53,a cost function also called a loss
+18:55,function objective function or error
+18:57,function is a measure of how wrong a
+18:58,model's predictions are compared to the
+19:01,True Values it quantifies the cost or
+19:03,penalty of incorrect predictions for
+19:04,example in a house price prediction
+19:06,model the cost might be the average
+19:07,difference between predicted and actual
+19:10,prices so in a linear regression model
+19:11,as seen here we often use the mean
+19:13,squared error function that is the
+19:15,squared vertical distances of the data
+19:17,points from the regression line here
+19:19,that is the sum of all the red square
+19:21,areas the further the line from the
+19:22,actual data points the larger the error
+19:25,which we also call loss or cost the goal
+19:26,of training is to minimize this cost
+19:28,function like trying to achieve the
+19:30,lowest possible error score the specific
+19:32,choice of cost function significantly
+19:34,influences how the model learns and what
+19:36,kinds of Errors it prioritizes avoiding
+19:38,and can be considered another
+19:40,hyperparameter gradient descent is a
+19:42,fundamental optimization algorithm used
+19:44,to train machine learning models by
+19:46,iteratively adjusting model parameters
+19:48,to minimize errors it is one of the main
+19:50,methods for minimizing the cost function
+19:52,like a hiker trying to find the lowest
+19:54,point in a valley by always stepping in
+19:56,the steepest downhill Direction gradient
+19:58,descent calculates the direction in
+20:00,which the model's error decreases most
+20:02,rapidly and updates the parameters
+20:04,accordingly for each step it computes
+20:06,the gradient essentially the slope of
+20:08,the error with respect to each parameter
+20:09,then adjust these parameters in the
+20:11,opposite direction of the gradient using
+20:13,the learning rate to determine step size
+20:16,this process continues until the model
+20:17,reaches a minimum error or stops
+20:20,improving significantly interestingly a
+20:21,ball rolling down a mountain will behave
+20:23,the same way at each point only going in
+20:25,the direction of the steepest Ascent
+20:28,this is Nature's gradient descent but as
+20:29,you can imagine the ball can also get
+20:31,stuck in a local minimum like a
+20:33,depression on the mountain side instead
+20:34,of finding its way all the way down to
+20:37,the valley however a real ball in
+20:39,particular a heavy one has momentum
+20:40,which allows it to shoot over local
+20:42,depressions and keep going down the
+20:44,valley this inspired a variant of
+20:46,gradient descent called momentum based
+20:48,gradient descent Which is less likely to
+20:50,get stuck in local Minima the learning
+20:51,rate is a crucial hyperparameter that
+20:54,determines how much a model adjusts its
+20:55,parameters in response to errors during
+20:58,training like a student adjusting their
+20:59,understanding based on on feedback a
+21:01,model with a high learning rate makes
+21:03,large adjustments to its parameters
+21:05,after seeing each batch of data
+21:07,potentially learning quickly but risking
+21:10,overshooting optimal values conversely a
+21:12,model with a low learning rate makes
+21:14,smaller more cautious adjustments this
+21:16,can be more stable but might take longer
+21:19,to converge or get stuck in suboptimal
+21:21,Solutions finding the right learning
+21:22,rate is often critical for successful
+21:25,training too high and the model might
+21:27,never converge too low and training
+21:29,might take unnecessarily long evaluation
+21:30,is the process of measuring how well a
+21:32,machine learning model performs on data
+21:34,it hasn't seen during training using
+21:36,various metrics appropriate to the task
+21:38,for classification model evaluation
+21:40,might involve measuring accuracy
+21:42,precision recall or F1 score for
+21:44,regression model it might use mean
+21:46,squared error or R squar values this
+21:48,process typically involves both
+21:49,validation to tune the model during
+21:52,development and testing using a
+21:53,completely separate test set to get an
+21:55,unbiased estimate of final performance
+21:57,evaluation helps determine whether a
+21:59,model has truly learned use patterns or
+22:01,has just memorized the training data
+22:02,those were all basic machine learning
+22:04,terms in 22 minutes although I surely
+22:06,missed a bunch if I did please complain
+22:08,in the comments if you found this video
+22:10,helpful share it with someone who you
+22:12,think might also like it and get started
+22:13,on one of the tutorials in the
+22:16,description or on this very Channel also
+22:17,consider liking the video and
+22:19,subscribing to be notified about similar
+22:21,content in the future thanks for
+English (auto-generated),watching

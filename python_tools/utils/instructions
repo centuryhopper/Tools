@@ -16,5 +16,10 @@ My custom commands:
     - general_tools (currently just an uber earnings calculator) 
     - wealth_calculator.py (compound interest calculator)
       - cmd line tool that calculates any investment value for you using the compound interest and future value of annuity formulas
-    
+    - pi 
+      - display the instructions for copying files from pi to localhost
+    - nas
+      - display the instructions for copying files from localhost to network attached storage
+    - iphone
+      - display the instructions for how to connect iphone to localhost
 "

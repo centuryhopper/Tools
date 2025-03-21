@@ -8,7 +8,7 @@ import os
 os.chdir(os.path.dirname(__file__))
 
 
-CLIENT_FILE = "gmail_delete_service_secrets.json"
+CLIENT_FILE = "./json/gmail_delete_service_secrets.json"
 API_NAME = "gmail"
 API_VERSION = "v1"
 SCOPES = ["https://mail.google.com/"]

@@ -1,0 +1,340 @@
+timestamp,text
+Introduction,Transcript
+hi again so maybe you just watched my,0:00
+previous videos about coding of,0:02
+perceptron and now I want to ask the,0:04
+question why is not just stop here so,0:08
+okay so we have this like very simple,0:13
+scenario right where we have a canvas,0:15
+and it has a whole bunch of points in,0:19
+that canvas or a Cartesian plane,0:21
+whatever we want to call it and we threw,0:23
+a line in between and we were trying to,0:25
+classify some points that are on one,0:27
+side of the line and some other points,0:30
+that are only another side of the line,0:32
+so that was a scenario where we had to,0:34
+be single perceptron the sort of like,0:37
+processing unit we can call it the,0:38
+neuron or the processor and it received,0:41
+inputs it had like x0 and x1,0:43
+we're like the x and y coordinates of,0:48
+the point it also had this thing called,0:50
+a bias and then it generated an output,0:52
+each one of these inputs was connected,0:57
+to the processor with a wait no wait one,1:00
+way to or never wait wait wait and the,1:05
+processor creates a weighted sum of all,1:08
+the inputs multiplied by the weights,1:11
+that weighted sum is passed through an,1:13
+activation function to generate the,1:15
+output so why isn't this good now let's,1:19
+first think about what what's what's the,1:26
+limit here so the idea is that what if I,1:29
+want any number of inputs to generate,1:32
+any number of outputs that's the essence,1:36
+of what I want to do in a lot of,1:40
+different machine learning applications,1:43
+let's take a very classic classification,1:45
+algorithm which is to say okay well what,1:48
+if I have a handwritten digit like the,1:50
+number 8 and I have all of the pixels of,1:53
+1:56,Classification example
+1:59,this digit and I want those to be the
+2:02,inputs to this perceptron and I want the
+2:06,output to tell me a set of probabilities
+2:11,as to which digit it is so the output
+2:12,should look something like
+2:15,you know there's a point one chance it's
+2:17,zero there's a point two chances of one
+2:20,there's a point one chance' two two zero
+2:24,three four five six seven oh it it's
+2:25,like a point ninety nine chances at
+2:27,eight and 0.05
+2:30,chance it's a ten and I don't think I
+2:32,got those to add up to one but you get
+2:35,the idea so the idea here is that we
+2:37,want to be able to have some type of
+2:39,processing unit that can take it
+2:42,arbitrary amount of inputs like maybe
+2:46,this is a 28 by 28 pixel image so
+2:50,there's 784 grayscale values and instead
+2:52,those are coming into the processor
+2:54,which was wait is it sudden and all this
+2:55,stuff when we get an output that have
+2:57,some arbitrary amounts of probabilities
+3:00,to mitla help us guess eight not that
+3:05,this is an eight this model why couldn't
+3:07,I just have a whole bunch more inputs
+3:09,and then a whole bunch more outputs but
+3:11,still have one single processing unit
+3:16,and the reason why I can't is a stems
+3:18,from an article I don't know I'm sorry a
+Perceptrons,book that was published in 1969 by
+Marvin Minsky and Seymour Papert paper,3:21
+call of perceptrons you know AI,3:23
+luminaries here in the book perceptron,3:26
+Marvin Minsky and Seymour Papert point,3:29
+out that a simple perceptron the thing,3:35
+that I built in the previous two videos,3:38
+can only solve linearly separable,3:41
+problems so what does that mean anyway,3:44
+and why should you care about that so,3:47
+3:49,Linearly separable problems
+3:54,let's think about this this over here is
+3:57,a linearly separable problem meaning I
+4:02,need to classify this stuff and if I
+4:04,were to visualize all that stuff I can
+4:09,draw a line in between this part of the
+4:12,day this this stuff is to this class and
+4:14,this stuff that's with this class the
+4:16,stuff itself is separable by a line in
+4:18,three dimensions
+4:19,I could put a plane and that would be
+4:22,literally separable because I can kind
+4:24,of divide the space in half and and
+4:28,and understand it that way the problem
+4:31,is most interesting problems are not
+4:34,linearly separable you know there might
+4:38,be some Dana which clusters all here in
+4:40,the center that is of one class but
+4:42,anything outside of it is of another
+4:45,class and I can't draw one line to
+4:47,separate that stuff and you might be
+4:49,even thinking but that's you know still
+4:51,so much you could do so much with
+4:56,linearly separable stuff well here I'm
+4:58,going to show you right now a particular
+5:01,problem I'm looking for an eraser
+5:04,logging around like a crazy person I'm
+5:05,going to show you a particular problem
+XOR,called X or I'm making the case for why
+we need to go a step further I just had,5:10
+an idea let's go back to the litter,5:13
+I'm thinking the case for why we need to,5:15
+go to a close go a step further and make,5:17
+something called a multi-layer,5:21
+perceptron and I'm going to lay out that,5:23
+case for you right now so you might be,5:25
+familiar you might remember me from my,5:27
+videos on conditional statements and,5:30
+boolean expressions well in those videos,5:32
+I talked about operations like and and,5:34
+or which in computer programming syntax,5:38
+are often written you know double,5:41
+ampersand or two pipes the idea being,5:43
+that if I were to make a truth table,5:46
+true true false false so what I'm doing,5:51
+now is I'm showing you a truth table I,5:58
+have two elements I'm saying what if I,6:00
+say a and the B so if a is true,6:07
+well this makes no sense what I've drawn,6:13
+here because I'm losing my brain cells,6:16
+slowly over time with every passing any,6:20
+first not true false true false true,6:24
+hand true yields true if I am hungry and,6:29
+I am thirsty I shall go and,6:34
+have budge right true and true yields,6:38
+true true and false is false false and,6:43
+true is false false itself is false,6:46
+right if I have a boolean expression a,6:49
+and B I need both of those things to be,6:51
+true in order for me to get through,6:53
+interestingly enough this is a linearly,6:56
+separable problem I can draw a line,6:59
+right here and true is on one side and,7:02
+false is on the other side this means if,7:05
+this is a linearly separable problem,7:08
+which means I could create a perceptron,7:10
+that perceptron is going to have two,7:12
+inputs there are going to be boolean,7:14
+values true or false for a false and I,7:16
+could train this perceptron to give me,7:19
+an output which if two truths come in I,7:21
+should get it true if one false to the,7:24
+true comes David I should get a false -,7:26
+false coming I should get a false great,7:27
+or I could do the same thing what is or,7:30
+change in two if I'm going to do or me,7:32
+erase this dotted line and or now all of,7:36
+these become true because with an or,7:40
+operation A or B I only need one of,7:42
+these to be true in order to get true,7:46
+but if both are false I get false and,7:50
+guess what still a linearly separable,7:52
+problem and is literally separable or is,7:54
+literally separable we could have a,7:59
+perceptron learn to do both of those,8:01
+things now hold on a second,8:04
+there is another boolean operator which,8:08
+you may you might not have heard up,8:12
+until this video which would be really,8:14
+kind of exciting for me it would make me,8:16
+very happy if somebody watching this,8:17
+never heard of this before it is called,8:18
+x4 can you see what I'm writing near X,8:21
+or the X stands for exclusive exclusive,8:24
+its exclusive or which means it's only,8:30
+true if one is true and what is false,8:36
+it's not true both are false this or,8:38
+that both those things are false I'm,8:42
+still false but if both are true it's,8:44
+also false so this is exclusive,8:46
+or let me erase all this exclusive or I,8:49
+mean if one if one is true and one is,8:58
+false it's true if one is true is one,9:02
+assault is true if both are true it's,9:04
+false if both are false it's false this,9:06
+is exclusive or a very simple boolean,9:10
+operation however I triple dog dare with,9:13
+the cherry on top you to draw a single,9:20
+line through here to divide the false in,9:23
+the truth I cannot I can draw if this is,9:27
+not a linearly separable problem this is,9:29
+the point of all this like rambling I,9:31
+could draw two lines one here and now I,9:33
+have all the truths in here and the,9:39
+false is outside of them this means a,9:40
+single perceptron the simplest cannot,9:42
+solve cannot solve the simple operation,9:46
+like this so this is what Minsky and,9:50
+Papert talked about in the book,9:52
+perceptrons well this is like an,9:54
+interesting idea conceptually it kind of,9:56
+seems very exciting but if it can't,10:00
+solve X or what are we supposed to do in,10:01
+this the answer to this is a new bike,10:04
+I've already thought of this yourself,10:08
+it's not two but I kind of missed a,10:09
+little piece of my diagram here right,10:12
+let's say this is a perceptron that,10:13
+knows how to solve and and this is a,10:18
+perceptron that knows how to solve for,10:23
+what if I took those same inputs and,10:26
+sent them into both and then I got the,10:29
+output here so this output would give me,10:33
+the result of and and this output would,10:38
+give me the result of or well what is,10:41
+XOR really XOR is actually or but not,10:44
+and right so if I could solve something,10:50
+and is linearly separable not and is,10:54
+also linearly separable so what I want,10:57
+then is for both of these out,11:01
+but actually to go into another,11:02
+perceptron that would then be and so,11:04
+this project run can solve not and and,11:11
+this perceptron can solve or and those,11:13
+output can come into here then this,11:15
+would be the results of both or is true,11:17
+and not and is true which is actually,11:21
+this these are the only two things where,11:23
+or is too but not in but not and and so,11:25
+the idea here is that more complex,11:29
+problems that are not linearly separable,11:31
+can be solved by linking multiple,11:34
+perceptron together and this is the idea,11:37
+of a multi layered perceptron we have,11:40
+multiple layers and this is still a very,11:47
+simple diagram you could think of this,11:49
+almost as like if you were designing a,11:51
+circuit right if you decide what,11:53
+electricity should flow and because,11:55
+we're like a these were switches you,11:57
+know how could you get a bunch of outfit,12:00
+you have an LED turn on with exclusive,12:02
+or you would actually water the circuit,12:06
+basically in exactly this way so this is,12:08
+the idea here so what I am would like to,12:12
+do in the next so at some point I would,12:14
+like to make a video where I actually,12:17
+just kind of build take that previous,12:18
+perceptron example and just take a few,12:20
+steps farther to do exactly that but,12:21
+what I'm going to do actually in the,12:24
+next videos is diagram out this,12:26
+structure of a multi-layer perceptron,12:29
+how the inputs how the outputs work how,12:32
+the feed-forward algorithm works where,12:35
+the inputs come in get x weights get,12:37
+some together and generate an output and,12:40
+build a simple javascript library and,12:42
+has all the pieces of that neural,12:45
+network system in it okay so I hope that,12:47
+this video kind of gives you a nice,12:51
+follow-up from the perceptron in a sense,12:53
+of why this is important and I'm not,12:55
+sure if I was done yet I'm going to go,12:58
+check the live chat then questions are,12:59
+important things like this,13:02
+this video will be over oh yeah back so,13:03
+there was one question which is,13:05
+important like Oh what I heard somebody,13:06
+in the chat asked what about the hidden,13:08
+layer and so this is jumping ahead a,13:10
+little bit because I'm going to get to,13:12
+this in more detail in the next video,13:13
+there's a way that I drew this diagram,13:14
+is pretty awkward let me try to fix this,13:16
+up for a second,13:18
+imagine there were two inputs and I,13:21
+actually drew those as if they are,13:24
+neuron and I know I'm out of the frame,13:26
+but I'm still here and these inputs were,13:28
+connected to each of these perceptrons,13:31
+each was connected and each was weighted,13:35
+so this is actually what's now known as,13:38
+a 3 layer Network there is the input,13:41
+layer this is the hidden layer in the,13:45
+reason why it will actually reduce the,13:51
+output layer right that's obvious right,13:52
+this is the input those are the inputs,13:55
+the trues and falses this is the output,13:57
+layer that should give us a result,14:00
+are we still true or we false and then,14:02
+the hidden layer are the neurons that,14:06
+sit in between the inputs and the,14:08
+outputs and they're called hidden,14:11
+because as a kind of user of the system,14:12
+we don't necessarily see them a user of,14:15
+the system is speeding in data and,14:17
+looking at the output the hidden layer,14:18
+in a sense is where the magic happens,14:20
+the hidden layer is what allows one to,14:22
+get around this sort of linearly,14:25
+separable question so the war in layers,14:26
+the more neurons the more amount of,14:31
+complexity in a way that the system the,14:34
+more waits the more parameters that need,14:35
+to be tweaked and we'll see that as they,14:37
+start to build a neural network library,14:39
+the way that I want that library to be,14:41
+set up I want to say I want to make a,14:43
+network with ten inputs three outputs,14:44
+one hidden layer with 15 like hidden,14:47
+neurons something like that but there,14:50
+could be multiple hidden layers and,14:51
+eventually as I get further and further,14:52
+down this road if I keep going we'll see,14:55
+there are all sorts of other styles of,14:57
+how the network can be configured and,14:59
+set up and whether it's the output feeds,15:01
+back to to the input that's something,15:03
+called recurrent networks convolutional,15:04
+Network and if some this kind of like,15:06
+said image processing operations almost,15:08
+happens early on before as part of the,15:11
+layers so there's a,15:13
+a lot of stuff in the grand scheme of,15:14
+things to get to but this is the,15:16
+fundamental building blocks so okay so,15:18
+I'm in the next video I'm going to start,15:21
+15:23,Outro
+15:25,building the library and to be honest I
+15:28,think what I need to do
+15:32,yeah the next video I'm going to set up
+15:34,the basic skeleton of the neural network
+15:36,library and look at all the pieces that
+15:38,we need and then I'm going to have to
+15:40,keep going and look at some matrix math
+15:46,that's going to be fun okay see you soon
+English (auto-generated),[Music]
