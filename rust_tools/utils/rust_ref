@@ -1,0 +1,218 @@
+########################################
+#             RUST QUICK REF          #
+########################################
+
+# 🚀 FILE HANDLING
+use std::fs::{File, OpenOptions, read_to_string, remove_file, create_dir, create_dir_all, read_dir};
+use std::io::{Read, Write, BufReader, BufWriter, Error};
+use std::path::Path;
+
+// Read file to string
+let content = read_to_string("file.txt")?;
+println!("{}", content);
+
+// Read file line by line
+let file = File::open("file.txt")?;
+let reader = BufReader::new(file);
+for line in reader.lines() {
+    println!("{}", line?);
+}
+
+// Write to file (overwrite)
+let mut file = File::create("file.txt")?;
+file.write_all(b"Hello, Rust!")?;
+
+// Append to file
+let mut file = OpenOptions::new().append(true).open("file.txt")?;
+file.write_all(b"\nAppended text")?;
+
+// Delete file
+remove_file("file.txt")?;
+
+// Create directory
+create_dir("my_folder")?;
+create_dir_all("parent/child")?;
+
+// List files in directory
+for entry in read_dir(".")? {
+    println!("{}", entry?.path().display());
+}
+
+// Check if file exists
+if Path::new("file.txt").exists() {
+    println!("File exists!");
+}
+
+/* ===========================
+   ⌨️ USER INPUT
+=========================== */
+use std::io;
+
+// Basic user input
+let mut input = String::new();
+println!("Enter your name:");
+io::stdin().read_line(&mut input)?;
+println!("Hello, {}!", input.trim());
+
+// Parse input to integer
+let mut number = String::new();
+println!("Enter a number:");
+io::stdin().read_line(&mut number)?;
+let num: i32 = number.trim().parse().expect("Invalid number");
+println!("You entered: {}", num);
+
+// Input with error handling
+let mut age = String::new();
+println!("Enter your age:");
+io::stdin().read_line(&mut age)?;
+match age.trim().parse::<u32>() {
+    Ok(val) => println!("You are {} years old!", val),
+    Err(_) => println!("Invalid age input!"),
+}
+
+########################################
+# 🔥 CONCURRENCY
+use std::thread;
+use std::sync::{Arc, Mutex, RwLock, mpsc};
+use std::time::Duration;
+
+// Spawn a thread
+let handle = thread::spawn(|| {
+    println!("Thread running");
+    thread::sleep(Duration::from_secs(1));
+});
+handle.join().unwrap();
+
+// Mutex example
+let data = Arc::new(Mutex::new(0));
+let data_clone = Arc::clone(&data);
+let handle = thread::spawn(move || {
+    let mut num = data_clone.lock().unwrap();
+    *num += 1;
+});
+handle.join().unwrap();
+println!("Result: {}", *data.lock().unwrap());
+
+// RwLock example
+let lock = Arc::new(RwLock::new(5));
+{
+    let mut num = lock.write().unwrap();
+    *num += 10;
+}
+println!("Updated: {}", *lock.read().unwrap());
+
+// Channel example
+let (tx, rx) = mpsc::channel();
+thread::spawn(move || {
+    tx.send("Message from thread").unwrap();
+});
+println!("Received: {}", rx.recv().unwrap());
+
+########################################
+# 🔢 COLLECTIONS
+use std::collections::{HashMap, HashSet, VecDeque};
+
+// Vector
+let mut v = vec![1, 2, 3];
+v.push(4);
+println!("{:?}", v);
+
+// HashMap
+let mut map = HashMap::new();
+map.insert("key", "value");
+println!("{:?}", map.get("key"));
+
+// HashSet
+let mut set = HashSet::new();
+set.insert(1);
+set.insert(2);
+println!("{:?}", set.contains(&1));
+
+// VecDeque (Queue)
+let mut queue = VecDeque::new();
+queue.push_back(1);
+queue.push_back(2);
+println!("Front: {:?}", queue.front());
+
+########################################
+# 🧹 ERROR HANDLING
+
+// Result Example
+fn read_file() -> Result<(), Error> {
+    let _file = File::open("file.txt")?;
+    Ok(())
+}
+
+// Option Example
+let x: Option<i32> = Some(10);
+let y = x.unwrap_or(0);
+println!("Value: {}", y);
+
+########################################
+# 📌 STRING OPERATIONS
+
+// Split string
+let s = "hello,world";
+for part in s.split(',') {
+    println!("{}", part);
+}
+
+// Replace
+let new_s = s.replace("world", "Rust");
+println!("{}", new_s);
+
+// Trim
+let trimmed = "  hello  ".trim();
+println!("{}", trimmed);
+
+########################################
+# 🔨 COMMAND EXECUTION
+use std::process::Command;
+
+// Run a shell command
+let output = Command::new("ls").output()?;
+println!("{}", String::from_utf8_lossy(&output.stdout));
+
+// Run command with args
+let output = Command::new("echo").arg("Hello, Rust!").output()?;
+println!("{}", String::from_utf8_lossy(&output.stdout));
+
+########################################
+# 📦 SERIALIZATION (Serde JSON)
+use serde::{Serialize, Deserialize};
+use serde_json;
+
+#[derive(Serialize, Deserialize)]
+struct User {
+    name: String,
+    age: u8,
+}
+
+// Serialize
+let user = User { name: "Alice".to_string(), age: 30 };
+let json_str = serde_json::to_string(&user)?;
+println!("{}", json_str);
+
+// Deserialize
+let deserialized: User = serde_json::from_str(&json_str)?;
+println!("Name: {}, Age: {}", deserialized.name, deserialized.age);
+
+########################################
+# 🏗️ REGEX
+use regex::Regex;
+
+let re = Regex::new(r"\d+")?;
+for cap in re.find_iter("My number is 12345") {
+    println!("Found: {}", cap.as_str());
+}
+
+########################################
+# ✅ HOW TO USE
+# Save this file:
+#   nvim rust_ref.txt
+# View anytime:
+#   cat rust_ref.txt
+#
+# Happy Coding! 🚀
+########################################
+
