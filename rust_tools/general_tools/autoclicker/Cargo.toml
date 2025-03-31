@@ -1,0 +1,12 @@
+[package]
+name = "autoclicker"
+version = "0.1.0"
+edition = "2021"
+description = "A cross-platform auto clicker library"
+license = "MIT"
+
+[dependencies]
+device_query = "3.0.1"
+enigo = "0.3.0" # will help us click on the screen
+inputbot = "0.6.0" # will help us listen to keyboard presses globally
+rdev = "0.5.3"

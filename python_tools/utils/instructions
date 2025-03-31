@@ -7,13 +7,15 @@ My custom commands:
     - FileOrganizer.py [path/to/folder]
         - group files in the path you specify into folders by their extensions (for example, all .png files will be grouped in to a folder called 'png')
     
+    - get_youtube_transcript.py
+      - pass in any youtube video and it will print the transcript for you and write it to a text file and csv file
     - GitHubAutomator.py --name [name of your github repo]
       - add '--private' flag for a private repo
     - passwords
       - enter your email and password from the password manager account to view your records in a table
     - create_daily_journal
       - creates a new entry by utilizing the current year-month-day format for the path to the file
-    - general_tools (currently just an uber earnings calculator) 
+    - uber (originally the 'general_tools' executable. For now it's currently just an uber earnings calculator) 
     - wealth_calculator.py (compound interest calculator)
       - cmd line tool that calculates any investment value for you using the compound interest and future value of annuity formulas
     - pi 

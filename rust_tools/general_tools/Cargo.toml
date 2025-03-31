@@ -1,4 +1,4 @@
-workspace = { members = [ "concurrency_primes", "keylogger","uber_calculator"] }
+workspace = { members = [ "autoclicker", "donut","keylogger","uber_calculator"] }
 [package]
 name = "general_tools"
 version = "0.1.0"
@@ -8,6 +8,8 @@ edition = "2021"
 
 [dependencies]
 uber_calculator = { path = "./uber_calculator" }
-concurrency_primes = { path = "./concurrency_primes" }
 keylogger = { path = "./keylogger" }
+autoclicker = { path = "./autoclicker"}
+donut = { path = "./donut"}
+
 
