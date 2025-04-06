@@ -1,0 +1,7 @@
+[package]
+name = "doubly_linked_list"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+linked_list_trait = { version = "0.1.0", path = "../linked_list_trait" }

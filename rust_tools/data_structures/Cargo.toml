@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 concurrency_primes = { path = "./concurrency_primes" }
+doubly_linked_list = { version = "0.1.0", path = "doubly_linked_list" }
+linked_list_trait = { version = "0.1.0", path = "linked_list_trait" }
