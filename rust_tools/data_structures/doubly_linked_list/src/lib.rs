@@ -16,7 +16,7 @@ struct ListNode<T> {
 
 impl<T> ListNode<T> {
     pub fn new(data: T) -> Self {
-        ListNode {
+        Self {
             data: data,
             next: None,
             prev: None,
@@ -24,6 +24,7 @@ impl<T> ListNode<T> {
     }
 }
 
+/// doubly linked list
 #[derive(Debug)]
 pub struct DoublyLinkedList<T> {
     head: NodePointer<T>,

@@ -1,5 +1,3 @@
-
-
 /*
 🔸 Use &self when just reading data
 🔸 Use &mut self when modifying self
@@ -7,9 +5,7 @@
 🔸 Omit self for static or associated methods
 */
 
-
-pub trait LinkedListTrait<T>
-{
+pub trait LinkedListTrait<T> {
     fn size(&self) -> u32;
     fn tail_insert(&mut self, data: T);
     fn head_insert(&mut self, data: T);
