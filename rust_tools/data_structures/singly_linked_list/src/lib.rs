@@ -34,7 +34,9 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord + Default> SinglyLinkedList<T> {
         }
     }
 
-    fn get_linked_list_parts(list: &mut SinglyLinkedList<T>) -> (SinglyLinkedList<T>, SinglyLinkedList<T>) {
+    fn get_linked_list_parts(
+        list: &mut SinglyLinkedList<T>,
+    ) -> (SinglyLinkedList<T>, SinglyLinkedList<T>) {
         let mut slow = list.head.clone();
         let mut fast = list.head.clone();
         let mut mid = list.head.clone();
@@ -100,7 +102,7 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord + Default> SinglyLinkedList<T> {
                 }
             };
 
-            // set aux tail's pointer accordingly            
+            // set aux tail's pointer accordingly
             tail.borrow_mut().next = next_node.clone();
 
             // move aux tail to its new next pointer
@@ -141,7 +143,11 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord + Default> SinglyLinkedList<T> {
         // dummy head and tail refer to nodes within the same linked list
         {
             let mut tail_mut = tail.borrow_mut();
-            tail_mut.next = if head_a.is_some() { head_a.clone() } else { head_b.clone() };
+            tail_mut.next = if head_a.is_some() {
+                head_a.clone()
+            } else {
+                head_b.clone()
+            };
         }
 
         // exclude dummy head value
@@ -159,8 +165,7 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord + Default> SinglyLinkedList<T> {
     // and recursively do the same for them and then merge them when they're both sorted
     fn merge_sort(list: &mut SinglyLinkedList<T>) -> SinglyLinkedList<T> {
         // if there's only one node, it should return that node as a sorted one-element list, not an empty one.
-        if list.head.is_none() || list.head.clone().unwrap().borrow().next.is_none()
-        {
+        if list.head.is_none() || list.head.clone().unwrap().borrow().next.is_none() {
             return SinglyLinkedList {
                 head: list.head.clone(),
                 size: list.size,
@@ -169,7 +174,8 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord + Default> SinglyLinkedList<T> {
         let (mut a_list, mut b_list) = SinglyLinkedList::get_linked_list_parts(list);
         let mut sorted_a = SinglyLinkedList::merge_sort(&mut a_list);
         let mut sorted_b = SinglyLinkedList::merge_sort(&mut b_list);
-        let result = SinglyLinkedList::merge_two_sorted_list(&mut sorted_a.head, &mut sorted_b.head);
+        let result =
+            SinglyLinkedList::merge_two_sorted_list(&mut sorted_a.head, &mut sorted_b.head);
         return result;
     }
 
@@ -459,6 +465,68 @@ mod tests {
     //     list.tail_remove();
     //     assert_eq!(list.size(), 4);
     // }
+
+    #[test]
+    fn test_sort_already_sorted() {
+        let mut list = SinglyLinkedList::new(1);
+        for i in 2..=5 {
+            list.tail_insert(i);
+        }
+        list.sort_list();
+        assert_eq!(list.show(), vec![1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn test_sort_reverse_list() {
+        let mut list = SinglyLinkedList::new(5);
+        for i in (1..5).rev() {
+            list.tail_insert(i);
+        }
+        list.sort_list();
+        assert_eq!(list.show(), vec![1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn test_sort_with_duplicates() {
+        let mut list = SinglyLinkedList::new(5);
+        list.tail_insert(1);
+        list.tail_insert(5);
+        list.tail_insert(3);
+        list.tail_insert(1);
+        list.tail_insert(3);
+        list.sort_list();
+        assert_eq!(list.show(), vec![1, 1, 3, 3, 5, 5]);
+    }
+
+    #[test]
+    fn test_insert_delete_oob() {
+        let mut list = SinglyLinkedList::new(1);
+        list.insert_at_index(5, 100); // Should not insert
+        assert_eq!(list.size(), 1);
+        list.delete_at_index(10); // Should not panic
+        assert_eq!(list.size(), 1);
+    }
+
+    #[test]
+    fn test_delete_all() {
+        let mut list = SinglyLinkedList::new(1);
+        list.tail_insert(2);
+        list.tail_insert(3);
+
+        list.head_remove();
+        list.head_remove();
+        list.head_remove();
+
+        assert_eq!(list.size(), 0);
+        assert_eq!(list.show(), vec![]);
+    }
+
+    #[test]
+    fn test_insert_at_head() {
+        let mut list = SinglyLinkedList::new(10);
+        list.insert_at_index(0, 99);
+        assert_eq!(list.show(), vec![99, 10]);
+    }
 
     #[test]
     pub fn overall_test() {
