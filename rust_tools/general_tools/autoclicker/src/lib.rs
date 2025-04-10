@@ -50,5 +50,6 @@ fn logic() {
 
 pub fn run_autoclicker() {
     println!("Running auto clicker...");
+    println!("Toggle [ON/OFF] with F6");
     logic();
 }

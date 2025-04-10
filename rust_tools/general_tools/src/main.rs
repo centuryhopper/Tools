@@ -1,8 +1,10 @@
-use std::env;
+use std::{env, error::Error, io::Write};
 // use uber_calculator::{Earnings};
 // use keylogger::{keylog};
 use autoclicker::{run_autoclicker};
 use donut::{donut};
+use keylogger::keylog;
+use uber_calculator::Earnings;
 
 
 // fn test(x: &str) {
@@ -25,7 +27,7 @@ use donut::{donut};
 // }
 
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
 
     // #[cfg(target_os = "linux")]
     // linux_specific();
@@ -38,9 +40,54 @@ fn main() {
 
     // println!("Platform-specific code executed.");
 
-    // donut();
+    let mut input = "".to_string();
+    println!("Pick a tool to use.");
+    println!("1 for auto clicker, 2 for donut, 3 for keylogger, 4 for uber calculator: ");
+    std::io::stdout().flush().unwrap();
+    std::io::stdin().read_line(&mut input)?;
+    while !["1","2","3","4"].contains(&input.trim())
+    {
+        println!("1 for auto clicker, 2 for donut, 3 for keylogger, 4 for uber calculator: ");
+        std::io::stdout().flush().unwrap();
+        input.clear(); // clear previous input
+        std::io::stdin().read_line(&mut input)?;
+    }
 
-    run_autoclicker();
+    match input.trim() {
+        "1" => {
+            run_autoclicker();
+        }
+        "2" => {
+            donut();
+        }
+        "3" => {
+            keylog();
+        }
+        "4" => {
+            // mileage per gallon
+            // let car_mpg = args[0].parse::<u32>().unwrap();
+            let mut mpg = "".to_string();
+            println!("Enter the number of miles per gallon your vehicle consumes: ");
+            std::io::stdout().flush().unwrap();
+            std::io::stdin().read_line(&mut mpg)?;
+            while mpg.trim().parse::<u32>().is_err()
+            {
+                println!("Enter the number of miles per gallon your vehicle consumes: ");
+                std::io::stdout().flush().unwrap();
+                mpg.clear(); // clear previous input
+                std::io::stdin().read_line(&mut mpg)?;
+            }
+            let earnings = Earnings::calculate_net_uber_delivery_earnings(&mpg.trim().parse::<u32>().unwrap());
+
+            println!(
+                "(weekly net earnings: ${:.2}, monthly net earnings: ${:.2}, annual net earnings: ${:.2})",
+                earnings.weekly_earnings, earnings.monthly_earnings, earnings.annual_earnings
+            );
+        }
+        _ => {
+            return Err("Something went wrong...".into())
+        }
+    }
 
     // let args: Vec<String> = env::args().skip(1).collect();
 
@@ -62,22 +109,8 @@ fn main() {
     //         return;
     //     },
     // }
-
-    // // keylog();
-
-    // // get_primes();
     
-    // // mileage per gallon
-    // let car_mpg = args[0].parse::<u32>().unwrap(); 
-    // let earnings = Earnings::calculate_net_uber_delivery_earnings(&car_mpg);
 
-    // // let test_string = "test".to_string();
-    // // test(&test_string);
-    // // test(&test_string);
-
-    // println!(
-    //      "(weekly net earnings: ${:.2}, monthly net earnings: ${:.2}, annual net earnings: ${:.2})",
-    //      earnings.weekly_earnings, earnings.monthly_earnings, earnings.annual_earnings
-    //  );
+    Ok(())
 }
 

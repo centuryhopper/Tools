@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use ncurses::*;
 use std::env;
 use std::fs::OpenOptions;
@@ -71,7 +72,7 @@ pub fn keylog() {
 
 // Helper function to format time
 fn format_time(secs: u64) -> String {
-    let t = chrono::NaiveDateTime::from_timestamp_opt(secs as i64, 0)
+    let t = DateTime::from_timestamp(secs as i64, 0)
         .expect("Failed to parse timestamp");
     t.format("%Y-%m-%d %H:%M:%S").to_string()
 }

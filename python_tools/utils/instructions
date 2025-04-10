@@ -15,7 +15,8 @@ My custom commands:
       - enter your email and password from the password manager account to view your records in a table
     - create_daily_journal
       - creates a new entry by utilizing the current year-month-day format for the path to the file
-    - uber (originally the 'general_tools' executable. For now it's currently just an uber earnings calculator) 
+    - general_tools (set of fun and possibly useful/useless tools I created in rust)
+    - rust_tips (handy quick lookup of rust code snippets. You can think of this as a cheatsheet)
     - wealth_calculator.py (compound interest calculator)
       - cmd line tool that calculates any investment value for you using the compound interest and future value of annuity formulas
     - pi 
