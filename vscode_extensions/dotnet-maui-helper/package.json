@@ -1,0 +1,68 @@
+{
+  "name": "dotnet-maui-helper",
+  "displayName": "dotnet-maui-helper",
+  "publisher": "roguedeveloper",
+  "description": "Easily switch between .xaml and its code behind .xaml.cs file with hotkeys",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RogueCoder123/Vscode_Extensions/blob/main/dotnet-maui-helper.zip",
+    "directory": "dotnet-maui-helper"
+  },
+  "bugs": {
+    "url": "https://github.com/RogueCoder123/Vscode_Extensions/issues"
+  },
+  "homepage": "https://github.com/RogueCoder123/Vscode_Extensions/blob/main/xaml-maui-switcher/README.md",
+  "activationEvents": [
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.switchCodeBehind",
+        "title": "Switch to code-behind file"
+      },
+      {
+        "command": "extension.createCodeBehind",
+        "title": "create the code-behind file"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "extension.switchCodeBehind",
+        "key": "alt+o",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "extension.createCodeBehind",
+        "key": "alt+p",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.99.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "eslint": "^9.23.0",
+    "typescript": "^5.8.2",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+}
