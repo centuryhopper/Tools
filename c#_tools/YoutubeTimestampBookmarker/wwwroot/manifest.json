@@ -1,14 +1,29 @@
 ﻿{
   "manifest_version": 3,
-  "name": "YoutubeTimestampBookmarker Extension",
-  "description": "My browser extension built with Blazor WebAssembly",
+  "name": "YouTube Timestamp Tracker",
+  "description": "Save and view YouTube timestamps",
   "version": "0.1",
+  "permissions": [
+    "tabs",
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": ["https://www.youtube.com/*"],
   "background": {
     "service_worker": "content/BackgroundWorker.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["js/helpers.js", "js/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "YouTube Timestamp Tracker"
   },
   "options_ui": {
     "page": "options.html",
@@ -21,7 +36,8 @@
     {
       "resources": [
         "framework/*",
-        "content/*"
+        "content/*",
+        "helpers.js"
       ],
       "matches": [ "<all_urls>" ]
     }

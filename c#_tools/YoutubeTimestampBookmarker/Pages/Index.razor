@@ -1,4 +1,72 @@
 ﻿@page "/index.html"
 @inherits IndexPage
 
-<h1>Hello, from Blazor.</h1>
+
+<div class="container">
+    <div class="text-center">
+        <h3>YouTube Timestamp Bookmarks</h3>
+        @if (!Timestamps.Any())
+        {
+            <p>No bookmarks yet.</p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var item in Timestamps)
+                {
+                    <li style="list-style-type: none;"><a href="@item.Url" target="_blank">@item.Label</a></li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+@* <button class="btn btn-primary" @onclick="AddTimestamp">Add Current Timestamp</button> *@
+
+@code {
+    public class Timestamp
+    {
+        public string Label { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+
+        public override string ToString()
+        {
+            return $"url: {Url}, label: {Label}";
+        }
+    }
+
+    List<Timestamp> Timestamps = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Timestamps = await jsRuntime.InvokeAsync<List<Timestamp>>("loadTimestamps");
+            // Timestamps.ForEach(o => Console.WriteLine(o));
+
+            // ✅ Force UI update after timestamps load
+            StateHasChanged();
+        }
+    }
+
+    //private async Task AddTimestamp()
+    //{
+    //    var url = await jsRuntime.InvokeAsync<string>("getCurrentTabUrl");
+    //    if (!url.Contains("youtube.com/watch"))
+    //    {
+    //        Console.WriteLine("you must be on a youtube video link");
+    //        return;
+    //    }
+//
+    //    var time = await jsRuntime.InvokeAsync<int>("getVideoTime");
+    //    var label = $"Timestamp at {time}s";
+//
+    //    var bookmark = new Timestamp { Label = label, Url = $"{url}&t={time}s" };
+    //    Timestamps.Add(bookmark);
+//
+    //    await jsRuntime.InvokeVoidAsync("saveTimestamps", Timestamps);
+    //    //var json = System.Text.Json.JsonSerializer.Serialize(Timestamps);
+    //    //await jsRuntime.InvokeVoidAsync("localStorage.setItem", "yt_timestamps", json);
+    //}
+}
+

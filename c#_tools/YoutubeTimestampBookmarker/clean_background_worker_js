@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Remove the import line for s4 (content.js)
+sed -i '/import \* as s4 from "\/js\/content.js";/d' ./bin/Debug/net8.0/browserextension/content/BackgroundWorker.js
+
+# Remove the entry for s4
+sed -i 's/\["js\/content.js", s4\], *//g' ./bin/Debug/net8.0/browserextension/content/BackgroundWorker.js
+
+
+
+
+
+
