@@ -1,17 +1,18 @@
 #![allow(warnings)]
 
 use std::cell::{Ref, RefCell};
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 use linked_list_trait::LinkedListTrait;
 
-type NodePointer<T> = Option<Rc<RefCell<ListNode<T>>>>;
+type Next<T> = Option<Rc<RefCell<ListNode<T>>>>;
+type Prev<T> = Option<Weak<RefCell<ListNode<T>>>>;
 
 #[derive(Debug)]
 struct ListNode<T> {
     pub data: T,
-    pub next: NodePointer<T>,
-    pub prev: NodePointer<T>,
+    pub next: Next<T>,
+    pub prev: Prev<T>,
 }
 
 impl<T> ListNode<T> {
@@ -27,13 +28,12 @@ impl<T> ListNode<T> {
 /// doubly linked list
 #[derive(Debug)]
 pub struct DoublyLinkedList<T> {
-    head: NodePointer<T>,
-    tail: NodePointer<T>,
+    head: Next<T>,
+    tail: Next<T>,
     size: u32,
 }
 
-impl<T: std::fmt::Debug + Clone + std::cmp::Ord> DoublyLinkedList<T>
-{
+impl<T: std::fmt::Debug + Clone + std::cmp::Ord> DoublyLinkedList<T> {
     pub fn new(data: T) -> Self {
         let newNode = Rc::new(RefCell::new(ListNode::new(data)));
         DoublyLinkedList {
@@ -43,7 +43,6 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord> DoublyLinkedList<T>
         }
     }
 }
-
 
 impl<T: std::fmt::Debug + Clone + std::cmp::Ord> LinkedListTrait<T> for DoublyLinkedList<T> {
     fn size(&self) -> u32 {
@@ -55,7 +54,7 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord> LinkedListTrait<T> for DoublyLi
         match self.tail.take() {
             Some(tailNode) => {
                 tailNode.borrow_mut().next = Some(newNode.clone());
-                newNode.borrow_mut().prev = Some(tailNode);
+                newNode.borrow_mut().prev = Some(Rc::downgrade(&tailNode));
                 self.tail = Some(newNode);
             }
             None => {
@@ -74,7 +73,7 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord> LinkedListTrait<T> for DoublyLi
         let newNode = Rc::new(RefCell::new(ListNode::new(data)));
         match self.head.take() {
             Some(headNode) => {
-                headNode.borrow_mut().prev = Some(newNode.clone());
+                headNode.borrow_mut().prev = Some(Rc::downgrade(&newNode));
                 newNode.borrow_mut().next = Some(headNode);
                 self.head = Some(newNode);
             }
@@ -138,8 +137,10 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord> LinkedListTrait<T> for DoublyLi
         match self.tail.take() {
             Some(old_tail) => {
                 if let Some(prev) = old_tail.borrow_mut().prev.take() {
-                    prev.borrow_mut().next = None; // Disconnect the old tail from the previous node
-                    self.tail = Some(prev); // Update the tail to the previous node
+                    if let Some(prev_rc) = prev.upgrade() {
+                        prev_rc.borrow_mut().next = None; // Disconnect the old tail from the previous node
+                        self.tail = Some(prev_rc); // Update the tail to the previous node
+                    }
                 } else {
                     // If there's no previous node, the list becomes empty
                     self.head = None;
@@ -199,14 +200,17 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord> LinkedListTrait<T> for DoublyLi
             if idxCnt < idx {
                 idxCnt += 1;
             } else {
-                // put newNode right before it
+                // put newNode right before "node"
                 if let Some(prev) = node.borrow_mut().prev.take() {
-                    prev.borrow_mut().next = Some(newNode.clone());
-                    newNode.borrow_mut().prev = Some(prev);
+                    // upgrade weak pointer to rc pointer
+                    if let Some(prev_rc) = prev.upgrade() {
+                        prev_rc.borrow_mut().next = Some(newNode.clone());
+                        newNode.borrow_mut().prev = Some(Rc::downgrade(&prev_rc));
+                    }
                 }
 
                 newNode.borrow_mut().next = Some(node.clone());
-                node.borrow_mut().prev = Some(newNode.clone());
+                node.borrow_mut().prev = Some(Rc::downgrade(&newNode));
                 break;
             }
             cur = node.borrow().next.clone();
@@ -243,11 +247,13 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord> LinkedListTrait<T> for DoublyLi
 
                 // If there's a previous node, link it to the next node
                 if let Some(prev_node) = prev {
-                    if let Some(next_node) = next.clone() {
-                        prev_node.borrow_mut().next = Some(next_node.clone());
-                        next_node.borrow_mut().prev = Some(prev_node);
-                    } else {
-                        prev_node.borrow_mut().next = None; // If no next node, it's the tail
+                    if let Some(prev_node_rc) = prev_node.upgrade() {
+                        if let Some(next_node) = next.clone() {
+                            prev_node_rc.borrow_mut().next = Some(next_node.clone());
+                            next_node.borrow_mut().prev = Some(prev_node);
+                        } else {
+                            prev_node_rc.borrow_mut().next = None; // If no next node, it's the tail
+                        }
                     }
                 } else if let Some(next_node) = next {
                     next_node.borrow_mut().prev = None; // If no previous node, it's the head
@@ -287,7 +293,7 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord> LinkedListTrait<T> for DoublyLi
     // size()
     // peekHead()
     // tailInsert()
-    // headInsert()
+    // head_insert()
     // show()
     // deleteAtIndex()
     // insertAtIndex()
@@ -327,11 +333,11 @@ mod tests {
         list.tail_insert(5);
         list.tail_insert(6);
         list.tail_insert(7);
-        list.headInsert(11);
+        list.head_insert(11);
         assert_eq!(list.size(), 6);
         list.head_remove();
         assert_eq!(list.size(), 5);
-        list.tailRemove();
+        list.tail_remove();
         assert_eq!(list.size(), 4);
     }
 
@@ -342,7 +348,7 @@ mod tests {
         list.tail_insert(5);
         list.tail_insert(6);
         list.tail_insert(7);
-        list.headInsert(11);
+        list.head_insert(11);
 
         assert_eq!(list.show(), vec![11, 3, 4, 5, 6, 7]);
 
