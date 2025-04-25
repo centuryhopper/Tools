@@ -492,23 +492,26 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord + Default> LinkedListTrait<T>
         self.head = result.head;
         self.tail = result.tail;
         self.size = result.size;
-        // if self.size == 0 {
-        //     println!("{:?}", self.peek_head().unwrap());
-        //     return;
-        // }
 
-        // let mut results = Vec::with_capacity(self.size() as usize);
+        realign_prevs(&mut self.head, &None);
+        
+        fn realign_prevs<T>(head: &mut Next<T>, prev: &Next<T>) {
+            match head {
+                Some(node_rc) => {
+                    // take the next before dropping the borrow
+                    let mut next = {
+                        let mut node = node_rc.borrow_mut();
+                        node.prev = prev.as_ref().map(|p| Rc::downgrade(p));
+                        node.next.clone()
+                    };
 
-        // let mut tmp = self.head.clone();
-        // while tmp.is_some() {
-        //     let cur = tmp.take().unwrap();
-        //     results.push(cur.borrow().data.clone());
-        //     tmp = cur.borrow().next.clone();
-        // }
-
-        // results.sort();
-
-        // println!("{:?}", results);
+                    realign_prevs(&mut next, &Some(node_rc.clone()));
+                },
+                None => {
+                    // panic!("head is none");
+                }
+            }
+        }
     }
 
     // size()
@@ -808,5 +811,14 @@ mod tests {
         let mut output_vector = vec![];
         DoublyLinkedList::print_backwards(&list.tail, &mut output_vector);
         assert_eq!(output_vector, vec![6,5,10,3,]);
+
+        list.sort_list();
+        assert_eq!(list.show(), vec![3,5,6,10]);
+
+        output_vector.clear();
+        DoublyLinkedList::print_backwards(&list.tail, &mut output_vector);
+        println!("output_vector: {:?}", output_vector);
+        assert_eq!(output_vector, vec![10,6,5,3,]);
+
     }
 }
