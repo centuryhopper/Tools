@@ -43,6 +43,26 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord + Default> DoublyLinkedList<T> {
         }
     }
 
+    pub fn print_backwards(tail: &Next<T>, output: &mut Vec<T>) where
+    T: Clone + std::fmt::Debug, {
+        match tail {
+            Some(tail_node) => {
+                //print!("{:?} ", tail_node.borrow().data);
+                output.push(tail_node.borrow().data.clone());
+                let tail_prev = tail_node.borrow().prev.clone();
+                if tail_prev.is_some()
+                {
+                    Self::print_backwards(&tail_prev.unwrap().upgrade(), output);
+                }
+            },
+            None => {
+                //println!("");
+                //println!("Reached beginning of list");
+                panic!("print_backwards called with None: tail is None, cannot print.");
+            }
+        }
+    }
+
     fn get_linked_list_parts(
         list: &mut DoublyLinkedList<T>,
     ) -> (DoublyLinkedList<T>, DoublyLinkedList<T>) {
@@ -605,8 +625,6 @@ mod tests {
         assert_eq!(list.show(), vec![1]);
     }
 
-    
-
     #[test]
     fn test_get_tail() {
         // Case 1: Single element
@@ -786,5 +804,9 @@ mod tests {
         list.tail_remove();
 
         assert_eq!(list.show(), vec![3, 10, 5, 6,]);
+
+        let mut output_vector = vec![];
+        DoublyLinkedList::print_backwards(&list.tail, &mut output_vector);
+        assert_eq!(output_vector, vec![6,5,10,3,]);
     }
 }
