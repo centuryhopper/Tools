@@ -134,7 +134,9 @@ def transcript2df(transcript):
     transcript = transcript.split("\n")
     transcript_timestamps = transcript[1::2]
     transcript_text = transcript[::2]
-    df = pd.DataFrame({"timestamp": transcript_timestamps, "text": transcript_text})
+    # make sure arrays are the same length
+    min_len = min(len(transcript_timestamps), len(transcript_text))
+    df = pd.DataFrame({"timestamp": transcript_timestamps[:min_len], "text": transcript_text[:min_len]})
 
     return df
 
