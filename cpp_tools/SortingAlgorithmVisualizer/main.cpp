@@ -13,6 +13,10 @@ void ResetColors(SDL_Renderer *renderer, std::vector<int> &v);
     sudo apt install libc++-dev libc++abi-dev
     g++ main.cpp -std=c++20 -o main $(sdl2-config --cflags --libs) && ./main
 
+    check for memory leaks:
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./main
+
+
     All sorting algorithms in this file will sort the vector in place as this shows the best consistency in the animations
 */
 
@@ -43,7 +47,7 @@ class SortingAlorithms
                     SDL_RenderClear(renderer);
                     draw_state(v, renderer, i, j);
                     SDL_RenderPresent(renderer);
-                    SDL_Delay(50);
+                    SDL_Delay(1);
                 }
             }
 
@@ -61,7 +65,7 @@ class SortingAlorithms
                     SDL_RenderClear(renderer);
                     draw_state(v, renderer, left + p, -1);
                     SDL_RenderPresent(renderer);
-                    SDL_Delay(50);
+                    SDL_Delay(1);
                 }
             }
 
@@ -105,7 +109,7 @@ class SortingAlorithms
                     SDL_RenderClear(renderer);
                     draw_state(v,renderer,i,j);
                     SDL_RenderPresent(renderer);
-                    SDL_Delay(10);
+                    SDL_Delay(1);
                 }
                 if (!swapped) break; // list is sorted
             }
@@ -191,18 +195,18 @@ int main() {
         v.push_back(d(rd));
     }
 
-    SortingAlorithms::mergeSort(v,0,v.size(), renderer);
+    // SortingAlorithms::mergeSort(v,0,v.size(), renderer);
 
-    // SortingAlorithms::bubbleSort(v,renderer);
+    SortingAlorithms::bubbleSort(v,renderer);
 
-    // ResetColors(renderer, v);
+    ResetColors(renderer, v);
 
-    std::copy(v.begin(), v.end(),
-              std::ostream_iterator<int>(std::cout, " "));
-    if (std::ranges::is_sorted(v))
-    {
-        std::cout << "sorted" << std::endl;
-    }
+    // std::copy(v.begin(), v.end(),
+    //           std::ostream_iterator<int>(std::cout, " "));
+    // if (std::ranges::is_sorted(v))
+    // {
+    //     std::cout << "sorted" << std::endl;
+    // }
 
     SDL_Event e;
     bool quit = false;
