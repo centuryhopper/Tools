@@ -36,7 +36,7 @@ void selectionSort(int *arr)
             {
                 minIdx = j;
             }
-            draw_state(arr, i, j);
+            draw_state(arr, i, j, -1);
             j += 1;
         }
         else

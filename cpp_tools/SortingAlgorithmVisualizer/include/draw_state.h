@@ -3,6 +3,6 @@
 
 #include "raylib.h"
 
-void draw_state(const int* arr, int red, int blue);
+void draw_state(const int* arr, int red, int blue, int green);
 
 #endif

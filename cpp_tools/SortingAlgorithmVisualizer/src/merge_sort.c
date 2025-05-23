@@ -19,7 +19,7 @@ static void mergeyMerge(int *arr, int left, int mid, int right)
             tmp[k++] = arr[j++];
 
         BeginDrawing();
-        draw_state(arr, i, j);
+        draw_state(arr, i, j, -1);
         EndDrawing();
         WaitTime(0.01);
     }
@@ -43,7 +43,7 @@ static void mergeyMerge(int *arr, int left, int mid, int right)
         arr[left + p] = tmp[p];
 
         BeginDrawing();
-        draw_state(arr, left + p, -1);
+        draw_state(arr, left + p, -1, -1);
         EndDrawing();
         WaitTime(0.01);
     }

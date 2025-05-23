@@ -4,7 +4,7 @@
 #define SCREEN_HEIGHT 1200
 #define BAR_WIDTH 20
 
-void draw_state(const int* arr, int red, int blue)
+void draw_state(const int* arr, int red, int blue, int green)
 {
     ClearBackground(BLACK);
 
@@ -13,6 +13,7 @@ void draw_state(const int* arr, int red, int blue)
         Color color = WHITE;
         if (i == red) color = RED;
         else if (i == blue) color = BLUE;
+        else if (i == green) color = GREEN;
 
         int posX = i * BAR_WIDTH;
         int barHeight = arr[i] * 10;

@@ -34,7 +34,7 @@ void insertionSort(int *arr)
                 arr[j - 1] = arr[j];
                 arr[j] = tmp;
             }
-            draw_state(arr, i, j);
+            draw_state(arr, i, j, -1);
             j -= 1;
         }
         else

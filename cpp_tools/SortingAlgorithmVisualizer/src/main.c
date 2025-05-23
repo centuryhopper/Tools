@@ -10,7 +10,9 @@
 #include "../include/insertion_sort.h"
 #include "../include/selection_sort.h"
 #include "../include/merge_sort.h"
+#include "../include/quick_sort.h"
 #include "../include/draw_state.h"
+
 
 /*
     compile to wasm pre-reqs:
@@ -252,7 +254,6 @@ static int visualizationTest(char *arg, int *data)
     }
     else if (strcmp(arg, "i") == 0)
     {
-        // printf("INSERTION sort\n");
         insertionSort(data);
     }
     else if (strcmp(arg, "b") == 0)
@@ -261,7 +262,7 @@ static int visualizationTest(char *arg, int *data)
     }
     else if (strcmp(arg, "q") == 0)
     {
-        quickSortRaw(data, ELEMENT_COUNT, 0, ELEMENT_COUNT);
+        quickSort(data);
     }
     else if (strcmp(arg, "m") == 0)
     {
@@ -311,7 +312,10 @@ int main(int argc, char *argv[])
     int data[ELEMENT_COUNT];
     srand((unsigned int)time(NULL));
     for (int i = 0; i < ELEMENT_COUNT; ++i)
-        data[i] = 1 + rand() % 100;
+    {
+        data[i] = 100 - i;
+        // data[i] = 1 + rand() % 100;
+    }
 
     switch (input)
     {
@@ -325,7 +329,7 @@ int main(int argc, char *argv[])
             while (!WindowShouldClose())
             {
                 BeginDrawing();
-                draw_state(data, -1, -1); // Final state
+                draw_state(data, -1, -1, -1); // Final state
                 EndDrawing();
             }
             CloseWindow();
