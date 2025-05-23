@@ -47,3 +47,22 @@ void insertionSort(int *arr)
         WaitTime(0.01);
     }
 }
+
+void insertionSortRaw(int *arr, int size)
+{
+    if (size < 2)
+        return;
+    // make sure j doesn't overshoot
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = i + 1; j > 0; j--)
+        {
+            if (arr[j] < arr[j - 1])
+            {
+                int tmp = arr[j - 1];
+                arr[j - 1] = arr[j];
+                arr[j] = tmp;
+            }
+        }
+    }
+}

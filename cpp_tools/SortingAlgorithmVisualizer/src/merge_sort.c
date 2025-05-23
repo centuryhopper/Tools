@@ -72,3 +72,40 @@ void mergeSort(int *arr)
     runner(arr, 0, ELEMENT_COUNT - 1);
 }
 
+
+static void mergeyMergeRaw(int *arr, int left, int mid, int right)
+{
+  int tmpArraySize = right - left + 1;
+  int tmp[tmpArraySize];
+  int i = left, j = mid + 1, k = 0;
+  while (i <= mid && j <= right)
+  {
+    if (arr[i] <= arr[j])
+      tmp[k++] = arr[i++];
+    else
+      tmp[k++] = arr[j++];
+  }
+
+  while (i <= mid)
+    tmp[k++] = arr[i++];
+  while (j <= right)
+    tmp[k++] = arr[j++];
+
+  // copy tmp array contents over to original v
+  for (int p = 0; p < tmpArraySize; ++p)
+  {
+    arr[left + p] = tmp[p];
+  }
+}
+
+void mergeSortRaw(int *arr, int left, int right)
+{
+  if (left >= right)
+    return;
+
+  // postorder style traversal
+  int mid = left + (right - left) / 2;
+  mergeSortRaw(arr, left, mid);
+  mergeSortRaw(arr, mid + 1, right);
+  mergeyMergeRaw(arr, left, mid, right);
+}

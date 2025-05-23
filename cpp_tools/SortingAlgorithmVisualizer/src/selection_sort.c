@@ -53,3 +53,24 @@ void selectionSort(int *arr)
         WaitTime(0.01);
     }
 }
+
+void selectionSortRaw(int *arr, int size)
+{
+    if (size < 2)
+        return;
+    for (int i = 0; i < size; i++)
+    {
+        // assume ith index is the min so far
+        int minIdx = i;
+        for (int j = i + 1; j < size; j++)
+        {
+            if (arr[minIdx] > arr[j])
+            {
+                minIdx = j;
+            }
+        }
+        int tmp = arr[i];
+        arr[i] = arr[minIdx];
+        arr[minIdx] = tmp;
+    }
+}
