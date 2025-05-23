@@ -7,6 +7,9 @@
 #include <stdbool.h>
 #include "../include/configs.h"
 #include "../include/bubble_sort.h"
+#include "../include/insertion_sort.h"
+#include "../include/selection_sort.h"
+#include "../include/merge_sort.h"
 #include "../include/draw_state.h"
 
 /*
@@ -46,7 +49,8 @@ static void insertionSortRaw(int *arr, int size)
 {
     if (size < 2)
         return;
-    for (int i = 0; i < size; i++)
+    // make sure j doesn't overshoot
+    for (int i = 0; i < size - 1; i++)
     {
         for (int j = i + 1; j > 0; j--)
         {
@@ -151,7 +155,7 @@ static void quickSortRaw(int *arr, int size, int lo, int hi)
     }
     int partitionIdx = quickSortPartition(arr, size, lo, hi);
     quickSortRaw(arr, size, lo, partitionIdx);
-    quickSortRaw(arr, size, partitionIdx+1, hi);
+    quickSortRaw(arr, size, partitionIdx + 1, hi);
 }
 
 static void mergeyMerge(int *arr, int left, int mid, int right)
@@ -191,7 +195,7 @@ static void mergeSortRaw(int *arr, int left, int right)
     mergeyMerge(arr, left, mid, right);
 }
 
-static int rawTest(char* arg, int* data)
+static int rawTest(char *arg, int *data)
 {
     str_to_lower(arg);
 
@@ -214,6 +218,54 @@ static int rawTest(char* arg, int* data)
     else if (strcmp(arg, "m") == 0)
     {
         mergeSortRaw(data, 0, ELEMENT_COUNT);
+    }
+    else
+    {
+        fprintf(stderr, "Error: Unknown argument. Please choose one of the following: (s,i,b,q,m)\n");
+        return EXIT_FAILURE; // Non-zero to indicate error
+    }
+
+    for (int i = 0; i < 100; i++)
+    {
+        printf("%d%s", data[i], (i == 99) ? "\n" : " ");
+    }
+
+    if (isSorted(data, ELEMENT_COUNT))
+    {
+        printf("sorted\n");
+    }
+    else
+    {
+        printf("not sorted\n");
+    }
+
+    return EXIT_SUCCESS;
+}
+
+static int visualizationTest(char *arg, int *data)
+{
+    str_to_lower(arg);
+
+    if (strcmp(arg, "s") == 0)
+    {
+        selectionSort(data);
+    }
+    else if (strcmp(arg, "i") == 0)
+    {
+        // printf("INSERTION sort\n");
+        insertionSort(data);
+    }
+    else if (strcmp(arg, "b") == 0)
+    {
+        bubbleSort(data);
+    }
+    else if (strcmp(arg, "q") == 0)
+    {
+        quickSortRaw(data, ELEMENT_COUNT, 0, ELEMENT_COUNT);
+    }
+    else if (strcmp(arg, "m") == 0)
+    {
+        mergeSort(data);
     }
     else
     {
@@ -267,26 +319,21 @@ int main(int argc, char *argv[])
             rawTest(argv[1], data);
             break;
         case 'n':
-            InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Bubble Sort Visualizer - raylib");
+            InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sort Visualizer - raylib");
             SetTargetFPS(60);
-
-            bubbleSort(data);
-
+            visualizationTest(argv[1], data);
             while (!WindowShouldClose())
             {
                 BeginDrawing();
                 draw_state(data, -1, -1); // Final state
                 EndDrawing();
             }
-
             CloseWindow();
             break;
         default:
             fprintf(stderr, "Error: Invalid input\n");
             break;
     }
-    
 
-    
     return 0;
 }

@@ -23,16 +23,17 @@ CFLAGS_WEB = -Wall -std=c99 -Os \
 all: native
 
 native:
-	gcc ./src/main.c ./src/bubble_sort.c ./src/draw_state.c -o main $(CFLAGS_NATIVE) $(LIBS_NATIVE)
+	gcc ./src/main.c ./src/bubble_sort.c ./src/insertion_sort.c ./src/merge_sort.c ./src/selection_sort.c ./src/draw_state.c -o main $(CFLAGS_NATIVE) $(LIBS_NATIVE)
 
 run: native
 	./main
 
 web:
-	emcc ./src/main.c ./src/bubble_sort.c ./src/draw_state.c -o main.html $(CFLAGS_WEB)
+	emcc ./src/main.c ./src/bubble_sort.c ./src/insertion_sort.c ./src/merge_sort.c ./src/selection_sort.c ./src/draw_state.c -o main.html $(CFLAGS_WEB)
 	mkdir -p ./wasm
 	mv main.html main.js main.wasm ./wasm
 
 clean:
 	rm -f ./main
 	rm -rf ./wasm
+

@@ -1,0 +1,2 @@
+
+void mergeSort(int* arr);
