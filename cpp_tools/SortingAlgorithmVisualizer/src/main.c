@@ -1,3 +1,5 @@
+#define RAYGUI_IMPLEMENTATION
+#include "../include/raygui.h"
 #include "../include/configs.h"
 #include "../include/draw_state.h"
 #include "../include/bubble_sort.h"
@@ -5,6 +7,7 @@
 #include "../include/merge_sort.h"
 #include "../include/quick_sort.h"
 #include "../include/selection_sort.h"
+#include "../include/utils.h"
 #include <ctype.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -13,7 +16,16 @@
 #include <string.h>
 #include <time.h>
 
+#define WIDGET_WIDTH 400
+#define WIDGET_HEIGHT 100
+#define SPACING 75
+
+static void initializeArray(int *arr);
+
 /*
+    raygui:
+      wget https://raw.githubusercontent.com/raysan5/raygui/master/src/raygui.h -O raygui.h
+
     compile to wasm pre-reqs:
         cd raylib/src
         emmake make PLATFORM=PLATFORM_WEB
@@ -24,6 +36,35 @@
         python3 -m http.server
         then go to http://localhost:8000/wasm/main.html
 */
+// "Bubble;Insertion;Selection;Quick;Merge"
+typedef enum
+{
+  BUBBLE = 0,
+  INSERTION = 1,
+  SELECTION = 2,
+  QUICK = 3,
+  MERGE = 4,
+  NONE = -1,
+} SortType;
+
+const char *getSortTypeString(SortType sortType)
+{
+  switch (sortType)
+  {
+  case SELECTION:
+    return "SELECTION";
+  case INSERTION:
+    return "INSERTION";
+  case BUBBLE:
+    return "BUBBLE";
+  case QUICK:
+    return "QUICK";
+  case MERGE:
+    return "MERGE";
+  default:
+    return "NONE";
+  }
+}
 
 static void str_to_lower(char *str)
 {
@@ -79,7 +120,7 @@ static int rawTest(char *arg, int *data)
 
   for (int i = 0; i < ELEMENT_COUNT; i++)
   {
-    printf("%d%s", data[i], (i == ELEMENT_COUNT-1) ? "\n" : " ");
+    printf("%d%s", data[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
   }
 
   if (isSorted(data, ELEMENT_COUNT))
@@ -94,64 +135,238 @@ static int rawTest(char *arg, int *data)
   return EXIT_SUCCESS;
 }
 
+// Just a dummy dispatcher for now; add animation/sleep logic inside your sort implementations
+void runSort(SortType type, int *data, void *sortState)
+{
+  switch (type)
+  {
+  case SELECTION:
+    selectionSort(data);
+    break;
+  case INSERTION:
+    insertionSort(data);
+    break;
+  case BUBBLE:
+    bubbleSort(data, (BubbleSortState *)sortState);
+    break;
+  case QUICK:
+    quickSort(data);
+    break;
+  case MERGE:
+    mergeSort(data);
+    break;
+  default:
+    break;
+  }
+}
+
+void resetSortState(SortType type, int *data, void **sortState)
+{
+  switch (type)
+  {
+  case SELECTION:
+    break;
+  case INSERTION:
+    break;
+  case BUBBLE:
+    *sortState = (BubbleSortState *) initializeBubbleSortState((BubbleSortState *)*sortState, (BubbleSortState){.i = ELEMENT_COUNT - 1, .j = 1, .swapped = 0, .sorting = 1});
+    break;
+  case QUICK:
+    break;
+  case MERGE:
+    break;
+  default:
+    break;
+  }
+}
+
+void cleanUpSortState(SortType type, void **sortState)
+{
+  switch (type)
+  {
+  case SELECTION:
+    break;
+  case INSERTION:
+    break;
+  case BUBBLE:
+    *sortState = cleanUpBubbleSortState((BubbleSortState *)*sortState);
+    break;
+  case QUICK:
+    break;
+  case MERGE:
+    break;
+  default:
+    break;
+  }
+}
+
 static int visualizationTest(char *arg, int *data)
 {
   str_to_lower(arg);
 
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sort Visualizer - raylib");
-  SetTargetFPS(60);
+  SetTargetFPS(FPS);
+  // Set raygui font size
+  GuiSetStyle(DEFAULT, TEXT_SIZE, 50);
 
-  if (strcmp(arg, "s") == 0)
-  {
-    selectionSort(data);
-  }
-  else if (strcmp(arg, "i") == 0)
-  {
-    insertionSort(data);
-  }
-  else if (strcmp(arg, "b") == 0)
-  {
-    bubbleSort(data);
-  }
-  else if (strcmp(arg, "q") == 0)
-  {
-    quickSort(data);
-  }
-  else if (strcmp(arg, "m") == 0)
-  {
-    mergeSort(data);
-  }
-  else
-  {
-    fprintf(stderr, "Error: Unknown argument. Please choose one of the "
-                    "following: (s,i,b,q,m)\n");
-    return EXIT_FAILURE; // Non-zero to indicate error
-  }
+  int totalWidth = 4 * WIDGET_WIDTH + 2 * SPACING;
+  int startX = (SCREEN_WIDTH - totalWidth) / 2;
+  int y = 50; // vertical position
+  int currentSortChoice = 0;
+  int sortDropdownActive = 0;
+  float speed = 1.0f;
+  bool started = false;
+  SortType sortChosen = NONE;
 
-  for (int i = 0; i < ELEMENT_COUNT; i++)
-  {
-    printf("%d%s", data[i], (i == ELEMENT_COUNT-1) ? "\n" : " ");
-  }
+  initializeArray(data);
 
-  if (isSorted(data, ELEMENT_COUNT))
-  {
-    printf("sorted\n");
-  }
-  else
-  {
-    printf("not sorted\n");
-  }
+  const char *options = "Bubble;Insertion;Selection;Quick;Merge";
+
+  // BubbleSortState bubbleSortState = {
+  //     .i = ELEMENT_COUNT - 1,
+  //     .j = 1,
+  //     .swapped = 0,
+  //     .sorting = 1,
+  // };
+
+  void *sortState = NULL;
 
   while (!WindowShouldClose())
   {
     BeginDrawing();
-    draw_state(data, -1, -1, -1); // Final state
+    ClearBackground(DARKGRAY);
+
+    if (!started)
+    {
+      // dropdown
+      Rectangle dropdownBounds = {startX - 100, y, WIDGET_WIDTH, WIDGET_HEIGHT};
+      if (GuiDropdownBox(dropdownBounds, options, &currentSortChoice, sortDropdownActive))
+      {
+        sortDropdownActive = !sortDropdownActive;
+      }
+
+      Rectangle sliderBounds = {startX + WIDGET_WIDTH + SPACING, y, WIDGET_WIDTH, WIDGET_HEIGHT};
+      GuiSliderBar(sliderBounds, "Speed", NULL, &speed, 0.1f, 5.0f);
+
+      Rectangle buttonBounds = {startX + 2 * (WIDGET_WIDTH + SPACING), y, WIDGET_WIDTH, WIDGET_HEIGHT};
+      if (GuiButton(buttonBounds, "Start"))
+      {
+        started = true;
+        sortChosen = (SortType)currentSortChoice;
+        resetSortState(sortChosen, data, &sortState);
+        // printf("i initted: %d\n", ((BubbleSortState *)(sortState))->i);
+      }
+
+      draw_state_with_color(data, -1, -1, -1, BLUE);
+    }
+    else
+    {
+      // sort logic goes here
+      runSort(sortChosen, data, sortState);
+
+      WaitTime(0.01);
+    }
+
+    if (started && isSorted(data, ELEMENT_COUNT))
+    {
+      DrawText("Sorted!", SCREEN_WIDTH / 2 - 100, 50, 40, DARKGREEN);
+
+      // clean up sort state here
+      // cleanUpSortState(sortChosen, &sortState);
+
+      // Visualization bars
+      draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
+    }
+    else if (started && !isSorted(data, ELEMENT_COUNT))
+    {
+      DrawText(getSortTypeString(sortChosen), SCREEN_WIDTH / 2 - 100, 50, 40, DARKGREEN);
+    }
+
+    // Reset button
+    Rectangle resetBounds = {startX + 3 * (WIDGET_WIDTH + SPACING), y, WIDGET_WIDTH, WIDGET_HEIGHT};
+    if (GuiButton(resetBounds, started ? "Reset" : "Randomize"))
+    {
+      started = false;
+      // Reset your data array here, for example:
+      initializeArray(data);
+
+      resetSortState(sortChosen, data, &sortState);
+    }
+
     EndDrawing();
   }
+
+  // clean up sort state here
+  cleanUpSortState(sortChosen, &sortState);
+  if (!sortState)
+  {
+    printf("CLEANED UP sortState\n");
+  }
+  // if (strcmp(arg, "s") == 0)
+  // {
+  //   selectionSort(data);
+  // }
+  // else if (strcmp(arg, "i") == 0)
+  // {
+  //   insertionSort(data);
+  // }
+  // else if (strcmp(arg, "b") == 0)
+  // {
+  //   bubbleSort(data);
+  // }
+  // else if (strcmp(arg, "q") == 0)
+  // {
+  //   quickSort(data);
+  // }
+  // else if (strcmp(arg, "m") == 0)
+  // {
+  //   mergeSort(data);
+  //   // mergeSortIterativeRaw(data, ELEMENT_COUNT);
+  // }
+  // else
+  // {
+  //   fprintf(stderr, "Error: Unknown argument. Please choose one of the "
+  //                   "following: (s,i,b,q,m)\n");
+  //   return EXIT_FAILURE; // Non-zero to indicate error
+  // }
+
+  // for (int i = 0; i < ELEMENT_COUNT; i++)
+  // {
+  //   printf("%d%s", data[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
+  // }
+
+  // if (isSorted(data, ELEMENT_COUNT))
+  // {
+  //   printf("sorted\n");
+  // }
+  // else
+  // {
+  //   printf("not sorted\n");
+  // }
+
+  // while (!WindowShouldClose())
+  // {
+  //   BeginDrawing();
+  //   draw_state(data, -1, -1, -1); // Final state
+  //   EndDrawing();
+  // }
 
   CloseWindow();
 
   return EXIT_SUCCESS;
+}
+
+// initializes array with randomized values between 1 and 100
+static void initializeArray(int *arr)
+{
+  for (int i = 0; i < ELEMENT_COUNT; ++i)
+  {
+    // just to show that quick sort runs in quadratic run time with this kind of
+    // input
+    // arr[i] = 100 - i;
+    arr[i] = 1 + rand() % 100;
+    // printf("%d%s", arr[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
+  }
 }
 
 int main(int argc, char *argv[])
@@ -174,21 +389,14 @@ int main(int argc, char *argv[])
   input = tolower(input);
 
   int data[ELEMENT_COUNT];
-  srand((unsigned int) time(NULL));
-  for (int i = 0; i < ELEMENT_COUNT; ++i)
-  {
-    // just to show that quick sort runs in quadratic run time with this kind of
-    // input
-    // data[i] = 100 - i;
-    data[i] = 1 + rand() % ELEMENT_COUNT;
-    printf("%d%s", data[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
-  }
+  srand((unsigned int)time(NULL));
 
   printf("===========================================\n");
 
   switch (input)
   {
   case 'y':
+    initializeArray(data);
     rawTest(argv[1], data);
     break;
   case 'n':

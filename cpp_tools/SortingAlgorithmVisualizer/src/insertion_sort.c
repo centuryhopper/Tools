@@ -44,7 +44,7 @@ void insertionSort(int *arr)
         }
 
         EndDrawing();
-        WaitTime(0.01);
+        WaitTime(WAIT_TIME);
     }
 }
 

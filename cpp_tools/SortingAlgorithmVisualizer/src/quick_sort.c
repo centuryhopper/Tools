@@ -38,7 +38,7 @@ static int quickSortPartition(int *arr, int size, int lo, int hi)
       BeginDrawing();
       draw_state(arr, i, -1, pivotIdx);
       EndDrawing();
-      WaitTime(0.02);
+      WaitTime(0.05);
     } while (left <= arr[pivotIdx]);
 
     do
@@ -51,7 +51,7 @@ static int quickSortPartition(int *arr, int size, int lo, int hi)
       BeginDrawing();
       draw_state(arr, -1, j, pivotIdx);
       EndDrawing();
-      WaitTime(0.02);
+      WaitTime(0.05);
     } while (right > arr[pivotIdx]);
 
     if (i < j)
@@ -87,6 +87,7 @@ void quickSort(int *arr)
 {
   srand((unsigned int)time(NULL));
   runner(arr, ELEMENT_COUNT, 0, ELEMENT_COUNT);
+  printf("quick sort is done\n");
 }
 
 static int quickSortPartitionRaw(int *arr, int size, int lo, int hi)

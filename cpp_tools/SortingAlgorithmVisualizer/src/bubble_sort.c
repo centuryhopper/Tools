@@ -1,63 +1,65 @@
 #include "raylib.h"
 #include "../include/configs.h"
 #include "../include/draw_state.h"
+#include "../include/bubble_sort.h"
+#include <stdlib.h>
 
-/*
-for (int i = size - 1; i >= 0; i--)
+
+
+BubbleSortState* cleanUpBubbleSortState(BubbleSortState* state)
+{
+    if (state)
     {
-        bool swapped = false;
-        for (int j = 1; j <= i; j++)
-        {
-            if (arr[j] < arr[j - 1])
-            {
-                int tmp = arr[j];
-                arr[j] = arr[j - 1];
-                arr[j - 1] = tmp;
-                swapped = true;
-            }
-        }
-        if (!swapped)
-            break; // list is sorted
+        free(state);
+        state=NULL;
     }
-*/
+    return NULL;
+}
+
+BubbleSortState* initializeBubbleSortState(BubbleSortState* state, BubbleSortState values)
+{
+    if (state)
+    {
+        state = cleanUpBubbleSortState(state);
+    }
+    state = malloc(sizeof(BubbleSortState));
+    if (!state)
+    {
+        return NULL;
+    }
+    state->i = values.i;
+    state->j = values.j;
+    state->swapped = values.swapped;
+    state->sorting = values.sorting;
+    return state;
+}
+
+
 
 // Bubble Sort with per-frame visualization
-void bubbleSort(int *arr)
+void bubbleSort(int *arr, BubbleSortState *state)
 {
-    int i = ELEMENT_COUNT - 1;
-    int j = 1;
-    int swapped = 0;
-    int sorting = 1;
-
-    while (!WindowShouldClose() && sorting)
+    if (state->j <= state->i)
     {
-        BeginDrawing();
-
-        if (j <= i)
+        if (arr[state->j] < arr[state->j - 1])
         {
-            if (arr[j] < arr[j - 1])
-            {
-                int temp = arr[j];
-                arr[j] = arr[j - 1];
-                arr[j - 1] = temp;
-                swapped = 1;
-            }
-
-            draw_state(arr, i, j, -1);
-            j++;
-        }
-        else
-        {
-            if (!swapped)
-                sorting = 0;
-
-            swapped = 0;
-            i--;
-            j = 1;
+            int temp = arr[state->j];
+            arr[state->j] = arr[state->j - 1];
+            arr[state->j - 1] = temp;
+            state->swapped = 1;
         }
 
-        EndDrawing();
-        WaitTime(0.01);
+        draw_state(arr, state->i, state->j, -1);
+        state->j++;
+    }
+    else
+    {
+        if (!state->swapped)
+            state->sorting = 0;
+
+        state->swapped = 0;
+        state->i--;
+        state->j = 1;
     }
 }
 
@@ -77,6 +79,7 @@ void bubbleSortRaw(int *arr, int size)
                 arr[j - 1] = tmp;
                 swapped = true;
             }
+            draw_state(arr, i, j, -1);
         }
         if (!swapped)
             break; // list is sorted

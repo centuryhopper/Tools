@@ -4,9 +4,10 @@
 #include "raylib.h"
 
 #define ELEMENT_COUNT 50
-// SCREEN_WIDTH should be 20 times that of ELEMENT_COUNT
-#define SCREEN_WIDTH 1000
-#define SCREEN_HEIGHT 1500
+#define SCREEN_WIDTH 2500
+#define SCREEN_HEIGHT 1000
 #define BAR_WIDTH 20
+#define WAIT_TIME 0.01
+#define FPS 240
 
 #endif
