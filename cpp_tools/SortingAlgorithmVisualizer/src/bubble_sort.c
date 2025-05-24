@@ -11,7 +11,6 @@ BubbleSortState* cleanUpBubbleSortState(BubbleSortState* state)
     if (state)
     {
         free(state);
-        state=NULL;
     }
     return NULL;
 }
@@ -33,8 +32,6 @@ BubbleSortState* initializeBubbleSortState(BubbleSortState* state, BubbleSortSta
     state->sorting = values.sorting;
     return state;
 }
-
-
 
 // Bubble Sort with per-frame visualization
 void bubbleSort(int *arr, BubbleSortState *state)
@@ -79,7 +76,7 @@ void bubbleSortRaw(int *arr, int size)
                 arr[j - 1] = tmp;
                 swapped = true;
             }
-            draw_state(arr, i, j, -1);
+            // draw_state(arr, i, j, -1);
         }
         if (!swapped)
             break; // list is sorted

@@ -1,57 +1,67 @@
 #include "raylib.h"
 #include "../include/configs.h"
 #include "../include/draw_state.h"
+#include "../include/selection_sort.h"
+#include <stdlib.h>
 
-/*
-    for (int i = 0; i < size; i++)
+SelectionSortState *cleanUpSelectionSortState(SelectionSortState *state)
+{
+    if (state)
     {
-        assume ith index is the min so far
-        int minIdx = i;
-        for (int j = i + 1; j < size; j++)
-        {
-            if (arr[minIdx] > arr[j])
-            {
-                minIdx = j;
-            }
-        }
-        int tmp = arr[i];
-        arr[i] = arr[minIdx];
-        arr[minIdx] = tmp;
+        free(state);
     }
-*/
+    return NULL;
+}
+
+SelectionSortState *initializeSelectionSortState(SelectionSortState *state, SelectionSortState values)
+{
+    if (state)
+    {
+        state = cleanUpSelectionSortState(state);
+    }
+    state = malloc(sizeof(SelectionSortState));
+    if (!state)
+    {
+        return NULL;
+    }
+    state->i = values.i;
+    state->j = values.j;
+    state->minIdx = values.minIdx;
+    state->swapped = values.swapped;
+    return state;
+}
 
 // Selection Sort with per-frame visualization
-void selectionSort(int *arr)
+void selectionSort(int *arr, SelectionSortState *state)
 {
-    int i = 0;
-    int j = i + 1;
-    int minIdx = i;
-    // make sure j doesn't overshoot out of the bounds of the array
-    for (; !WindowShouldClose() && i < ELEMENT_COUNT - 1;)
+    // assume ith index is the min so far
+    if (state->i != ELEMENT_COUNT)
     {
-        BeginDrawing();
-        if (j < ELEMENT_COUNT)
+        if (state->j < ELEMENT_COUNT)
         {
-            if (arr[minIdx] > arr[j])
+            if (arr[state->minIdx] > arr[state->j])
             {
-                minIdx = j;
+                state->minIdx = state->j;
+                state->swapped = 1;
             }
-            draw_state(arr, i, j, -1);
-            j += 1;
+            draw_state(arr, state->i, state->j, -1);
+            state->j += 1;
         }
         else
         {
-            int tmp = arr[i];
-            arr[i] = arr[minIdx];
-            arr[minIdx] = tmp;
-            i += 1;
-            minIdx = i;
-            j = i + 1;
+            if (state->swapped)
+            {
+                int tmp = arr[state->i];
+                arr[state->i] = arr[state->minIdx];
+                arr[state->minIdx] = tmp;
+            }
+            state->swapped = 0;
+            state->i+=1;
+            state->minIdx=state->i;
+            state->j = state->i+1;
         }
-
-        EndDrawing();
-        WaitTime(0.01);
     }
+    
 }
 
 void selectionSortRaw(int *arr, int size)

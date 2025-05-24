@@ -3,10 +3,8 @@
 
 typedef struct
 {
-    // State variables for each sort type
-    int i, j;    // For bubble, insertion, selection
-    int swapped; // bubble
-                 // Add other vars for quicksort, merge sort if needed
+    int i, j;
+    int swapped;
     int sorting;
 } BubbleSortState;
 

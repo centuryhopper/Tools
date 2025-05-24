@@ -136,12 +136,13 @@ static int rawTest(char *arg, int *data)
 }
 
 // Just a dummy dispatcher for now; add animation/sleep logic inside your sort implementations
-void runSort(SortType type, int *data, void *sortState)
+static void runSort(SortType type, int *data, void *sortState)
 {
+  // TODO: complete the other sorts
   switch (type)
   {
   case SELECTION:
-    selectionSort(data);
+    selectionSort(data, (SelectionSortState *)sortState);
     break;
   case INSERTION:
     insertionSort(data);
@@ -160,16 +161,23 @@ void runSort(SortType type, int *data, void *sortState)
   }
 }
 
-void resetSortState(SortType type, int *data, void **sortState)
+static void resetSortState(SortType type, int *data, void **sortState)
 {
+  // TODO: complete the other sorts
   switch (type)
   {
   case SELECTION:
+    *sortState = (SelectionSortState *)initializeSelectionSortState((SelectionSortState *)*sortState, (SelectionSortState){
+                                                                                                          .i = 0,
+                                                                                                          .j = 1,
+                                                                                                          .minIdx = 0,
+                                                                                                          .swapped = 0,
+                                                                                                      });
     break;
   case INSERTION:
     break;
   case BUBBLE:
-    *sortState = (BubbleSortState *) initializeBubbleSortState((BubbleSortState *)*sortState, (BubbleSortState){.i = ELEMENT_COUNT - 1, .j = 1, .swapped = 0, .sorting = 1});
+    *sortState = (BubbleSortState *)initializeBubbleSortState((BubbleSortState *)*sortState, (BubbleSortState){.i = ELEMENT_COUNT - 1, .j = 1, .swapped = 0, .sorting = 1});
     break;
   case QUICK:
     break;
@@ -180,8 +188,9 @@ void resetSortState(SortType type, int *data, void **sortState)
   }
 }
 
-void cleanUpSortState(SortType type, void **sortState)
+static void cleanUpSortState(SortType type, void **sortState)
 {
+  // TODO: complete the other sorts
   switch (type)
   {
   case SELECTION:
@@ -200,10 +209,8 @@ void cleanUpSortState(SortType type, void **sortState)
   }
 }
 
-static int visualizationTest(char *arg, int *data)
+static int visualizationTest(int *data)
 {
-  str_to_lower(arg);
-
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sort Visualizer - raylib");
   SetTargetFPS(FPS);
   // Set raygui font size
@@ -214,7 +221,7 @@ static int visualizationTest(char *arg, int *data)
   int y = 50; // vertical position
   int currentSortChoice = 0;
   int sortDropdownActive = 0;
-  float speed = 1.0f;
+  float speed = 0.5f;
   bool started = false;
   SortType sortChosen = NONE;
 
@@ -222,14 +229,8 @@ static int visualizationTest(char *arg, int *data)
 
   const char *options = "Bubble;Insertion;Selection;Quick;Merge";
 
-  // BubbleSortState bubbleSortState = {
-  //     .i = ELEMENT_COUNT - 1,
-  //     .j = 1,
-  //     .swapped = 0,
-  //     .sorting = 1,
-  // };
-
   void *sortState = NULL;
+  double lastStepTime = GetTime();
 
   while (!WindowShouldClose())
   {
@@ -238,6 +239,9 @@ static int visualizationTest(char *arg, int *data)
 
     if (!started)
     {
+      // make sure to draw bars first to avoid appearing in front of the text ui
+      draw_state_with_color(data, -1, -1, -1, BLUE);
+
       // dropdown
       Rectangle dropdownBounds = {startX - 100, y, WIDGET_WIDTH, WIDGET_HEIGHT};
       if (GuiDropdownBox(dropdownBounds, options, &currentSortChoice, sortDropdownActive))
@@ -246,7 +250,9 @@ static int visualizationTest(char *arg, int *data)
       }
 
       Rectangle sliderBounds = {startX + WIDGET_WIDTH + SPACING, y, WIDGET_WIDTH, WIDGET_HEIGHT};
-      GuiSliderBar(sliderBounds, "Speed", NULL, &speed, 0.1f, 5.0f);
+      GuiSliderBar(sliderBounds, "Speed", NULL, &speed, 0.01f, 0.99f);
+
+      printf("speed: %f\n", speed);
 
       Rectangle buttonBounds = {startX + 2 * (WIDGET_WIDTH + SPACING), y, WIDGET_WIDTH, WIDGET_HEIGHT};
       if (GuiButton(buttonBounds, "Start"))
@@ -255,16 +261,21 @@ static int visualizationTest(char *arg, int *data)
         sortChosen = (SortType)currentSortChoice;
         resetSortState(sortChosen, data, &sortState);
         // printf("i initted: %d\n", ((BubbleSortState *)(sortState))->i);
+        lastStepTime = GetTime(); // Reset timing
       }
-
-      draw_state_with_color(data, -1, -1, -1, BLUE);
     }
     else
     {
       // sort logic goes here
-      runSort(sortChosen, data, sortState);
+      double currentTime = GetTime();
+      if (!isSorted(data, ELEMENT_COUNT) && (currentTime - lastStepTime >= (1.0 - speed)))
+      {
+        runSort(sortChosen, data, sortState);
+        lastStepTime = currentTime;
+      }
+      // runSort(sortChosen, data, sortState);
 
-      WaitTime(0.01);
+      // WaitTime(1 - speed);
     }
 
     if (started && isSorted(data, ELEMENT_COUNT))
@@ -289,7 +300,6 @@ static int visualizationTest(char *arg, int *data)
       started = false;
       // Reset your data array here, for example:
       initializeArray(data);
-
       resetSortState(sortChosen, data, &sortState);
     }
 
@@ -302,55 +312,6 @@ static int visualizationTest(char *arg, int *data)
   {
     printf("CLEANED UP sortState\n");
   }
-  // if (strcmp(arg, "s") == 0)
-  // {
-  //   selectionSort(data);
-  // }
-  // else if (strcmp(arg, "i") == 0)
-  // {
-  //   insertionSort(data);
-  // }
-  // else if (strcmp(arg, "b") == 0)
-  // {
-  //   bubbleSort(data);
-  // }
-  // else if (strcmp(arg, "q") == 0)
-  // {
-  //   quickSort(data);
-  // }
-  // else if (strcmp(arg, "m") == 0)
-  // {
-  //   mergeSort(data);
-  //   // mergeSortIterativeRaw(data, ELEMENT_COUNT);
-  // }
-  // else
-  // {
-  //   fprintf(stderr, "Error: Unknown argument. Please choose one of the "
-  //                   "following: (s,i,b,q,m)\n");
-  //   return EXIT_FAILURE; // Non-zero to indicate error
-  // }
-
-  // for (int i = 0; i < ELEMENT_COUNT; i++)
-  // {
-  //   printf("%d%s", data[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
-  // }
-
-  // if (isSorted(data, ELEMENT_COUNT))
-  // {
-  //   printf("sorted\n");
-  // }
-  // else
-  // {
-  //   printf("not sorted\n");
-  // }
-
-  // while (!WindowShouldClose())
-  // {
-  //   BeginDrawing();
-  //   draw_state(data, -1, -1, -1); // Final state
-  //   EndDrawing();
-  // }
-
   CloseWindow();
 
   return EXIT_SUCCESS;
@@ -369,43 +330,45 @@ static void initializeArray(int *arr)
   }
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
   // printf("Number of arguments: %d\n", argc);
   // for (int i = 0; i < argc; i++) {
   //     printf("Argument %d: %s\n", i, argv[i]);
   // }
 
-  if (argc < 2)
-  {
-    fprintf(stderr, "Error: Missing argument. Usage: %s <type of sort>\n",
-            argv[0]);
-    return EXIT_FAILURE; // Non-zero to indicate error
-  }
+  // if (argc < 2)
+  // {
+  //   fprintf(stderr, "Error: Missing argument. Usage: %s <type of sort>\n",
+  //           argv[0]);
+  //   return EXIT_FAILURE; // Non-zero to indicate error
+  // }
 
-  printf("raw test? (y/n)\n");
-  char input;
-  scanf(" %c", &input); // ✅ Recommended for reading single characters
-  input = tolower(input);
+  // printf("raw test? (y/n)\n");
+  // char input;
+  // scanf(" %c", &input); // ✅ Recommended for reading single characters
+  // input = tolower(input);
 
   int data[ELEMENT_COUNT];
   srand((unsigned int)time(NULL));
 
-  printf("===========================================\n");
+  visualizationTest(data);
 
-  switch (input)
-  {
-  case 'y':
-    initializeArray(data);
-    rawTest(argv[1], data);
-    break;
-  case 'n':
-    visualizationTest(argv[1], data);
-    break;
-  default:
-    fprintf(stderr, "Error: Invalid input\n");
-    break;
-  }
+  // printf("===========================================\n");
+
+  // switch (input)
+  // {
+  // case 'y':
+  //   initializeArray(data);
+  //   rawTest(argv[1], data);
+  //   break;
+  // case 'n':
+  //   visualizationTest(argv[1], data);
+  //   break;
+  // default:
+  //   fprintf(stderr, "Error: Invalid input\n");
+  //   break;
+  // }
 
   return 0;
 }
