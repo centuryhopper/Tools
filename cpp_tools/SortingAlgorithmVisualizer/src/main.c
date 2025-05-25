@@ -135,7 +135,7 @@ static int rawTest(char *arg, int *data)
   return EXIT_SUCCESS;
 }
 
-// Just a dummy dispatcher for now; add animation/sleep logic inside your sort implementations
+// contains the actual sort logic
 static void runSort(SortType type, int *data, void *sortState)
 {
   // TODO: complete the other sorts
@@ -145,7 +145,7 @@ static void runSort(SortType type, int *data, void *sortState)
     selectionSort(data, (SelectionSortState *)sortState);
     break;
   case INSERTION:
-    insertionSort(data);
+    insertionSort(data, (InsertionSortState *)sortState);
     break;
   case BUBBLE:
     bubbleSort(data, (BubbleSortState *)sortState);
@@ -175,6 +175,10 @@ static void resetSortState(SortType type, int *data, void **sortState)
                                                                                                       });
     break;
   case INSERTION:
+    *sortState = (InsertionSortState *)initializeInsertionSortState((InsertionSortState *)*sortState, (InsertionSortState){
+                                                                                                          .i = 0,
+                                                                                                          .j = 1,
+                                                                                                      });
     break;
   case BUBBLE:
     *sortState = (BubbleSortState *)initializeBubbleSortState((BubbleSortState *)*sortState, (BubbleSortState){.i = ELEMENT_COUNT - 1, .j = 1, .swapped = 0, .sorting = 1});
@@ -194,8 +198,10 @@ static void cleanUpSortState(SortType type, void **sortState)
   switch (type)
   {
   case SELECTION:
+    *sortState = cleanUpSelectionSortState((SelectionSortState *)*sortState);
     break;
   case INSERTION:
+    *sortState = cleanUpInsertionSortState((InsertionSortState *)*sortState);
     break;
   case BUBBLE:
     *sortState = cleanUpBubbleSortState((BubbleSortState *)*sortState);
@@ -250,9 +256,9 @@ static int visualizationTest(int *data)
       }
 
       Rectangle sliderBounds = {startX + WIDGET_WIDTH + SPACING, y, WIDGET_WIDTH, WIDGET_HEIGHT};
-      GuiSliderBar(sliderBounds, "Speed", NULL, &speed, 0.01f, 0.99f);
+      GuiSliderBar(sliderBounds, "Speed", NULL, &speed, 0.001f, 0.999f);
 
-      printf("speed: %f\n", speed);
+      // printf("speed: %f\n", speed);
 
       Rectangle buttonBounds = {startX + 2 * (WIDGET_WIDTH + SPACING), y, WIDGET_WIDTH, WIDGET_HEIGHT};
       if (GuiButton(buttonBounds, "Start"))
@@ -267,30 +273,63 @@ static int visualizationTest(int *data)
     else
     {
       // sort logic goes here
+      // IMPORTANT: We don't use WaitTime because WaitTime will block
       double currentTime = GetTime();
       if (!isSorted(data, ELEMENT_COUNT) && (currentTime - lastStepTime >= (1.0 - speed)))
       {
         runSort(sortChosen, data, sortState);
         lastStepTime = currentTime;
       }
+
+      int i, j;
+      switch (sortChosen)
+      {
+      case SELECTION:;
+        SelectionSortState *sState = (SelectionSortState *)sortState;
+        i = sState->i;
+        j = sState->j;
+        // printf("i: %d, j: %d\n", i, j);
+        draw_state(data, i, j, -1);
+        // printf("Selection!\n");
+        break;
+      case BUBBLE:;
+        BubbleSortState *bState = (BubbleSortState *)sortState;
+        i = bState->i;
+        j = bState->j;
+        draw_state(data, i, j, -1);
+        break;
+      case INSERTION:;
+        InsertionSortState *iState = (InsertionSortState *)sortState;
+        i = iState->i;
+        j = iState->j;
+        draw_state(data, i, j, -1);
+        break;
+      case MERGE:
+        break;
+      case QUICK:
+        break;
+      default:
+        break;
+      }
+
       // runSort(sortChosen, data, sortState);
 
-      // WaitTime(1 - speed);
+      // draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
     }
 
     if (started && isSorted(data, ELEMENT_COUNT))
     {
       DrawText("Sorted!", SCREEN_WIDTH / 2 - 100, 50, 40, DARKGREEN);
 
-      // clean up sort state here
-      // cleanUpSortState(sortChosen, &sortState);
-
       // Visualization bars
       draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
     }
     else if (started && !isSorted(data, ELEMENT_COUNT))
     {
+      // printf("drawing it\n");
       DrawText(getSortTypeString(sortChosen), SCREEN_WIDTH / 2 - 100, 50, 40, DARKGREEN);
+      // Visualization bars
+      // draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
     }
 
     // Reset button
@@ -307,11 +346,9 @@ static int visualizationTest(int *data)
   }
 
   // clean up sort state here
+  printf("%s\n", !sortState ? "sort state cleaned up already? Something is wrong!" : "sort state not cleaned up but will be!");
   cleanUpSortState(sortChosen, &sortState);
-  if (!sortState)
-  {
-    printf("CLEANED UP sortState\n");
-  }
+  printf("%s\n", !sortState ? "sort state cleaned up!" : "sort state not cleaned up! Okay something is definitely wrong!");
   CloseWindow();
 
   return EXIT_SUCCESS;

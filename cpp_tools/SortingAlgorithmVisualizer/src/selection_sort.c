@@ -44,7 +44,7 @@ void selectionSort(int *arr, SelectionSortState *state)
                 state->minIdx = state->j;
                 state->swapped = 1;
             }
-            draw_state(arr, state->i, state->j, -1);
+            // draw_state(arr, state->i, state->j, -1);
             state->j += 1;
         }
         else
