@@ -319,7 +319,7 @@ static int visualizationTest(int *data)
 
     if (started && isSorted(data, ELEMENT_COUNT))
     {
-      DrawText("Sorted!", SCREEN_WIDTH / 2 - 100, 50, 40, DARKGREEN);
+      DrawText("Sorted!", SCREEN_WIDTH / 2 - 100, 50, 40, YELLOW);
 
       // Visualization bars
       draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
@@ -327,7 +327,7 @@ static int visualizationTest(int *data)
     else if (started && !isSorted(data, ELEMENT_COUNT))
     {
       // printf("drawing it\n");
-      DrawText(getSortTypeString(sortChosen), SCREEN_WIDTH / 2 - 100, 50, 40, DARKGREEN);
+      DrawText(getSortTypeString(sortChosen), SCREEN_WIDTH / 2 - 100, 50, 40, YELLOW);
       // Visualization bars
       // draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
     }
@@ -346,9 +346,9 @@ static int visualizationTest(int *data)
   }
 
   // clean up sort state here
-  printf("%s\n", !sortState ? "sort state cleaned up already? Something is wrong!" : "sort state not cleaned up but will be!");
+  // printf("%s\n", !sortState ? "sort state cleaned up already? Something is wrong!" : "sort state not cleaned up but will be!");
   cleanUpSortState(sortChosen, &sortState);
-  printf("%s\n", !sortState ? "sort state cleaned up!" : "sort state not cleaned up! Okay something is definitely wrong!");
+  // printf("%s\n", !sortState ? "sort state cleaned up!" : "sort state not cleaned up! Okay something is definitely wrong!");
   CloseWindow();
 
   return EXIT_SUCCESS;
