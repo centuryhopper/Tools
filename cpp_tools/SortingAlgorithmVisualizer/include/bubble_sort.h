@@ -8,9 +8,9 @@ typedef struct
     int sorting;
 } BubbleSortState;
 
-BubbleSortState* cleanUpBubbleSortState(BubbleSortState* state);
-BubbleSortState* initializeBubbleSortState(BubbleSortState* state, BubbleSortState values);
-void bubbleSort(int* arr, BubbleSortState *state);
+void cleanUpBubbleSortState(BubbleSortState **state);
+void initializeBubbleSortState(BubbleSortState **state);
+void bubbleSort(int *arr, BubbleSortState *state);
 void bubbleSortRaw(int *arr, int size);
 
 #endif

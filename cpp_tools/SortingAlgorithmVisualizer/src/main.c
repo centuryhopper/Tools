@@ -1,7 +1,7 @@
 #define RAYGUI_IMPLEMENTATION
 #include "../include/raygui.h"
 #include "../include/configs.h"
-#include "../include/draw_state.h"
+#include "../include/utils.h"
 #include "../include/bubble_sort.h"
 #include "../include/insertion_sort.h"
 #include "../include/merge_sort.h"
@@ -20,7 +20,20 @@
 #define WIDGET_HEIGHT 100
 #define SPACING 75
 
+// "Bubble;Insertion;Selection;Quick;Merge"
+typedef enum
+{
+  MERGE = 0,
+  BUBBLE = 1,
+  INSERTION = 2,
+  SELECTION = 3,
+  QUICK = 4,
+  NONE = -1,
+} SortType;
+
 static void initializeArray(int *arr);
+static bool isSorted(const int *arr);
+static void cleanUpSortState(SortType type, void **sortState);
 
 /*
     raygui:
@@ -36,16 +49,6 @@ static void initializeArray(int *arr);
         python3 -m http.server
         then go to http://localhost:8000/wasm/main.html
 */
-// "Bubble;Insertion;Selection;Quick;Merge"
-typedef enum
-{
-  BUBBLE = 0,
-  INSERTION = 1,
-  SELECTION = 2,
-  QUICK = 3,
-  MERGE = 4,
-  NONE = -1,
-} SortType;
 
 const char *getSortTypeString(SortType sortType)
 {
@@ -66,6 +69,48 @@ const char *getSortTypeString(SortType sortType)
   }
 }
 
+static void visualizeBars(SortType sortChosen, int *data, void *sortState)
+{
+  if (!sortState)
+  {
+    return;
+  }
+  int i, j;
+  switch (sortChosen)
+  {
+  case SELECTION:;
+    SelectionSortState *sState = (SelectionSortState *)sortState;
+    i = sState->i;
+    j = sState->j;
+    // printf("i: %d, j: %d\n", i, j);
+    draw_state(data, i, j, -1);
+    // printf("Selection!\n");
+    break;
+  case BUBBLE:;
+    BubbleSortState *bState = (BubbleSortState *)sortState;
+    i = bState->i;
+    j = bState->j;
+    draw_state(data, i, j, -1);
+    break;
+  case INSERTION:;
+    InsertionSortState *iState = (InsertionSortState *)sortState;
+    i = iState->i;
+    j = iState->j;
+    draw_state(data, i, j, -1);
+    break;
+  case MERGE:;
+    MergeSortState *mState = (MergeSortState *)sortState;
+    i = mState->tempArrayIdx;
+    // printf("%d\n", mState->isSortDone);
+    draw_state(data, i, -1, -1);
+    break;
+  case QUICK:
+    break;
+  default:
+    break;
+  }
+}
+
 static void str_to_lower(char *str)
 {
   while (*str)
@@ -75,9 +120,9 @@ static void str_to_lower(char *str)
   }
 }
 
-static bool isSorted(const int *arr, int n)
+static bool isSorted(const int *arr)
 {
-  for (int i = 1; i < n; ++i)
+  for (int i = 1; i < ELEMENT_COUNT; ++i)
   {
     if (arr[i] < arr[i - 1])
     {
@@ -123,7 +168,7 @@ static int rawTest(char *arg, int *data)
     printf("%d%s", data[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
   }
 
-  if (isSorted(data, ELEMENT_COUNT))
+  if (isSorted(data))
   {
     printf("sorted\n");
   }
@@ -153,8 +198,12 @@ static void runSort(SortType type, int *data, void *sortState)
   case QUICK:
     quickSort(data);
     break;
-  case MERGE:
-    mergeSort(data);
+  case MERGE:;
+    MergeSortState *mSortState = (MergeSortState *)sortState;
+    if (!mSortState->isSortDone)
+    {
+      mergeSort(data, (MergeSortState *)sortState);
+    }
     break;
   default:
     break;
@@ -163,29 +212,26 @@ static void runSort(SortType type, int *data, void *sortState)
 
 static void resetSortState(SortType type, int *data, void **sortState)
 {
+  if (*sortState)
+    cleanUpSortState(type, sortState);
   // TODO: complete the other sorts
   switch (type)
   {
   case SELECTION:
-    *sortState = (SelectionSortState *)initializeSelectionSortState((SelectionSortState *)*sortState, (SelectionSortState){
-                                                                                                          .i = 0,
-                                                                                                          .j = 1,
-                                                                                                          .minIdx = 0,
-                                                                                                          .swapped = 0,
-                                                                                                      });
+    initializeSelectionSortState((SelectionSortState **)sortState);
     break;
   case INSERTION:
-    *sortState = (InsertionSortState *)initializeInsertionSortState((InsertionSortState *)*sortState, (InsertionSortState){
-                                                                                                          .i = 0,
-                                                                                                          .j = 1,
-                                                                                                      });
+    initializeInsertionSortState((InsertionSortState **)sortState);
     break;
   case BUBBLE:
-    *sortState = (BubbleSortState *)initializeBubbleSortState((BubbleSortState *)*sortState, (BubbleSortState){.i = ELEMENT_COUNT - 1, .j = 1, .swapped = 0, .sorting = 1});
+    initializeBubbleSortState((BubbleSortState **)sortState);
     break;
   case QUICK:
     break;
   case MERGE:
+    printf("reseting merge sort\n");
+    initializeMergeSortState((MergeSortState **)sortState);
+    printf("done reseting merge sort\n");
     break;
   default:
     break;
@@ -194,21 +240,26 @@ static void resetSortState(SortType type, int *data, void **sortState)
 
 static void cleanUpSortState(SortType type, void **sortState)
 {
+  if (!(*sortState))
+  {
+    return;
+  }
   // TODO: complete the other sorts
   switch (type)
   {
   case SELECTION:
-    *sortState = cleanUpSelectionSortState((SelectionSortState *)*sortState);
+    cleanUpSelectionSortState((SelectionSortState **)sortState);
     break;
   case INSERTION:
-    *sortState = cleanUpInsertionSortState((InsertionSortState *)*sortState);
+    cleanUpInsertionSortState((InsertionSortState **)sortState);
     break;
   case BUBBLE:
-    *sortState = cleanUpBubbleSortState((BubbleSortState *)*sortState);
+    cleanUpBubbleSortState((BubbleSortState **)sortState);
     break;
   case QUICK:
     break;
   case MERGE:
+    cleanUpMergeSortState((MergeSortState **)sortState);
     break;
   default:
     break;
@@ -233,7 +284,7 @@ static int visualizationTest(int *data)
 
   initializeArray(data);
 
-  const char *options = "Bubble;Insertion;Selection;Quick;Merge";
+  const char *options = "Merge;Bubble;Insertion;Selection;Quick";
 
   void *sortState = NULL;
   double lastStepTime = GetTime();
@@ -275,56 +326,27 @@ static int visualizationTest(int *data)
       // sort logic goes here
       // IMPORTANT: We don't use WaitTime because WaitTime will block
       double currentTime = GetTime();
-      if (!isSorted(data, ELEMENT_COUNT) && (currentTime - lastStepTime >= (1.0 - speed)))
+      if (!isSorted(data) && (currentTime - lastStepTime >= (1.0 - speed)))
       {
         runSort(sortChosen, data, sortState);
         lastStepTime = currentTime;
       }
 
-      int i, j;
-      switch (sortChosen)
-      {
-      case SELECTION:;
-        SelectionSortState *sState = (SelectionSortState *)sortState;
-        i = sState->i;
-        j = sState->j;
-        // printf("i: %d, j: %d\n", i, j);
-        draw_state(data, i, j, -1);
-        // printf("Selection!\n");
-        break;
-      case BUBBLE:;
-        BubbleSortState *bState = (BubbleSortState *)sortState;
-        i = bState->i;
-        j = bState->j;
-        draw_state(data, i, j, -1);
-        break;
-      case INSERTION:;
-        InsertionSortState *iState = (InsertionSortState *)sortState;
-        i = iState->i;
-        j = iState->j;
-        draw_state(data, i, j, -1);
-        break;
-      case MERGE:
-        break;
-      case QUICK:
-        break;
-      default:
-        break;
-      }
-
-      // runSort(sortChosen, data, sortState);
+      visualizeBars(sortChosen, data, sortState);
 
       // draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
     }
 
-    if (started && isSorted(data, ELEMENT_COUNT))
+    if (started && isSorted(data))
     {
       DrawText("Sorted!", SCREEN_WIDTH / 2 - 100, 50, 40, YELLOW);
+
+      cleanUpSortState(sortChosen, &sortState);
 
       // Visualization bars
       draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
     }
-    else if (started && !isSorted(data, ELEMENT_COUNT))
+    else if (started && !isSorted(data))
     {
       // printf("drawing it\n");
       DrawText(getSortTypeString(sortChosen), SCREEN_WIDTH / 2 - 100, 50, 40, YELLOW);

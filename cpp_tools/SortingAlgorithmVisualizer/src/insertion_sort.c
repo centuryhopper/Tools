@@ -1,32 +1,34 @@
 #include "raylib.h"
 #include <stdlib.h>
 #include "../include/configs.h"
-#include "../include/draw_state.h"
+#include "../include/utils.h"
 #include "../include/insertion_sort.h"
+#include <stdio.h>
 
-InsertionSortState *cleanUpInsertionSortState(InsertionSortState *state)
+void cleanUpInsertionSortState(InsertionSortState **state)
 {
-    if (state)
+    if (*state)
     {
-        free(state);
+        free(*state);
+        *state = NULL;
     }
-    return NULL;
 }
 
-InsertionSortState *initializeInsertionSortState(InsertionSortState *state, InsertionSortState values)
+void initializeInsertionSortState(InsertionSortState **state)
 {
-    if (state)
+    if (*state)
     {
-        state = cleanUpInsertionSortState(state);
+        cleanUpInsertionSortState(state);
     }
-    state = malloc(sizeof(InsertionSortState));
-    if (!state)
+    *state = malloc(sizeof(InsertionSortState));
+    if (!(*state))
     {
-        return NULL;
+        printf("insertion sort malloc failed\n");
+        return;
     }
-    state->i = values.i;
-    state->j = values.j;
-    return state;
+
+    (*state)->i = 0;
+    (*state)->j = 1;
 }
 
 // Insertion Sort with per-frame visualization

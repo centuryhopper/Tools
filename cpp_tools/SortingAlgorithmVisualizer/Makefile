@@ -23,13 +23,17 @@ CFLAGS_WEB = -Wall -std=c99 -Os \
 all: native
 
 native:
-	gcc ./src/main.c ./src/bubble_sort.c ./src/insertion_sort.c ./src/merge_sort.c ./src/selection_sort.c ./src/quick_sort.c ./src/draw_state.c ./src/utils.c -o main $(CFLAGS_NATIVE) $(LIBS_NATIVE)
+	gcc ./src/main.c ./src/bubble_sort.c ./src/insertion_sort.c ./src/merge_sort.c ./src/selection_sort.c ./src/quick_sort.c ./src/utils.c -o main $(CFLAGS_NATIVE) $(LIBS_NATIVE)
+	./main
 
 run: native
 	./main
 
+sanity:
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --gen-suppressions=all ./main
+
 web:
-	emcc ./src/main.c ./src/bubble_sort.c ./src/insertion_sort.c ./src/merge_sort.c ./src/selection_sort.c ./src/quick_sort.c ./src/draw_state.c ./src/utils.c -o main.html $(CFLAGS_WEB)
+	emcc ./src/main.c ./src/bubble_sort.c ./src/insertion_sort.c ./src/merge_sort.c ./src/selection_sort.c ./src/quick_sort.c ./src/utils.c -o main.html $(CFLAGS_WEB)
 	mkdir -p ./wasm
 	mv main.html main.js main.wasm ./wasm
 

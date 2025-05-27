@@ -1,8 +1,42 @@
 #include "raylib.h"
 #include "../include/configs.h"
-#include "../include/draw_state.h"
+#include "../include/utils.h"
+#include "../include/merge_sort.h"
 #include <stdlib.h>
 #include <stdio.h>
+
+void cleanUpMergeSortState(MergeSortState **state)
+{
+  if (state && *state)
+  {
+    free((*state)->tempArray);
+    (*state)->tempArray = NULL;
+    free(*state);
+    *state = NULL;
+  }
+}
+
+void initializeMergeSortState(MergeSortState **state)
+{
+  if (*state)
+  {
+    cleanUpMergeSortState(state);
+  }
+
+  *state = malloc(sizeof(MergeSortState));
+  if (!(*state))
+  {
+    printf("merge sort malloc failed\n");
+    return;
+  }
+
+  (*state)->subArrayWidth = 1;
+  (*state)->section = 0;
+  (*state)->tempArrayIdx = 0;
+  (*state)->isSortDone = false;
+  (*state)->tempArray = malloc(sizeof(int) * ELEMENT_COUNT);
+}
+
 
 // Merge function with visualization
 static void mergeyMerge(int *arr, int left, int mid, int right)
@@ -77,48 +111,51 @@ void runner(int *arr, int left, int right)
 }
 
 // Public interface
-void mergeSort(int *arr)
-{
-  runner(arr, 0, ELEMENT_COUNT);
+// void mergeSort(int *arr)
+// {
+//   runner(arr, 0, ELEMENT_COUNT);
 
-  // printf("merge sort done\n");
-}
-
-void mergeSortIterative(int *arr, int n)
+// Iterative merge sort implementation runtime: O(ceil(log (n))), where n is the number of elements to be sorted
+void mergeSort(int *arr, MergeSortState *state)
 {
-  int *temp = (int *)malloc(n * sizeof(int));
-  for (int width = 1; width < n; width *= 2)
+  if (state->subArrayWidth < ELEMENT_COUNT)
   {
-    for (int i = 0; i < n; i += 2 * width)
+    if (state->section < ELEMENT_COUNT)
     {
-      int left = i;
-      int mid = i + width;
-      int right = i + 2 * width;
-      if (mid > n)
-        mid = n;
-      if (right > n)
-        right = n;
+      int left = state->section;
+      int mid = state->section + state->subArrayWidth;
+      int right = state->section + 2 * state->subArrayWidth;
+      mid = MIN(mid, ELEMENT_COUNT);
+      right = MIN(right, ELEMENT_COUNT);
 
       // Merge arr[left:mid] and arr[mid:right] into temp
       int l = left, r = mid, t = left;
       while (l < mid && r < right)
-        temp[t++] = arr[l] < arr[r] ? arr[l++] : arr[r++];
+        state->tempArray[t++] = arr[l] < arr[r] ? arr[l++] : arr[r++];
       while (l < mid)
-        temp[t++] = arr[l++];
+        state->tempArray[t++] = arr[l++];
       while (r < right)
-        temp[t++] = arr[r++];
+        state->tempArray[t++] = arr[r++];
+
+      state->section += (2 * state->subArrayWidth);
     }
-    // Copy back to original array
-    for (int i = 0; i < n; i++)
+    else
     {
-      BeginDrawing();
-      EndDrawing();
-      WaitTime(WAIT_TIME);
-      arr[i] = temp[i];
-      draw_state(arr, i, -1, -1);
+      if (state->tempArrayIdx < ELEMENT_COUNT)
+      {
+        // copy a newly formed pass from the temp array over to arr
+        arr[state->tempArrayIdx] = state->tempArray[state->tempArrayIdx];
+        state->tempArrayIdx += 1;
+      }
+      else
+      {
+        state->section = 0;
+        state->subArrayWidth *= 2;
+        state->tempArrayIdx = 0;
+      }
     }
   }
-  free(temp);
+
 }
 
 void mergeSortIterativeRaw(int *arr, int n)

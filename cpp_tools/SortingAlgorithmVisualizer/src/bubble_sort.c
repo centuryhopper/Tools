@@ -1,36 +1,36 @@
 #include "raylib.h"
 #include "../include/configs.h"
-#include "../include/draw_state.h"
+#include "../include/utils.h"
 #include "../include/bubble_sort.h"
 #include <stdlib.h>
+#include <stdio.h>
 
-
-
-BubbleSortState* cleanUpBubbleSortState(BubbleSortState* state)
+void cleanUpBubbleSortState(BubbleSortState **state)
 {
-    if (state)
+    if (*state)
     {
-        free(state);
+        free(*state);
+        *state = NULL;
     }
-    return NULL;
 }
 
-BubbleSortState* initializeBubbleSortState(BubbleSortState* state, BubbleSortState values)
+void initializeBubbleSortState(BubbleSortState **state)
 {
-    if (state)
+    if (*state)
     {
-        state = cleanUpBubbleSortState(state);
+        cleanUpBubbleSortState(state);
     }
-    state = malloc(sizeof(BubbleSortState));
-    if (!state)
+    *state = malloc(sizeof(BubbleSortState));
+    if (!(*state))
     {
-        return NULL;
+        printf("bubble sort malloc failed\n");
+        return;
     }
-    state->i = values.i;
-    state->j = values.j;
-    state->swapped = values.swapped;
-    state->sorting = values.sorting;
-    return state;
+
+    (*state)->i = ELEMENT_COUNT - 1;
+    (*state)->j = 1;
+    (*state)->swapped = 0;
+    (*state)->sorting = 1;
 }
 
 // Bubble Sort with per-frame visualization

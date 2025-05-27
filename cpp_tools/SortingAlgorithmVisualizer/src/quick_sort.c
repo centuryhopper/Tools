@@ -2,8 +2,9 @@
 #include <limits.h>
 #include <stdio.h>
 #include <time.h>
+#include "../include/utils.h"
 #include "../include/configs.h"
-#include "../include/draw_state.h"
+
 #include <stdlib.h>
 
 static int quickSortPartition(int *arr, int size, int lo, int hi)
@@ -24,7 +25,6 @@ static int quickSortPartition(int *arr, int size, int lo, int hi)
   int i = lo;
   int j = hi;
   int left, right;
-
 
   while (i < j)
   {

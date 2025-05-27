@@ -1,34 +1,36 @@
 #include "raylib.h"
 #include "../include/configs.h"
-#include "../include/draw_state.h"
+#include "../include/utils.h"
 #include "../include/selection_sort.h"
 #include <stdlib.h>
+#include <stdio.h>
 
-SelectionSortState *cleanUpSelectionSortState(SelectionSortState *state)
+void cleanUpSelectionSortState(SelectionSortState **state)
 {
-    if (state)
+    if (*state)
     {
-        free(state);
+        free(*state);
+        *state = NULL;
     }
-    return NULL;
 }
 
-SelectionSortState *initializeSelectionSortState(SelectionSortState *state, SelectionSortState values)
+void initializeSelectionSortState(SelectionSortState **state)
 {
-    if (state)
+    if (*state)
     {
-        state = cleanUpSelectionSortState(state);
+        cleanUpSelectionSortState(state);
     }
-    state = malloc(sizeof(SelectionSortState));
-    if (!state)
+    *state = malloc(sizeof(SelectionSortState));
+    if (!(*state))
     {
-        return NULL;
+        printf("selection sort malloc failed\n");
+        return;
     }
-    state->i = values.i;
-    state->j = values.j;
-    state->minIdx = values.minIdx;
-    state->swapped = values.swapped;
-    return state;
+
+    (*state)->i = 0;
+    (*state)->j = 1;
+    (*state)->minIdx = 0;
+    (*state)->swapped = 0;
 }
 
 // Selection Sort with per-frame visualization
@@ -56,12 +58,11 @@ void selectionSort(int *arr, SelectionSortState *state)
                 arr[state->minIdx] = tmp;
             }
             state->swapped = 0;
-            state->i+=1;
-            state->minIdx=state->i;
-            state->j = state->i+1;
+            state->i += 1;
+            state->minIdx = state->i;
+            state->j = state->i + 1;
         }
     }
-    
 }
 
 void selectionSortRaw(int *arr, int size)
