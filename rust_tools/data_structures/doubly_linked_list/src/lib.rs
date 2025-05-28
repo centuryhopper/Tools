@@ -158,25 +158,26 @@ impl<T: std::fmt::Debug + Clone + std::cmp::Ord + Default> DoublyLinkedList<T> {
             // set aux tail's pointer accordingly
             tail.borrow_mut().next = next_node.clone();
 
+            // no longer need this if we're calling realign_prev()
             // outer scope not necessary but added for clarity
-            {
-                // limit the scope of each mutable borrow by introducing separate blocks or by dropping the borrow explicitly before creating a new one.
+            // {
+            //     // limit the scope of each mutable borrow by introducing separate blocks or by dropping the borrow explicitly before creating a new one.
 
-                // set next_node's prev to tail
-                let next_node_prev: Prev<T> = {
-                    if let Some(next_node_rc) = next_node.clone() {
-                        let next_node_rc_borrow_mut = next_node_rc.borrow_mut();
-                        next_node_rc_borrow_mut.prev.clone();
-                    }
-                    None
-                };
+            //     // set next_node's prev to tail
+            //     let next_node_prev: Prev<T> = {
+            //         if let Some(next_node_rc) = next_node.clone() {
+            //             let next_node_rc_borrow_mut = next_node_rc.borrow_mut();
+            //             next_node_rc_borrow_mut.prev.clone();
+            //         }
+            //         None
+            //     };
 
-                if let Some(weak_ptr) = next_node_prev {
-                    if let Some(rc) = weak_ptr.upgrade() {
-                        rc.borrow_mut().prev = Some(Rc::downgrade(&tail));
-                    }
-                }
-            }
+            //     if let Some(weak_ptr) = next_node_prev {
+            //         if let Some(rc) = weak_ptr.upgrade() {
+            //             rc.borrow_mut().prev = Some(Rc::downgrade(&tail));
+            //         }
+            //     }
+            // }
 
             // move aux tail to its new next pointer
             tail = tail.clone().borrow_mut().next.clone().unwrap();

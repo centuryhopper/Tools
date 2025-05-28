@@ -4,10 +4,48 @@
 #include <time.h>
 #include "../include/utils.h"
 #include "../include/configs.h"
+#include "../include/quick_sort.h"
 
 #include <stdlib.h>
 
-static int quickSortPartition(int *arr, int size, int lo, int hi)
+static void quickSortIterative(int *arr, int l, int h);
+static int quickSortPartitionRaw(int *arr, int lo, int hi);
+static void iterativeRunner(int *arr, QuickSortState *state);
+
+void cleanUpQuickSortState(QuickSortState **state)
+{
+  if (state && *state)
+  {
+    free((*state)->stack);
+    (*state)->stack = NULL;
+    free(*state);
+    *state = NULL;
+  }
+}
+
+void initializeQuickSortState(QuickSortState **state)
+{
+  if (*state)
+  {
+    cleanUpQuickSortState(state);
+  }
+  *state = malloc(sizeof(QuickSortState));
+  if (!(*state))
+  {
+    printf("quick sort malloc failed\n");
+    return;
+  }
+
+  (*state)->l = 0;
+  (*state)->h = ELEMENT_COUNT;
+  (*state)->top = -1;
+  (*state)->stack = (int *)calloc((ELEMENT_COUNT + 1), sizeof(int));
+  // Push initial values of l and h to stack
+  (*state)->stack[++(*state)->top] = (*state)->l;
+  (*state)->stack[++(*state)->top] = (*state)->h;
+}
+
+static int quickSortPartition(int *arr, int lo, int hi)
 {
   if (WindowShouldClose())
     return lo; // early exit if window closed
@@ -78,19 +116,94 @@ static void runner(int *arr, int size, int lo, int hi)
     return;
   }
 
-  int partitionIdx = quickSortPartition(arr, size, lo, hi);
+  int partitionIdx = quickSortPartition(arr, lo, hi);
   runner(arr, size, lo, partitionIdx);
   runner(arr, size, partitionIdx + 1, hi);
 }
 
-void quickSort(int *arr)
+// void quickSort(int *arr)
+// {
+//   srand((unsigned int)time(NULL));
+//   // runner(arr, ELEMENT_COUNT, 0, ELEMENT_COUNT);
+//   // printf("quick sort is done\n");
+//   quickSortIterative(arr, 0, ELEMENT_COUNT);
+// }
+
+void quickSort(int *arr, QuickSortState *state)
 {
   srand((unsigned int)time(NULL));
-  runner(arr, ELEMENT_COUNT, 0, ELEMENT_COUNT);
-  printf("quick sort is done\n");
+  iterativeRunner(arr, state);
 }
 
-static int quickSortPartitionRaw(int *arr, int size, int lo, int hi)
+static void iterativeRunner(int *arr, QuickSortState *state)
+{
+  // Keep popping while stack is not empty
+  if (state->top >= 0)
+  {
+    // Pop h and l
+    state->h = state->stack[state->top--];
+    state->l = state->stack[state->top--];
+
+    // Partition the array
+    int p = quickSortPartitionRaw(arr, state->l, state->h);
+    state->pivot = p;
+
+    // exclude lo if same of greater than pivot index
+    if (p > state->l)
+    {
+      state->stack[++state->top] = state->l;
+      state->stack[++state->top] = p;
+    }
+
+    // If right side of pivot has more than 1 element
+    if (p + 1 < state->h)
+    {
+      state->stack[++state->top] = p + 1;
+      state->stack[++state->top] = state->h;
+    }
+  }
+}
+
+// Iterative quicksort using a stack
+static void quickSortIterative(int *arr, int l, int h)
+{
+  // Stack to hold subarray start and end indices
+  int stack[h - l + 1];
+
+  // Initialize top of stack
+  int top = -1;
+
+  // Push initial values of l and h to stack
+  stack[++top] = l;
+  stack[++top] = h;
+
+  // Keep popping while stack is not empty
+  while (top >= 0)
+  {
+    // Pop h and l
+    h = stack[top--];
+    l = stack[top--];
+
+    // Partition the array
+    int p = quickSortPartitionRaw(arr, l, h);
+
+    // exclude lo if same of greater than pivot index
+    if (p > l)
+    {
+      stack[++top] = l;
+      stack[++top] = p;
+    }
+
+    // If right side of pivot has more than 1 element
+    if (p + 1 < h)
+    {
+      stack[++top] = p + 1;
+      stack[++top] = h;
+    }
+  }
+}
+
+static int quickSortPartitionRaw(int *arr, int lo, int hi)
 {
   int pivotIdx = lo + (rand() % (hi - lo));
   // printf("pivotIdx: %d\n", pivotIdx);
@@ -135,13 +248,13 @@ static int quickSortPartitionRaw(int *arr, int size, int lo, int hi)
   return j;
 }
 
-void quickSortRaw(int *arr, int size, int lo, int hi)
+void quickSortRaw(int *arr, int lo, int hi)
 {
   if (hi - lo <= 1)
   {
     return;
   }
-  int partitionIdx = quickSortPartitionRaw(arr, size, lo, hi);
-  quickSortRaw(arr, size, lo, partitionIdx);
-  quickSortRaw(arr, size, partitionIdx + 1, hi);
+  int partitionIdx = quickSortPartitionRaw(arr, lo, hi);
+  quickSortRaw(arr, lo, partitionIdx);
+  quickSortRaw(arr, partitionIdx + 1, hi);
 }

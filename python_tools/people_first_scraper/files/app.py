@@ -15,15 +15,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
+from webdriver_manager.firefox import GeckoDriverManager
+
 
 os.chdir(os.path.dirname(__file__))
 output = Path.cwd() / "PeopleFirstCareersOutput"
 output.mkdir(exist_ok=True)
+LOG_PATH = "./logs"
 
 
 def human_delay(seconds=random.uniform(2, 5)):
     time.sleep(seconds)
-
 
 def setup_firefox_driver():
     options = Options()
@@ -38,10 +40,14 @@ def setup_firefox_driver():
     options.set_preference("dom.webdriver.enabled", False)
     options.set_preference("useAutomationExtension", False)
 
-    print(os.getcwd())
-    print(os.listdir())
+    # print(os.getcwd())
+    # print(os.listdir())
 
-    service = Service(executable_path="./geckodriver_for_arm")
+    # service = Service(executable_path="./geckodriver_for_arm")
+    service = Service(
+        GeckoDriverManager().install(),
+        log_path=os.path.join(LOG_PATH, "people_first_careers.log"),
+    )
 
     driver = webdriver.Firefox(
         options=options,
@@ -207,7 +213,7 @@ def main():
                 continue
             pages.append(PAGE_LINK.replace("$$$", str(i)))
             i += 25
-        pprint.pprint(pages)
+        # pprint.pprint(pages)
         for page in pages:
             driver.get(page)
             human_delay()

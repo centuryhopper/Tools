@@ -1,6 +1,7 @@
 #ifndef MERGE_SORT_H
 #define MERGE_SORT_H
 
+#include <stdbool.h>
 
 typedef struct
 {
@@ -8,7 +9,6 @@ typedef struct
     int section;
     int *tempArray;
     int tempArrayIdx;
-    bool isSortDone;
 } MergeSortState;
 
 void cleanUpMergeSortState(MergeSortState **state);

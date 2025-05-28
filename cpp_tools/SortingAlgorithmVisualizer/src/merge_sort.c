@@ -33,7 +33,6 @@ void initializeMergeSortState(MergeSortState **state)
   (*state)->subArrayWidth = 1;
   (*state)->section = 0;
   (*state)->tempArrayIdx = 0;
-  (*state)->isSortDone = false;
   (*state)->tempArray = malloc(sizeof(int) * ELEMENT_COUNT);
 }
 

@@ -1,6 +1,58 @@
 #include <raylib.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "../include/configs.h"
 int getMaxValue(const int *arr, int size);
+
+void printArray(int *arr)
+{
+    for (int i = 0; i < ELEMENT_COUNT; i++)
+    {
+        printf("%d%s", arr[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
+    }
+}
+
+// initializes array with randomized values between 1 and 100
+void initializeArray(int *arr)
+{
+    for (int i = 0; i < ELEMENT_COUNT; ++i)
+    {
+        // just to show that quick sort runs in quadratic run time with this kind of
+        // input
+        // arr[i] = 100 - i;
+        arr[i] = 1 + rand() % 100;
+        // printf("%d%s", arr[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
+    }
+}
+
+void swap(int *a, int *b)
+{
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+void str_to_lower(char *str)
+{
+    while (*str)
+    {
+        *str = tolower((unsigned char)*str);
+        str++;
+    }
+}
+
+bool isSorted(const int *arr)
+{
+    for (int i = 1; i < ELEMENT_COUNT; ++i)
+    {
+        if (arr[i] < arr[i - 1])
+        {
+            return false; // Found a pair out of order
+        }
+    }
+    return true; // All pairs in order
+}
 
 void draw_state_with_color(const int *arr, int red, int blue, int green, Color color)
 {

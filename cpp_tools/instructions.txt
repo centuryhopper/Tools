@@ -1,0 +1,50 @@
+Here's how to compile a C++ program that uses OpenCV on Ubuntu: 
+
+• Install OpenCV: 
+	• Update the package list: 
+
+    sudo apt update
+
+Install OpenCV library and development files. 
+    sudo apt install libopencv-dev
+
+• Write your C++ code: 
+	• Create a .cpp file (e.g., main.cpp) and include the necessary OpenCV headers. 
+
+    #include <iostream>
+    #include <opencv2/opencv.hpp>
+    
+    using namespace cv;
+    using namespace std;
+    
+    int main() {
+        Mat image = imread("image.jpg", IMREAD_COLOR); // Replace "image.jpg" with your image path
+        if (image.empty()) {
+            cout << "Could not open or find the image" << endl;
+            return -1;
+        }
+        imshow("Display window", image);
+        waitKey(0); 
+        return 0;
+    }
+
+• Compile the code: 
+	• Use g++ to compile, linking with the OpenCV libraries using pkg-config. 
+
+    g++ main.cpp -o output $(pkg-config --cflags --libs opencv4)
+
+• If pkg-config returns an error, you might have to locate the OpenCV libraries manually. 
+	• Find the OpenCV library directory (e.g., /usr/lib/x86_64-linux-gnu). 
+	• Compile with: 
+
+        g++ main.cpp -o output -I/usr/include/opencv4 -L/usr/lib/x86_64-linux-gnu -lopencv_core -lopencv_imgcodecs -lopencv_imgproc -lopencv_highgui 
+
+• Adjust the paths and library names as needed. 
+
+Run the executable. 
+    ./output
+
+• Make sure that the image file (e.g., "image.jpg") is in the same directory as the executable or provide the correct path to the image. 
+
+AI responses may include mistakes.
+

@@ -23,16 +23,16 @@
 // "Bubble;Insertion;Selection;Quick;Merge"
 typedef enum
 {
-  MERGE = 0,
-  BUBBLE = 1,
-  INSERTION = 2,
-  SELECTION = 3,
-  QUICK = 4,
+  QUICK = 0,
+  MERGE = 1,
+  BUBBLE = 2,
+  INSERTION = 3,
+  SELECTION = 4,
   NONE = -1,
 } SortType;
 
-static void initializeArray(int *arr);
-static bool isSorted(const int *arr);
+const char *options = "Quick;Merge;Bubble;Insertion;Selection;";
+static SortType prevChosenSortType = NONE;
 static void cleanUpSortState(SortType type, void **sortState);
 
 /*
@@ -50,7 +50,7 @@ static void cleanUpSortState(SortType type, void **sortState);
         then go to http://localhost:8000/wasm/main.html
 */
 
-const char *getSortTypeString(SortType sortType)
+const char *getSortTypeString(const SortType sortType)
 {
   switch (sortType)
   {
@@ -101,39 +101,24 @@ static void visualizeBars(SortType sortChosen, int *data, void *sortState)
   case MERGE:;
     MergeSortState *mState = (MergeSortState *)sortState;
     i = mState->tempArrayIdx;
-    // printf("%d\n", mState->isSortDone);
     draw_state(data, i, -1, -1);
     break;
-  case QUICK:
+  case QUICK:;
+    QuickSortState *qState = (QuickSortState *)sortState;
+    int pivot = qState->pivot;
+    int lo = qState->l;
+    int hi = qState->h;
+    // printf("pivot: %d\n", pivot);
+    draw_state(data, pivot, lo, hi);
     break;
   default:
     break;
   }
 }
 
-static void str_to_lower(char *str)
-{
-  while (*str)
-  {
-    *str = tolower((unsigned char)*str);
-    str++;
-  }
-}
-
-static bool isSorted(const int *arr)
-{
-  for (int i = 1; i < ELEMENT_COUNT; ++i)
-  {
-    if (arr[i] < arr[i - 1])
-    {
-      return false; // Found a pair out of order
-    }
-  }
-  return true; // All pairs in order
-}
-
 static int rawTest(char *arg, int *data)
 {
+  initializeArray(data);
   str_to_lower(arg);
 
   if (strcmp(arg, "s") == 0)
@@ -150,7 +135,10 @@ static int rawTest(char *arg, int *data)
   }
   else if (strcmp(arg, "q") == 0)
   {
-    quickSortRaw(data, ELEMENT_COUNT, 0, ELEMENT_COUNT);
+    // printf("quick sorting\n");
+    quickSortRaw(data, 0, ELEMENT_COUNT);
+    // quickSort(data);
+    // printf("quick sorting done\n");
   }
   else if (strcmp(arg, "m") == 0)
   {
@@ -163,10 +151,7 @@ static int rawTest(char *arg, int *data)
     return EXIT_FAILURE; // Non-zero to indicate error
   }
 
-  for (int i = 0; i < ELEMENT_COUNT; i++)
-  {
-    printf("%d%s", data[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
-  }
+  printArray(data);
 
   if (isSorted(data))
   {
@@ -183,7 +168,6 @@ static int rawTest(char *arg, int *data)
 // contains the actual sort logic
 static void runSort(SortType type, int *data, void *sortState)
 {
-  // TODO: complete the other sorts
   switch (type)
   {
   case SELECTION:
@@ -195,15 +179,13 @@ static void runSort(SortType type, int *data, void *sortState)
   case BUBBLE:
     bubbleSort(data, (BubbleSortState *)sortState);
     break;
-  case QUICK:
-    quickSort(data);
+  case QUICK:;
+    QuickSortState *qSortState = (QuickSortState *)sortState;
+    quickSort(data, qSortState);
     break;
   case MERGE:;
     MergeSortState *mSortState = (MergeSortState *)sortState;
-    if (!mSortState->isSortDone)
-    {
-      mergeSort(data, (MergeSortState *)sortState);
-    }
+    mergeSort(data, (MergeSortState *)sortState);
     break;
   default:
     break;
@@ -213,8 +195,12 @@ static void runSort(SortType type, int *data, void *sortState)
 static void resetSortState(SortType type, int *data, void **sortState)
 {
   if (*sortState)
-    cleanUpSortState(type, sortState);
-  // TODO: complete the other sorts
+  {
+    // printf("%s\n", getSortTypeString(prevChosenSortType));
+    cleanUpSortState(prevChosenSortType, sortState);
+    // printf("cleaned up %s\n", getSortTypeString(prevChosenSortType));
+  }
+  prevChosenSortType = type;
   switch (type)
   {
   case SELECTION:
@@ -227,11 +213,12 @@ static void resetSortState(SortType type, int *data, void **sortState)
     initializeBubbleSortState((BubbleSortState **)sortState);
     break;
   case QUICK:
+    initializeQuickSortState((QuickSortState **)sortState);
     break;
   case MERGE:
-    printf("reseting merge sort\n");
+    // printf("reseting merge sort\n");
     initializeMergeSortState((MergeSortState **)sortState);
-    printf("done reseting merge sort\n");
+    // printf("done reseting merge sort\n");
     break;
   default:
     break;
@@ -244,7 +231,6 @@ static void cleanUpSortState(SortType type, void **sortState)
   {
     return;
   }
-  // TODO: complete the other sorts
   switch (type)
   {
   case SELECTION:
@@ -257,6 +243,7 @@ static void cleanUpSortState(SortType type, void **sortState)
     cleanUpBubbleSortState((BubbleSortState **)sortState);
     break;
   case QUICK:
+    cleanUpQuickSortState((QuickSortState **)sortState);
     break;
   case MERGE:
     cleanUpMergeSortState((MergeSortState **)sortState);
@@ -284,8 +271,6 @@ static int visualizationTest(int *data)
 
   initializeArray(data);
 
-  const char *options = "Merge;Bubble;Insertion;Selection;Quick";
-
   void *sortState = NULL;
   double lastStepTime = GetTime();
 
@@ -299,17 +284,17 @@ static int visualizationTest(int *data)
       // make sure to draw bars first to avoid appearing in front of the text ui
       draw_state_with_color(data, -1, -1, -1, BLUE);
 
+      Rectangle sliderBounds = {startX - 100, y, WIDGET_WIDTH, WIDGET_HEIGHT};
+      GuiSliderBar(sliderBounds, "Speed", NULL, &speed, 0.001f, 0.999f);
+
+      // printf("speed: %f\n", speed);
+
       // dropdown
-      Rectangle dropdownBounds = {startX - 100, y, WIDGET_WIDTH, WIDGET_HEIGHT};
+      Rectangle dropdownBounds = {startX + WIDGET_WIDTH + SPACING, y, WIDGET_WIDTH, WIDGET_HEIGHT};
       if (GuiDropdownBox(dropdownBounds, options, &currentSortChoice, sortDropdownActive))
       {
         sortDropdownActive = !sortDropdownActive;
       }
-
-      Rectangle sliderBounds = {startX + WIDGET_WIDTH + SPACING, y, WIDGET_WIDTH, WIDGET_HEIGHT};
-      GuiSliderBar(sliderBounds, "Speed", NULL, &speed, 0.001f, 0.999f);
-
-      // printf("speed: %f\n", speed);
 
       Rectangle buttonBounds = {startX + 2 * (WIDGET_WIDTH + SPACING), y, WIDGET_WIDTH, WIDGET_HEIGHT};
       if (GuiButton(buttonBounds, "Start"))
@@ -317,7 +302,7 @@ static int visualizationTest(int *data)
         started = true;
         sortChosen = (SortType)currentSortChoice;
         resetSortState(sortChosen, data, &sortState);
-        // printf("i initted: %d\n", ((BubbleSortState *)(sortState))->i);
+
         lastStepTime = GetTime(); // Reset timing
       }
     }
@@ -368,25 +353,12 @@ static int visualizationTest(int *data)
   }
 
   // clean up sort state here
-  // printf("%s\n", !sortState ? "sort state cleaned up already? Something is wrong!" : "sort state not cleaned up but will be!");
+  printf("%s\n", !sortState ? "sort state cleaned up already? Something is wrong!" : "sort state not cleaned up but will be!");
   cleanUpSortState(sortChosen, &sortState);
-  // printf("%s\n", !sortState ? "sort state cleaned up!" : "sort state not cleaned up! Okay something is definitely wrong!");
+  printf("%s\n", !sortState ? "sort state cleaned up!" : "sort state not cleaned up! Okay something is definitely wrong!");
   CloseWindow();
 
   return EXIT_SUCCESS;
-}
-
-// initializes array with randomized values between 1 and 100
-static void initializeArray(int *arr)
-{
-  for (int i = 0; i < ELEMENT_COUNT; ++i)
-  {
-    // just to show that quick sort runs in quadratic run time with this kind of
-    // input
-    // arr[i] = 100 - i;
-    arr[i] = 1 + rand() % 100;
-    // printf("%d%s", arr[i], (i == ELEMENT_COUNT - 1) ? "\n" : " ");
-  }
 }
 
 int main(void)
@@ -408,10 +380,15 @@ int main(void)
   // scanf(" %c", &input); // ✅ Recommended for reading single characters
   // input = tolower(input);
 
-  int data[ELEMENT_COUNT];
+  // MUST have this seed before using initializeArray() calls
   srand((unsigned int)time(NULL));
+  int data[ELEMENT_COUNT];
 
   visualizationTest(data);
+
+  // make sure the string is writeable
+  // char arg[] = "q";
+  // rawTest(arg, data);
 
   // printf("===========================================\n");
 
