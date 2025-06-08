@@ -8,6 +8,7 @@
 #include "../include/quick_sort.h"
 #include "../include/selection_sort.h"
 #include "../include/utils.h"
+#include "../include/binary_search.h"
 #include <ctype.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -15,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <raylib.h>
 
 #define WIDGET_WIDTH 400
 #define WIDGET_HEIGHT 100
@@ -32,7 +34,53 @@ typedef enum
 } SortType;
 
 const char *options = "Quick;Merge;Bubble;Insertion;Selection;";
+const int totalWidth = 4 * WIDGET_WIDTH + 2 * SPACING;
+const int y = 50; // vertical position
+static int startX = (SCREEN_WIDTH - totalWidth) / 2;
 static SortType prevChosenSortType = NONE;
+static int toastTimer = 0;
+static const int toastDuration = 120;
+static bool showToast = false;
+static char toastMessage[128];
+static char inputBuffer[3];
+bool shouldBinarySearch = false;
+
+void ShowToast(char *message)
+{
+  // printf("message: %s\n", message);
+  strncpy(toastMessage, message, sizeof(toastMessage) - 1);
+  toastMessage[sizeof(toastMessage) - 1] = '\0';  // null-terminate
+  toastTimer = toastDuration;
+  showToast = true;
+}
+
+void DrawToast()
+{
+  // printf("showToast: %d\n", showToast);
+  if (!showToast)
+    return;
+
+  int fontSize = 40;
+  int padding = 40;
+  int toastHeight = 100;
+
+  // Draw toast background (centered at bottom)
+  int toastWidth = MeasureText(toastMessage, fontSize) + padding * 2;
+  int x = (GetScreenWidth() - toastWidth) / 2;
+  int y = GetScreenHeight() - toastHeight - 40;
+
+  // Draw toast background and text
+  DrawRectangleRounded((Rectangle){x, y, toastWidth, toastHeight}, 0.2f, 10, Fade(DARKGRAY, 0.85f));
+  DrawText(toastMessage, x + padding, y + (toastHeight - fontSize) / 2, fontSize, RAYWHITE);
+
+  toastTimer--;
+  // printf("toast timer: %d\n", toastTimer);
+  if (toastTimer <= 0)
+  {
+    showToast = false;
+  }
+}
+
 static void cleanUpSortState(SortType type, void **sortState);
 
 /*
@@ -135,10 +183,7 @@ static int rawTest(char *arg, int *data)
   }
   else if (strcmp(arg, "q") == 0)
   {
-    // printf("quick sorting\n");
     quickSortRaw(data, 0, ELEMENT_COUNT);
-    // quickSort(data);
-    // printf("quick sorting done\n");
   }
   else if (strcmp(arg, "m") == 0)
   {
@@ -253,26 +298,106 @@ static void cleanUpSortState(SortType type, void **sortState)
   }
 }
 
+// Add text box for letting user binary search for a number in the sorted list
+static void binarySearchUI(int *arr, double *bsTime, BinarySearchState **state)
+{
+  bool hasOnlyDigits = true;
+  // shouldBinarySearch = false;
+  inputBuffer[2] = '\0';
+  static bool textBoxEditMode = false;
+
+  // Text box
+  if (!shouldBinarySearch)
+  {
+    DrawText("Type a number between 1 and 100 below.", SCREEN_WIDTH / 2 - 300, 150, 40, YELLOW);
+
+    if (GuiTextBox((Rectangle){SCREEN_WIDTH / 2 - 200, 250, WIDGET_WIDTH, WIDGET_HEIGHT}, inputBuffer, sizeof(inputBuffer), textBoxEditMode))
+    {
+      textBoxEditMode = !textBoxEditMode; // toggles editing mode when clicked
+    }
+  }
+
+  // only allow ints inside the input text
+  for (char *reader = inputBuffer; *reader != '\0'; reader++)
+  {
+    // printf("%c\n", *reader);
+    if (!isdigit(*reader))
+    {
+      hasOnlyDigits = false;
+    }
+  }
+
+  // printf("hasOnlyDigits: %d\n",hasOnlyDigits);
+
+  if (!hasOnlyDigits)
+  {
+    if (!showToast)
+    {
+      printArray(arr);
+      ShowToast("Please only enter numbers!");
+    }
+  }
+  else if (hasOnlyDigits && inputBuffer[0] != '\0')
+  {
+    // Draw Submit Button
+    if (GuiButton((Rectangle){SCREEN_WIDTH / 2 - 200, 400, WIDGET_WIDTH, WIDGET_HEIGHT}, "Binary Search"))
+    {
+      shouldBinarySearch = true;
+      initializeBinarySearchState(state);
+      // printf("initialize bs state\n");
+    }
+
+    double currentTime = GetTime();
+    if (shouldBinarySearch)
+    {
+      if (*state)
+      {
+        if (currentTime - *bsTime >= 2)
+        {
+          binarySearch(arr, atoi(inputBuffer), *state);
+          *bsTime = currentTime;
+        }
+        if ((*state)->isDone)
+        {
+          // printf("binary search done\n");
+          // printf("index is: %d\n", (*state)->answerIdx);
+          char msg[20] = "";
+          snprintf(msg, sizeof(msg), "index is: %d\n", (*state)->answerIdx);
+          ShowToast((char*) msg);
+          shouldBinarySearch = false;
+        }
+        else
+        {
+          draw_state(arr, (*state)->lo, (*state)->hi, (*state)->mid);
+        }
+      }
+    }
+
+    // persist with showing the user where the found value is
+    if (*state)
+    {
+      draw_state(arr, (*state)->lo, (*state)->hi, (*state)->mid);
+    }
+  }
+}
+
 static int visualizationTest(int *data)
 {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sort Visualizer - raylib");
   SetTargetFPS(FPS);
   // Set raygui font size
   GuiSetStyle(DEFAULT, TEXT_SIZE, 50);
-
-  int totalWidth = 4 * WIDGET_WIDTH + 2 * SPACING;
-  int startX = (SCREEN_WIDTH - totalWidth) / 2;
-  int y = 50; // vertical position
   int currentSortChoice = 0;
   int sortDropdownActive = 0;
-  float speed = 0.5f;
+  float speed = 1.0;
   bool started = false;
   SortType sortChosen = NONE;
 
   initializeArray(data);
-
+  BinarySearchState *bsState = NULL;
   void *sortState = NULL;
   double lastStepTime = GetTime();
+  double lastBsTime = GetTime();
 
   while (!WindowShouldClose())
   {
@@ -325,11 +450,14 @@ static int visualizationTest(int *data)
     if (started && isSorted(data))
     {
       DrawText("Sorted!", SCREEN_WIDTH / 2 - 100, 50, 40, YELLOW);
+      // printArray(data);
 
       cleanUpSortState(sortChosen, &sortState);
 
       // Visualization bars
       draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
+
+      binarySearchUI(data, &lastBsTime, &bsState);
     }
     else if (started && !isSorted(data))
     {
@@ -347,12 +475,18 @@ static int visualizationTest(int *data)
       // Reset your data array here, for example:
       initializeArray(data);
       resetSortState(sortChosen, data, &sortState);
+      cleanUpBinarySearchState(&bsState);
+      // clear binary search input string
+      inputBuffer[0] = '\0';
     }
 
+    DrawToast();
     EndDrawing();
   }
 
-  // clean up sort state here
+  // clean up states here
+  cleanUpBinarySearchState(&bsState);
+
   printf("%s\n", !sortState ? "sort state cleaned up already? Something is wrong!" : "sort state not cleaned up but will be!");
   cleanUpSortState(sortChosen, &sortState);
   printf("%s\n", !sortState ? "sort state cleaned up!" : "sort state not cleaned up! Okay something is definitely wrong!");

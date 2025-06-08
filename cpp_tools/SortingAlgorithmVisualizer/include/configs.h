@@ -9,6 +9,6 @@
 #define SCREEN_HEIGHT 1000
 #define BAR_WIDTH 50
 #define WAIT_TIME 0.01
-#define FPS 240
+#define FPS 60
 
 #endif
