@@ -27,6 +27,7 @@ LOG_PATH = "./logs"
 def human_delay(seconds=random.uniform(2, 5)):
     time.sleep(seconds)
 
+
 def setup_firefox_driver():
     options = Options()
     options.binary_location = "/usr/bin/firefox"
@@ -140,6 +141,8 @@ def scrape_table_data(driver):
         "specialist",
         "data",
         "computer",
+        "information",
+        "tech",
     ]
     # go thru each link and look for those that include one of the keywords
     human_delay()
@@ -230,7 +233,7 @@ def main():
         clean_up_people_job_results(PATH="./PeopleFirstCareersOutput/")
 
         result.to_csv(
-            f'./PeopleFirstCareersOutput/results_{time.strftime("%Y_%m_%d_%H_%M_%S")}.csv'
+            f"./PeopleFirstCareersOutput/results_{time.strftime('%Y_%m_%d_%H_%M_%S')}.csv"
         )
 
         # provide an accurate finish time
