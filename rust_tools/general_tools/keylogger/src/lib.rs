@@ -44,14 +44,15 @@ pub fn keylog() {
 
         if ch != ERR {
             let key_str = match ch {
-                32 => "[SPACE]".to_string(),       // Space key
-                9 => "[TAB]".to_string(),          // Tab key
-                10 => "[ENTER]".to_string(),       // Enter key
-                27 => {                            // Escape key
+                32 => "[SPACE]".to_string(), // Space key
+                9 => "[TAB]".to_string(),    // Tab key
+                10 => "[ENTER]".to_string(), // Enter key
+                27 => {
+                    // Escape key
                     writeln!(log_file, "[ESC]").expect("Failed to write to log file");
                     break;
                 }
-                127 => "[BACKSPACE]".to_string(),  // Backspace key
+                127 => "[BACKSPACE]".to_string(), // Backspace key
                 _ => {
                     if let Some(name) = keyname(ch) {
                         name.to_string()
@@ -72,7 +73,6 @@ pub fn keylog() {
 
 // Helper function to format time
 fn format_time(secs: u64) -> String {
-    let t = DateTime::from_timestamp(secs as i64, 0)
-        .expect("Failed to parse timestamp");
+    let t = DateTime::from_timestamp(secs as i64, 0).expect("Failed to parse timestamp");
     t.format("%Y-%m-%d %H:%M:%S").to_string()
 }

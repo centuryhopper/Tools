@@ -9,4 +9,5 @@ license = "MIT"
 device_query = "3.0.1"
 enigo = "0.3.0" # will help us click on the screen
 inputbot = "0.6.0" # will help us listen to keyboard presses globally
+rand = "0.9.1"
 rdev = "0.5.3"
