@@ -1,0 +1,11 @@
+[package]
+name = "webcrawler_multithread"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+futures = "0.3.31"
+reqwest = { version = "0.12.22", features = ["json", "rustls-tls"]}
+scraper = "0.23.1"
+tokio = { version = "1.46.1", features = ["full"] }
+url = "2.5.4"
