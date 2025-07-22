@@ -1,0 +1,39 @@
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@primeuix/themes": "^1.1.2",
+    "axios": "^1.10.0",
+    "bootstrap": "^5.3.6",
+    "chart.js": "^4.5.0",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "datatables.net-bs5": "^2.3.2",
+    "datatables.net-dt": "^2.3.2",
+    "datatables.net-vue3": "^3.0.4",
+    "jwt-decode": "^4.0.0",
+    "lucide-vue-next": "^0.515.0",
+    "pinia": "^3.0.3",
+    "primevue": "^4.3.5",
+    "sweetalert2": "^11.22.0",
+    "vite-plugin-vuetify": "^2.1.1",
+    "vue": "^3.5.13",
+    "vue-chartjs": "^5.3.2",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@mdi/font": "^7.4.47",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/tsconfig": "^0.7.0",
+    "material-design-icons-iconfont": "^6.7.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vue-tsc": "^2.2.10"
+  }
+}

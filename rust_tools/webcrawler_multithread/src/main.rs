@@ -69,6 +69,7 @@ async fn crawl(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     // a futures pool
     let mut tasks = FuturesUnordered::new();
 
+    // we'll just limit to 2000 for now
     while seen.len() < 2000 && (!deque.is_empty() || !tasks.is_empty()) {
         // println!("deque size: {}", deque.len());
         // println!("tasks size: {}", tasks.len());
