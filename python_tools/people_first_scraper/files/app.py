@@ -1,12 +1,15 @@
+import datetime
+import math
 import os
 import pprint
 import random
 import re
+import subprocess
 import sys
 import time
-import datetime
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import subprocess
+from typing import List
 
 import pandas as pd
 from selenium import webdriver
@@ -17,16 +20,13 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
 from webdriver_manager.firefox import GeckoDriverManager
 
-
 os.chdir(os.path.dirname(__file__))
 output = Path.cwd() / "PeopleFirstCareersOutput"
 output.mkdir(exist_ok=True)
 LOG_PATH = "./logs"
 
-
 def human_delay(seconds=random.uniform(2, 5)):
     time.sleep(seconds)
-
 
 def setup_firefox_driver():
     options = Options()
@@ -61,7 +61,6 @@ def setup_firefox_driver():
     )
 
     return driver
-
 
 def didRanAlready():
     script_execution_records = Path.cwd() / "script_execution_records"
@@ -107,7 +106,6 @@ def didRanAlready():
         f.write(time.strftime("%Y-%m-%d-%H:%M:%S"))
     return False
 
-
 def scrape_salary_from_job_page(driver: webdriver.Firefox, job_url: str):
     driver.get(job_url)
     human_delay(random.uniform(3, 6))
@@ -128,13 +126,11 @@ def scrape_salary_from_job_page(driver: webdriver.Firefox, job_url: str):
 
         if not salary_element:
             raise Exception()
+        return re.sub("Salary:", "", salary_element.text, flags=re.IGNORECASE).strip()
     except:
         return "n/a"
 
-    return re.sub("Salary:", "", salary_element.text, flags=re.IGNORECASE).strip()
-
-
-def scrape_table_data(driver):
+def scrape_table_data(driver, page):
     KEYWORDS = [
         "analyst",
         "programmer",
@@ -144,46 +140,56 @@ def scrape_table_data(driver):
         "information",
         "tech",
     ]
+    # print(page)
     # go thru each link and look for those that include one of the keywords
     human_delay()
-    search_results_shell = driver.find_element(By.CLASS_NAME, "searchResultsShell")
-    # print(search_results_shell.text)
-    table = search_results_shell.find_element(By.TAG_NAME, "table")
-    # print(table.text)
-    tbody = table.find_element(By.TAG_NAME, "tbody")
-    rows = tbody.find_elements(By.TAG_NAME, "tr")
     result_dict = {
         "Title": [],
         "Salary": [],
         "Date Posted": [],
         "Url": [],
     }
-    # store the title, salary, date posted, and url to a pandas dataframe
-    for row in rows:
-        td_cells = row.find_elements(By.TAG_NAME, "td")
-        for cell in td_cells:
-            # print(cell.get_attribute('headers'))
-            match cell.get_attribute("headers"):
-                case "hdrTitle":
-                    # print(cell.text)
-                    a = cell.find_element(By.TAG_NAME, "a")
-                    href = a.get_attribute("href")
-                    if not a or not any(
-                        keyword in a.text.lower() for keyword in KEYWORDS
-                    ):
-                        break
-                    result_dict["Title"].append(a.text)
-                    result_dict["Url"].append(href)
-                case "hdrDate":
-                    span = cell.find_element(By.TAG_NAME, "span")
-                    result_dict["Date Posted"].append(span.text)
-
+    try:
+        search_results_shell = driver.find_element(By.CLASS_NAME, "searchResultsShell")
+        # print(search_results_shell.text)
+        table = search_results_shell.find_element(By.TAG_NAME, "table")
+        # print(table.text)
+        tbody = table.find_element(By.TAG_NAME, "tbody")
+        rows = tbody.find_elements(By.TAG_NAME, "tr")
+        # store the title, salary, date posted, and url to a pandas dataframe
+        for row in rows:
+            td_cells = row.find_elements(By.TAG_NAME, "td")
+            for cell in td_cells:
+                # print(cell.get_attribute('headers'))
+                if not cell:
+                    continue
+                match cell.get_attribute("headers"):
+                    case "hdrTitle":
+                        # print(cell.text)
+                        a = cell.find_element(By.TAG_NAME, "a")
+                        href = a.get_attribute("href")
+                        if not a or not a.text or not any(
+                            keyword in a.text.lower() for keyword in KEYWORDS
+                        ):
+                            break
+                        result_dict["Title"].append(a.text)
+                        result_dict["Url"].append(href)
+                    case "hdrDate":
+                        span = cell.find_element(By.TAG_NAME, "span")
+                        result_dict["Date Posted"].append(span.text)
+                    case _:
+                        continue
+    except Exception as e:
+        for job_url in result_dict["Url"]:
+            salary = scrape_salary_from_job_page(driver, job_url)
+            result_dict["Salary"].append(salary)
+        # pprint.pprint(result_dict)
+        return result_dict
+    
     for job_url in result_dict["Url"]:
-        result_dict["Salary"].append(scrape_salary_from_job_page(driver, job_url))
-    # pprint.pprint(result_dict)
-
+            salary = scrape_salary_from_job_page(driver, job_url)
+            result_dict["Salary"].append(salary)
     return result_dict
-
 
 # by default, remove all files from directory if accumulated for more than 30 days
 def clean_up_people_job_results(PATH, MAX_NUM_FILES=30):
@@ -192,12 +198,25 @@ def clean_up_people_job_results(PATH, MAX_NUM_FILES=30):
             if f.is_file():
                 f.unlink()
 
+def process_pages(page: str):
+    local_driver = setup_firefox_driver()
+    try:
+        local_driver.get(page)
+        human_delay()
+        lst = scrape_table_data(local_driver, page)
+        df = pd.DataFrame(lst)
+        df = df[df["Salary"] != "job unavailable"]
+        return df
+    except:
+        return pd.DataFrame()
+    finally:
+        local_driver.quit()
 
 def main():
     if didRanAlready():
         return
     driver = setup_firefox_driver()
-    LINK = "https://jobs.myflorida.com/go/Science%2C-Technology%2C-Engineering-&-Mathematics/2814200/"
+    LINK = "https://jobs.myflorida.com/search"
     driver.get(LINK)
 
     list_of_dfs = []
@@ -208,22 +227,23 @@ def main():
         ul = pagination_bottom.find_element(By.CLASS_NAME, "pagination")
         ul = ul.find_elements(By.TAG_NAME, "li")
         i = 0
-        PAGE_LINK = "https://jobs.myflorida.com/go/Science%2C-Technology%2C-Engineering-&-Mathematics/2814200/$$$/?q=&sortColumn=referencedate&sortDirection=desc"
+        PAGE_LINK = "https://jobs.myflorida.com/search?q=&sortColumn=referencedate&sortDirection=desc&searchby=location&d=10&startrow=$$$"
         pages = []
-        for li in ul:
-            a_title = li.find_element(By.TAG_NAME, "a").get_attribute("title")
-            if a_title == "First Page" or a_title == "Last Page":
-                continue
+        srHelp = driver.find_element(By.CLASS_NAME, 'srHelp')
+        TOTAL_PAGES_COUNT = int(srHelp.text.split('of')[1].strip())
+        # TOTAL_PAGES_COUNT = 2
+        
+        for x in range(TOTAL_PAGES_COUNT):
             pages.append(PAGE_LINK.replace("$$$", str(i)))
             i += 25
+            
         # pprint.pprint(pages)
-        for page in pages:
-            driver.get(page)
-            human_delay()
-            df = pd.DataFrame(scrape_table_data(driver))
-            df = df[df["Salary"] != "job unavailable"]
-            list_of_dfs.append(df)
-
+        
+        result : pd.DataFrame | None = None
+        with ThreadPoolExecutor(max_workers=4) as exe:
+            list_of_dfs = list(exe.map(process_pages, pages))
+            list_of_dfs = [df for df in list_of_dfs if not df.empty]
+        
         result = pd.concat(list_of_dfs, ignore_index=True)
         # pprint.pprint(result)
 
