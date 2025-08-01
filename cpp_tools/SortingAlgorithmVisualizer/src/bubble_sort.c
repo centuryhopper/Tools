@@ -5,33 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void cleanUpBubbleSortState(BubbleSortState **state)
-{
-    if (*state)
-    {
-        free(*state);
-        *state = NULL;
-    }
-}
-
-void initializeBubbleSortState(BubbleSortState **state)
-{
-    if (*state)
-    {
-        cleanUpBubbleSortState(state);
-    }
-    *state = malloc(sizeof(BubbleSortState));
-    if (!(*state))
-    {
-        printf("bubble sort malloc failed\n");
-        return;
-    }
-
-    (*state)->i = ELEMENT_COUNT - 1;
-    (*state)->j = 1;
-    (*state)->swapped = 0;
-    (*state)->sorting = 1;
-}
 
 // Bubble Sort with per-frame visualization
 void bubbleSort(int *arr, BubbleSortState *state)

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 int getMaxValue(const int *arr, int size);
 
+
 /*
 
 sample test for why l <= h instead of l < h

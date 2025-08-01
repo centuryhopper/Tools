@@ -5,33 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void cleanUpSelectionSortState(SelectionSortState **state)
-{
-    if (*state)
-    {
-        free(*state);
-        *state = NULL;
-    }
-}
-
-void initializeSelectionSortState(SelectionSortState **state)
-{
-    if (*state)
-    {
-        cleanUpSelectionSortState(state);
-    }
-    *state = malloc(sizeof(SelectionSortState));
-    if (!(*state))
-    {
-        printf("selection sort malloc failed\n");
-        return;
-    }
-
-    (*state)->i = 0;
-    (*state)->j = 1;
-    (*state)->minIdx = 0;
-    (*state)->swapped = 0;
-}
 
 // Selection Sort with per-frame visualization
 void selectionSort(int *arr, SelectionSortState *state)

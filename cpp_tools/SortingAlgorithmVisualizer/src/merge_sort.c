@@ -5,36 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void cleanUpMergeSortState(MergeSortState **state)
-{
-  if (state && *state)
-  {
-    free((*state)->tempArray);
-    (*state)->tempArray = NULL;
-    free(*state);
-    *state = NULL;
-  }
-}
-
-void initializeMergeSortState(MergeSortState **state)
-{
-  if (*state)
-  {
-    cleanUpMergeSortState(state);
-  }
-
-  *state = malloc(sizeof(MergeSortState));
-  if (!(*state))
-  {
-    printf("merge sort malloc failed\n");
-    return;
-  }
-
-  (*state)->subArrayWidth = 1;
-  (*state)->section = 0;
-  (*state)->tempArrayIdx = 0;
-  (*state)->tempArray = malloc(sizeof(int) * ELEMENT_COUNT);
-}
 
 // Iterative merge sort implementation runtime: O(ceil(log (n))), where n is the number of elements to be sorted
 void mergeSort(int *arr, MergeSortState *state)

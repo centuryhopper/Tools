@@ -9,6 +9,7 @@
 #include "../include/selection_sort.h"
 #include "../include/utils.h"
 #include "../include/binary_search.h"
+#include "../include/resource_manager.h"
 #include <ctype.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -18,20 +19,24 @@
 #include <time.h>
 #include <raylib.h>
 
+/*
+    raygui:
+      wget https://raw.githubusercontent.com/raysan5/raygui/master/src/raygui.h -O raygui.h
+
+    compile to wasm pre-reqs:
+        cd raylib/src
+        emmake make PLATFORM=PLATFORM_WEB
+    compile to wasm:
+        source ~/emsdk/emsdk_env.fish && make web
+
+    start server:
+        python3 -m http.server
+        then go to http://localhost:8000/wasm/main.html
+*/
+
 #define WIDGET_WIDTH 400
 #define WIDGET_HEIGHT 100
 #define SPACING 75
-
-// "Bubble;Insertion;Selection;Quick;Merge"
-typedef enum
-{
-  QUICK = 0,
-  MERGE = 1,
-  BUBBLE = 2,
-  INSERTION = 3,
-  SELECTION = 4,
-  NONE = -1,
-} SortType;
 
 const char *options = "Quick;Merge;Bubble;Insertion;Selection;";
 const int totalWidth = 4 * WIDGET_WIDTH + 2 * SPACING;
@@ -49,7 +54,7 @@ void ShowToast(char *message)
 {
   // printf("message: %s\n", message);
   strncpy(toastMessage, message, sizeof(toastMessage) - 1);
-  toastMessage[sizeof(toastMessage) - 1] = '\0';  // null-terminate
+  toastMessage[sizeof(toastMessage) - 1] = '\0'; // null-terminate
   toastTimer = toastDuration;
   showToast = true;
 }
@@ -80,23 +85,6 @@ void DrawToast()
     showToast = false;
   }
 }
-
-static void cleanUpSortState(SortType type, void **sortState);
-
-/*
-    raygui:
-      wget https://raw.githubusercontent.com/raysan5/raygui/master/src/raygui.h -O raygui.h
-
-    compile to wasm pre-reqs:
-        cd raylib/src
-        emmake make PLATFORM=PLATFORM_WEB
-    compile to wasm:
-        source ~/emsdk/emsdk_env.fish && make web
-
-    start server:
-        python3 -m http.server
-        then go to http://localhost:8000/wasm/main.html
-*/
 
 const char *getSortTypeString(const SortType sortType)
 {
@@ -225,11 +213,9 @@ static void runSort(SortType type, int *data, void *sortState)
     bubbleSort(data, (BubbleSortState *)sortState);
     break;
   case QUICK:;
-    QuickSortState *qSortState = (QuickSortState *)sortState;
-    quickSort(data, qSortState);
+    quickSort(data, (QuickSortState *)sortState);
     break;
   case MERGE:;
-    MergeSortState *mSortState = (MergeSortState *)sortState;
     mergeSort(data, (MergeSortState *)sortState);
     break;
   default:
@@ -242,60 +228,12 @@ static void resetSortState(SortType type, int *data, void **sortState)
   if (*sortState)
   {
     // printf("%s\n", getSortTypeString(prevChosenSortType));
-    cleanUpSortState(prevChosenSortType, sortState);
+    cleanUpState(prevChosenSortType, sortState);
     // printf("cleaned up %s\n", getSortTypeString(prevChosenSortType));
   }
   prevChosenSortType = type;
-  switch (type)
-  {
-  case SELECTION:
-    initializeSelectionSortState((SelectionSortState **)sortState);
-    break;
-  case INSERTION:
-    initializeInsertionSortState((InsertionSortState **)sortState);
-    break;
-  case BUBBLE:
-    initializeBubbleSortState((BubbleSortState **)sortState);
-    break;
-  case QUICK:
-    initializeQuickSortState((QuickSortState **)sortState);
-    break;
-  case MERGE:
-    // printf("reseting merge sort\n");
-    initializeMergeSortState((MergeSortState **)sortState);
-    // printf("done reseting merge sort\n");
-    break;
-  default:
-    break;
-  }
-}
-
-static void cleanUpSortState(SortType type, void **sortState)
-{
-  if (!(*sortState))
-  {
-    return;
-  }
-  switch (type)
-  {
-  case SELECTION:
-    cleanUpSelectionSortState((SelectionSortState **)sortState);
-    break;
-  case INSERTION:
-    cleanUpInsertionSortState((InsertionSortState **)sortState);
-    break;
-  case BUBBLE:
-    cleanUpBubbleSortState((BubbleSortState **)sortState);
-    break;
-  case QUICK:
-    cleanUpQuickSortState((QuickSortState **)sortState);
-    break;
-  case MERGE:
-    cleanUpMergeSortState((MergeSortState **)sortState);
-    break;
-  default:
-    break;
-  }
+  // printf("type: %d\n", type);
+  initState(type, sortState);
 }
 
 // Add text box for letting user binary search for a number in the sorted list
@@ -363,7 +301,7 @@ static void binarySearchUI(int *arr, double *bsTime, BinarySearchState **state)
           // printf("index is: %d\n", (*state)->answerIdx);
           char msg[20] = "";
           snprintf(msg, sizeof(msg), "index is: %d\n", (*state)->answerIdx);
-          ShowToast((char*) msg);
+          ShowToast((char *)msg);
           shouldBinarySearch = false;
         }
         else
@@ -452,7 +390,7 @@ static int visualizationTest(int *data)
       DrawText("Sorted!", SCREEN_WIDTH / 2 - 100, 50, 40, YELLOW);
       // printArray(data);
 
-      cleanUpSortState(sortChosen, &sortState);
+      cleanUpState(sortChosen, &sortState);
 
       // Visualization bars
       draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
@@ -488,7 +426,7 @@ static int visualizationTest(int *data)
   cleanUpBinarySearchState(&bsState);
 
   printf("%s\n", !sortState ? "sort state cleaned up already? Something is wrong!" : "sort state not cleaned up but will be!");
-  cleanUpSortState(sortChosen, &sortState);
+  cleanUpState(sortChosen, &sortState);
   printf("%s\n", !sortState ? "sort state cleaned up!" : "sort state not cleaned up! Okay something is definitely wrong!");
   CloseWindow();
 

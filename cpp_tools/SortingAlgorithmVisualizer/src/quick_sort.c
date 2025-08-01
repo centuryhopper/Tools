@@ -12,39 +12,6 @@ static void quickSortIterative(int *arr, int l, int h);
 static int quickSortPartitionRaw(int *arr, int lo, int hi);
 static void iterativeRunner(int *arr, QuickSortState *state);
 
-void cleanUpQuickSortState(QuickSortState **state)
-{
-  if (state && *state)
-  {
-    free((*state)->stack);
-    (*state)->stack = NULL;
-    free(*state);
-    *state = NULL;
-  }
-}
-
-void initializeQuickSortState(QuickSortState **state)
-{
-  if (*state)
-  {
-    cleanUpQuickSortState(state);
-  }
-  *state = malloc(sizeof(QuickSortState));
-  if (!(*state))
-  {
-    printf("quick sort malloc failed\n");
-    return;
-  }
-
-  (*state)->l = 0;
-  (*state)->h = ELEMENT_COUNT;
-  (*state)->top = -1;
-  (*state)->stack = (int *)calloc((ELEMENT_COUNT + 1), sizeof(int));
-  // Push initial values of l and h to stack
-  (*state)->stack[++(*state)->top] = (*state)->l;
-  (*state)->stack[++(*state)->top] = (*state)->h;
-}
-
 void quickSort(int *arr, QuickSortState *state)
 {
   srand((unsigned int)time(NULL));

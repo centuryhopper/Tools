@@ -5,8 +5,7 @@ typedef struct
     int i, j;
 } InsertionSortState;
 
-void cleanUpInsertionSortState(InsertionSortState** state);
-void initializeInsertionSortState(InsertionSortState** state);
+
 void insertionSortRaw(int *arr, int size);
 void insertionSort(int *arr, InsertionSortState *state);
 

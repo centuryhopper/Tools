@@ -2,6 +2,17 @@
 #define UTILS_H
 #include "raylib.h"
 
+// "Bubble;Insertion;Selection;Quick;Merge"
+typedef enum
+{
+    QUICK = 0,
+    MERGE = 1,
+    BUBBLE = 2,
+    INSERTION = 3,
+    SELECTION = 4,
+    NONE = -1,
+} SortType;
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 int getMaxValue(const int *arr, int size);

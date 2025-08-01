@@ -7,8 +7,6 @@ typedef struct
     int swapped;
 } SelectionSortState;
 
-void cleanUpSelectionSortState(SelectionSortState **state);
-void initializeSelectionSortState(SelectionSortState **state);
 void selectionSortRaw(int *arr, int size);
 void selectionSort(int* arr, SelectionSortState* state);
 

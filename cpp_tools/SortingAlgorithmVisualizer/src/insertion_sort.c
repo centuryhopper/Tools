@@ -5,31 +5,6 @@
 #include "../include/insertion_sort.h"
 #include <stdio.h>
 
-void cleanUpInsertionSortState(InsertionSortState **state)
-{
-    if (*state)
-    {
-        free(*state);
-        *state = NULL;
-    }
-}
-
-void initializeInsertionSortState(InsertionSortState **state)
-{
-    if (*state)
-    {
-        cleanUpInsertionSortState(state);
-    }
-    *state = malloc(sizeof(InsertionSortState));
-    if (!(*state))
-    {
-        printf("insertion sort malloc failed\n");
-        return;
-    }
-
-    (*state)->i = 0;
-    (*state)->j = 1;
-}
 
 // Insertion Sort with per-frame visualization
 void insertionSort(int *arr, InsertionSortState *state)

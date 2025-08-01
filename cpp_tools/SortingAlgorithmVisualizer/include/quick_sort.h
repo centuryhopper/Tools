@@ -9,8 +9,8 @@ typedef struct
     int pivot;
 } QuickSortState;
 
-void cleanUpQuickSortState(QuickSortState **state);
-void initializeQuickSortState(QuickSortState **state);
+// void cleanUpQuickSortState(QuickSortState **state);
+// void initializeQuickSortState(QuickSortState **state);
 void quickSortRaw(int *arr, int lo, int hi);
 void quickSort(int *arr, QuickSortState* state);
 
