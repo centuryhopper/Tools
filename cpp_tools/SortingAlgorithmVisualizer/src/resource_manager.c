@@ -116,7 +116,7 @@ void initState(SortType type, void **sortState)
 
 void cleanUpState(SortType type, void **sortState)
 {
-    if (!(*sortState))
+    if (sortState == NULL)
     {
         return;
     }
@@ -134,7 +134,7 @@ void cleanUpState(SortType type, void **sortState)
         SelectionSortState **selState = (SelectionSortState **)sortState;
         if (*selState)
         {
-            free((*selState));
+            free(*selState);
             *selState = NULL;
         }
         break;
