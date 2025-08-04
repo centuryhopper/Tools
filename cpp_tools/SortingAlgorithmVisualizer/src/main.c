@@ -1,27 +1,27 @@
 #define RAYGUI_IMPLEMENTATION
-#include "../include/raygui.h"
-#include "../include/configs.h"
-#include "../include/utils.h"
+#include "../include/binary_search.h"
 #include "../include/bubble_sort.h"
+#include "../include/configs.h"
 #include "../include/insertion_sort.h"
 #include "../include/merge_sort.h"
 #include "../include/quick_sort.h"
+#include "../include/raygui.h"
+#include "../include/resource_manager.h"
 #include "../include/selection_sort.h"
 #include "../include/utils.h"
-#include "../include/binary_search.h"
-#include "../include/resource_manager.h"
 #include <ctype.h>
 #include <limits.h>
+#include <raylib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <raylib.h>
 
 /*
     raygui:
-      wget https://raw.githubusercontent.com/raysan5/raygui/master/src/raygui.h -O raygui.h
+      wget https://raw.githubusercontent.com/raysan5/raygui/master/src/raygui.h
+   -O raygui.h
 
     compile to wasm pre-reqs:
         cd raylib/src
@@ -75,8 +75,10 @@ void DrawToast()
   int y = GetScreenHeight() - toastHeight - 40;
 
   // Draw toast background and text
-  DrawRectangleRounded((Rectangle){x, y, toastWidth, toastHeight}, 0.2f, 10, Fade(DARKGRAY, 0.85f));
-  DrawText(toastMessage, x + padding, y + (toastHeight - fontSize) / 2, fontSize, RAYWHITE);
+  DrawRectangleRounded((Rectangle){x, y, toastWidth, toastHeight}, 0.2f, 10,
+                       Fade(DARKGRAY, 0.85f));
+  DrawText(toastMessage, x + padding, y + (toastHeight - fontSize) / 2,
+           fontSize, RAYWHITE);
 
   toastTimer--;
   // printf("toast timer: %d\n", toastTimer);
@@ -237,7 +239,8 @@ static void resetSortState(SortType type, int *data, void **sortState)
 }
 
 // Add text box for letting user binary search for a number in the sorted list
-static void binarySearchUI(int *arr, double *bsTime, BinarySearchState **state)
+static void binarySearchUI(int *arr, double *bsTime,
+                           BinarySearchState **state)
 {
   bool hasOnlyDigits = true;
   // shouldBinarySearch = false;
@@ -247,9 +250,12 @@ static void binarySearchUI(int *arr, double *bsTime, BinarySearchState **state)
   // Text box
   if (!shouldBinarySearch)
   {
-    DrawText("Type a number between 1 and 100 below.", SCREEN_WIDTH / 2 - 300, 150, 40, YELLOW);
+    DrawText("Type a number between 1 and 100 below.", SCREEN_WIDTH / 2 - 300,
+             150, 40, YELLOW);
 
-    if (GuiTextBox((Rectangle){SCREEN_WIDTH / 2 - 200, 250, WIDGET_WIDTH, WIDGET_HEIGHT}, inputBuffer, sizeof(inputBuffer), textBoxEditMode))
+    if (GuiTextBox((Rectangle){SCREEN_WIDTH / 2 - 200, 250, WIDGET_WIDTH,
+                               WIDGET_HEIGHT},
+                   inputBuffer, sizeof(inputBuffer), textBoxEditMode))
     {
       textBoxEditMode = !textBoxEditMode; // toggles editing mode when clicked
     }
@@ -278,7 +284,9 @@ static void binarySearchUI(int *arr, double *bsTime, BinarySearchState **state)
   else if (hasOnlyDigits && inputBuffer[0] != '\0')
   {
     // Draw Submit Button
-    if (GuiButton((Rectangle){SCREEN_WIDTH / 2 - 200, 400, WIDGET_WIDTH, WIDGET_HEIGHT}, "Binary Search"))
+    if (GuiButton((Rectangle){SCREEN_WIDTH / 2 - 200, 400, WIDGET_WIDTH,
+                              WIDGET_HEIGHT},
+                  "Binary Search"))
     {
       shouldBinarySearch = true;
       initializeBinarySearchState(state);
@@ -319,9 +327,9 @@ static void binarySearchUI(int *arr, double *bsTime, BinarySearchState **state)
   }
 }
 
-static int visualizationTest(int *data)
+int visualizationTest(int *data)
 {
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sort Visualizer - raylib");
+  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sort Visualizer");
   SetTargetFPS(FPS);
   // Set raygui font size
   GuiSetStyle(DEFAULT, TEXT_SIZE, 50);
@@ -353,13 +361,16 @@ static int visualizationTest(int *data)
       // printf("speed: %f\n", speed);
 
       // dropdown
-      Rectangle dropdownBounds = {startX + WIDGET_WIDTH + SPACING, y, WIDGET_WIDTH, WIDGET_HEIGHT};
-      if (GuiDropdownBox(dropdownBounds, options, &currentSortChoice, sortDropdownActive))
+      Rectangle dropdownBounds = {startX + WIDGET_WIDTH + SPACING, y,
+                                  WIDGET_WIDTH, WIDGET_HEIGHT};
+      if (GuiDropdownBox(dropdownBounds, options, &currentSortChoice,
+                         sortDropdownActive))
       {
         sortDropdownActive = !sortDropdownActive;
       }
 
-      Rectangle buttonBounds = {startX + 2 * (WIDGET_WIDTH + SPACING), y, WIDGET_WIDTH, WIDGET_HEIGHT};
+      Rectangle buttonBounds = {startX + 2 * (WIDGET_WIDTH + SPACING), y,
+                                WIDGET_WIDTH, WIDGET_HEIGHT};
       if (GuiButton(buttonBounds, "Start"))
       {
         started = true;
@@ -400,13 +411,15 @@ static int visualizationTest(int *data)
     else if (started && !isSorted(data))
     {
       // printf("drawing it\n");
-      DrawText(getSortTypeString(sortChosen), SCREEN_WIDTH / 2 - 100, 50, 40, YELLOW);
+      DrawText(getSortTypeString(sortChosen), SCREEN_WIDTH / 2 - 100, 50, 40,
+               YELLOW);
       // Visualization bars
       // draw_state_with_color(data, -1, -1, -1, started ? YELLOW : BLUE);
     }
 
     // Reset button
-    Rectangle resetBounds = {startX + 3 * (WIDGET_WIDTH + SPACING), y, WIDGET_WIDTH, WIDGET_HEIGHT};
+    Rectangle resetBounds = {startX + 3 * (WIDGET_WIDTH + SPACING), y,
+                             WIDGET_WIDTH, WIDGET_HEIGHT};
     if (GuiButton(resetBounds, started ? "Reset" : "Randomize"))
     {
       started = false;
@@ -423,18 +436,25 @@ static int visualizationTest(int *data)
   }
 
   // clean up states here
-  cleanUpBinarySearchState(&bsState);
+  if (bsState)
+  {
+    printf("cleaning up bs state.\n");
+    cleanUpBinarySearchState(&bsState);
+  }
 
-  printf("%s\n", !sortState ? "sort state cleaned up already? Something is wrong!" : "sort state not cleaned up but will be!");
-  cleanUpState(sortChosen, &sortState);
-  printf("%s\n", !sortState ? "sort state cleaned up!" : "sort state not cleaned up! Okay something is definitely wrong!");
+  if (sortState)
+  {
+    printf("cleaning up sort state.\n");
+    cleanUpState(sortChosen, &sortState);
+  }
+
   CloseWindow();
-
   return EXIT_SUCCESS;
 }
 
 int main(void)
 {
+  // int *dummy = (int *)malloc(sizeof(int));
   // printf("Number of arguments: %d\n", argc);
   // for (int i = 0; i < argc; i++) {
   //     printf("Argument %d: %s\n", i, argv[i]);
