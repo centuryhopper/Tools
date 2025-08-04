@@ -329,6 +329,16 @@ static void binarySearchUI(int *arr, double *bsTime,
 
 int visualizationTest(int *data)
 {
+  // InitWindow(800, 600, "hello");
+  // SetTargetFPS(60);
+  // while (!WindowShouldClose())
+  // {
+  //   BeginDrawing();
+  //   ClearBackground(RAYWHITE);
+  //   EndDrawing();
+  // }
+  // CloseWindow();
+
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sort Visualizer");
   SetTargetFPS(FPS);
   // Set raygui font size
