@@ -7,14 +7,36 @@ set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 file(GLOB SRC_FILES "${SRC_DIR}/*.c")
 
 # --- Your Local Raylib Path ---
-set(RAYLIB_SRC "${CMAKE_SOURCE_DIR}/raylib/src") # Change if needed on Windows
+set(RAYLIB_SRC "${CMAKE_SOURCE_DIR}/raylib/src") # Adjust as needed for Windows
 set(RAYLIB_WEB_LIB "${RAYLIB_SRC}/web/libraylib.web.a")
+
+# --- Detect platform ---
+if (WIN32)
+    set(PLATFORM_NAME "Windows")
+elseif(APPLE)
+    set(PLATFORM_NAME "macOS")
+elseif(UNIX)
+    set(PLATFORM_NAME "Linux")
+endif()
+
+message(STATUS "Building for platform: ${PLATFORM_NAME}")
 
 # --- Native Build (Linux/Windows/macOS) ---
 if (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
+
     add_executable(${PROJECT_NAME} ${SRC_FILES})
+
     target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR} ${RAYLIB_SRC})
-    target_link_libraries(${PROJECT_NAME} raylib m dl pthread GL rt X11)
+
+    if(WIN32)
+        # Windows-specific libs (MinGW or MSVC)
+        target_link_libraries(${PROJECT_NAME} raylib opengl32 gdi32 winmm)
+    elseif(APPLE)
+        target_link_libraries(${PROJECT_NAME} raylib m dl pthread GL rt X11)
+    else()
+        # Assume Linux
+        target_link_libraries(${PROJECT_NAME} raylib m dl pthread GL rt X11)
+    endif()
 
 # --- Web Build (Emscripten) ---
 else()
@@ -35,7 +57,6 @@ else()
         "-sEXPORTED_RUNTIME_METHODS=ccall"
     )
 
-     # Linker flags for emcc go here:
     target_link_options(${PROJECT_NAME} PRIVATE
         "-sUSE_GLFW=3"
         "-sASYNCIFY"

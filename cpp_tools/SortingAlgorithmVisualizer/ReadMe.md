@@ -5,10 +5,8 @@
 Native (Linux / Windows):
     mkdir build
     cd build
-    cmake ..
-    cmake --build .
-    ./SortingAlgorithmsVisualizer      # Linux
-    SortingAlgorithmsVisualizer.exe    # Windows
+    cmake -S . -B build && cmake --build build && ./build/SortingAlgorithmsVisualizer # Linux
+    cmake -S . -B build; cmake --build build; .\build\SortingAlgorithmsVisualizer.exe # Windows
 
 Web (Emscripten on linux):
     source ~/emsdk/emsdk_env.fish
