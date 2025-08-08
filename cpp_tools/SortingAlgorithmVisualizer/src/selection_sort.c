@@ -1,10 +1,9 @@
-#include "raylib.h"
+#include "../raylib/src/raylib.h"
 #include "../include/configs.h"
 #include "../include/utils.h"
 #include "../include/selection_sort.h"
 #include <stdlib.h>
 #include <stdio.h>
-
 
 // Selection Sort with per-frame visualization
 void selectionSort(int *arr, SelectionSortState *state)

@@ -1,4 +1,4 @@
-#include "raylib.h"
+#include "../raylib/src/raylib.h"
 #include "../include/configs.h"
 #include "../include/utils.h"
 #include "../include/binary_search.h"

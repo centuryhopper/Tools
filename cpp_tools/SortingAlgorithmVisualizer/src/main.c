@@ -458,6 +458,8 @@ int visualizationTest(int *data)
     cleanUpState(sortChosen, &sortState);
   }
 
+  // printf("finished!\n");
+
   CloseWindow();
   return EXIT_SUCCESS;
 }

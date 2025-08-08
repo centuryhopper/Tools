@@ -1,6 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include "raylib.h"
+#include "../raylib/src/raylib.h"
 
 // "Bubble;Insertion;Selection;Quick;Merge"
 typedef enum

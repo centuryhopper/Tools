@@ -1,6 +1,6 @@
 #include "../include/configs.h"
 #include <ctype.h>
-#include <raylib.h>
+#include "../raylib/src/raylib.h"
 #include <stdio.h>
 #include <stdlib.h>
 int getMaxValue(const int *arr, int size);

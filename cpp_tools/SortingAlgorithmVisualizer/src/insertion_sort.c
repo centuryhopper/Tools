@@ -1,10 +1,9 @@
-#include "raylib.h"
+#include "../raylib/src/raylib.h"
 #include <stdlib.h>
 #include "../include/configs.h"
 #include "../include/utils.h"
 #include "../include/insertion_sort.h"
 #include <stdio.h>
-
 
 // Insertion Sort with per-frame visualization
 void insertionSort(int *arr, InsertionSortState *state)

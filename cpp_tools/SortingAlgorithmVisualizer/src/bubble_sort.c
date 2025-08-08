@@ -1,10 +1,9 @@
-#include "raylib.h"
+#include "../raylib/src/raylib.h"
 #include "../include/configs.h"
 #include "../include/utils.h"
 #include "../include/bubble_sort.h"
 #include <stdlib.h>
 #include <stdio.h>
-
 
 // Bubble Sort with per-frame visualization
 void bubbleSort(int *arr, BubbleSortState *state)

@@ -1,7 +1,7 @@
 #ifndef CONFIGS_H
 #define CONFIGS_H
 
-#include "raylib.h"
+#include "../raylib/src/raylib.h"
 
 //  1250 seems to be the max that can fit on my screen
 #define ELEMENT_COUNT 100

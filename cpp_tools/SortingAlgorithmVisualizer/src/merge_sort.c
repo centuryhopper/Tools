@@ -1,10 +1,9 @@
-#include "raylib.h"
+#include "../raylib/src/raylib.h"
 #include "../include/configs.h"
 #include "../include/utils.h"
 #include "../include/merge_sort.h"
 #include <stdlib.h>
 #include <stdio.h>
-
 
 // Iterative merge sort implementation runtime: O(ceil(log (n))), where n is the number of elements to be sorted
 void mergeSort(int *arr, MergeSortState *state)
@@ -46,7 +45,6 @@ void mergeSort(int *arr, MergeSortState *state)
       }
     }
   }
-
 }
 
 void mergeSortIterativeRaw(int *arr, int n)
