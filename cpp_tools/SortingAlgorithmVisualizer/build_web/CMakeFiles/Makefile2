@@ -64,10 +64,12 @@ CMAKE_BINARY_DIR = /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgor
 
 # The main recursive "all" target.
 all: CMakeFiles/SortingAlgorithmsVisualizer.dir/all
+all: CMakeFiles/raylib_web.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
 codegen: CMakeFiles/SortingAlgorithmsVisualizer.dir/codegen
+codegen: CMakeFiles/raylib_web.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -76,13 +78,14 @@ preinstall:
 
 # The main recursive "clean" target.
 clean: CMakeFiles/SortingAlgorithmsVisualizer.dir/clean
+clean: CMakeFiles/raylib_web.dir/clean
 .PHONY : clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/SortingAlgorithmsVisualizer.dir
 
 # All Build rule for target.
-CMakeFiles/SortingAlgorithmsVisualizer.dir/all:
+CMakeFiles/SortingAlgorithmsVisualizer.dir/all: CMakeFiles/raylib_web.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SortingAlgorithmsVisualizer.dir/build.make CMakeFiles/SortingAlgorithmsVisualizer.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SortingAlgorithmsVisualizer.dir/build.make CMakeFiles/SortingAlgorithmsVisualizer.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Built target SortingAlgorithmsVisualizer"
@@ -90,7 +93,7 @@ CMakeFiles/SortingAlgorithmsVisualizer.dir/all:
 
 # Build rule for subdir invocation for target.
 CMakeFiles/SortingAlgorithmsVisualizer.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles 10
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles 11
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/SortingAlgorithmsVisualizer.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles 0
 .PHONY : CMakeFiles/SortingAlgorithmsVisualizer.dir/rule
@@ -100,7 +103,7 @@ SortingAlgorithmsVisualizer: CMakeFiles/SortingAlgorithmsVisualizer.dir/rule
 .PHONY : SortingAlgorithmsVisualizer
 
 # codegen rule for target.
-CMakeFiles/SortingAlgorithmsVisualizer.dir/codegen:
+CMakeFiles/SortingAlgorithmsVisualizer.dir/codegen: CMakeFiles/raylib_web.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SortingAlgorithmsVisualizer.dir/build.make CMakeFiles/SortingAlgorithmsVisualizer.dir/codegen
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Finished codegen for target SortingAlgorithmsVisualizer"
 .PHONY : CMakeFiles/SortingAlgorithmsVisualizer.dir/codegen
@@ -109,6 +112,38 @@ CMakeFiles/SortingAlgorithmsVisualizer.dir/codegen:
 CMakeFiles/SortingAlgorithmsVisualizer.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SortingAlgorithmsVisualizer.dir/build.make CMakeFiles/SortingAlgorithmsVisualizer.dir/clean
 .PHONY : CMakeFiles/SortingAlgorithmsVisualizer.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/raylib_web.dir
+
+# All Build rule for target.
+CMakeFiles/raylib_web.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raylib_web.dir/build.make CMakeFiles/raylib_web.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raylib_web.dir/build.make CMakeFiles/raylib_web.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles --progress-num=11 "Built target raylib_web"
+.PHONY : CMakeFiles/raylib_web.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/raylib_web.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles 1
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/raylib_web.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles 0
+.PHONY : CMakeFiles/raylib_web.dir/rule
+
+# Convenience name for target.
+raylib_web: CMakeFiles/raylib_web.dir/rule
+.PHONY : raylib_web
+
+# codegen rule for target.
+CMakeFiles/raylib_web.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raylib_web.dir/build.make CMakeFiles/raylib_web.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles --progress-num=11 "Finished codegen for target raylib_web"
+.PHONY : CMakeFiles/raylib_web.dir/codegen
+
+# clean rule for target.
+CMakeFiles/raylib_web.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raylib_web.dir/build.make CMakeFiles/raylib_web.dir/clean
+.PHONY : CMakeFiles/raylib_web.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

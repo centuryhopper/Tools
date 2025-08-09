@@ -129,6 +129,19 @@ SortingAlgorithmsVisualizer/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SortingAlgorithmsVisualizer.dir/build.make CMakeFiles/SortingAlgorithmsVisualizer.dir/build
 .PHONY : SortingAlgorithmsVisualizer/fast
 
+#=============================================================================
+# Target rules for targets named raylib_web
+
+# Build rule for target.
+raylib_web: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 raylib_web
+.PHONY : raylib_web
+
+# fast build rule for target.
+raylib_web/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raylib_web.dir/build.make CMakeFiles/raylib_web.dir/build
+.PHONY : raylib_web/fast
+
 src/binary_search.o: src/binary_search.c.o
 .PHONY : src/binary_search.o
 
@@ -353,6 +366,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... raylib_web"
 	@echo "... SortingAlgorithmsVisualizer"
 	@echo "... src/binary_search.o"
 	@echo "... src/binary_search.i"

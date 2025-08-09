@@ -44,6 +44,16 @@ else()
     target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR} ${RAYLIB_SRC})
     set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
 
+    # Build Raylib for Web
+    add_custom_command(
+        OUTPUT ${RAYLIB_WEB_LIB}
+        COMMAND ${CMAKE_COMMAND} -E chdir ${RAYLIB_SRC} emmake make PLATFORM=PLATFORM_WEB
+        WORKING_DIRECTORY ${RAYLIB_SRC}
+        COMMENT "Building Raylib for Web..."
+    )
+    add_custom_target(raylib_web ALL DEPENDS ${RAYLIB_WEB_LIB})
+    add_dependencies(${PROJECT_NAME} raylib_web)
+
     target_compile_options(${PROJECT_NAME} PRIVATE
         -Wall
         -std=c99
@@ -68,6 +78,7 @@ else()
 
     target_link_libraries(${PROJECT_NAME} ${RAYLIB_WEB_LIB})
 endif()
+
 
 # --- Valgrind Target (Linux only) ---
 if (UNIX AND NOT APPLE AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
