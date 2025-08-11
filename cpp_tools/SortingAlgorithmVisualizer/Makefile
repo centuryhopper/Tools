@@ -2,6 +2,20 @@
 TARGET = SortingAlgorithmsVisualizer
 BUILD_DIR = build
 WEB_BUILD_DIR = build_web
+RAYLIB_SRC = raylib
+EMCC = emcc
+SRC_DIR = src
+SRC = $(SRC_DIR)/*.c
+
+RAYLIB_WEB_LIB = $(RAYLIB_SRC)/web/libraylib.web.a
+
+CFLAGS_WEB = -Wall -std=c99 -Os -I$(RAYLIB_SRC) -L$(RAYLIB_SRC) -DPLATFORM_WEB \
+  -s USE_GLFW=3 \
+  -s ASYNCIFY \
+  -s TOTAL_MEMORY=67108864 \
+  -s FORCE_FILESYSTEM=1 \
+  -s 'EXPORTED_FUNCTIONS=["_free","_malloc","_main"]' \
+  -s EXPORTED_RUNTIME_METHODS=ccall
 
 # Default build type
 BUILD_TYPE ?= Release
@@ -33,7 +47,7 @@ wsl:
 # ---------------------------------------------------------
 # Web (Emscripten) build
 web:
-	#source ~/emsdk/emsdk_env.fish &&
+#source ~/emsdk/emsdk_env.fish &&
 	mkdir -p $(WEB_BUILD_DIR) && \
 	emcmake cmake -B $(WEB_BUILD_DIR) -DCMAKE_BUILD_TYPE=Release && \
 	cmake --build $(WEB_BUILD_DIR)
@@ -47,6 +61,10 @@ valgrind:
 		--show-leak-kinds=all \
 		--track-origins=yes \
 		./$(BUILD_DIR)/$(TARGET)
+
+test:
+	gcc tests/src/unity.c tests/src/test_sample.c -o tests/test_runner
+	./tests/test_runner
 
 # ---------------------------------------------------------
 # Cleanup

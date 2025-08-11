@@ -11,28 +11,14 @@
 #include "../include/utils.h"
 #include <ctype.h>
 #include <limits.h>
-#include <raylib.h>
+#include "../raylib/src/raylib.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+// #include <assert.h>
 
-/*
-    raygui:
-      wget https://raw.githubusercontent.com/raysan5/raygui/master/src/raygui.h
-   -O raygui.h
-
-    compile to wasm pre-reqs:
-        cd raylib/src
-        emmake make PLATFORM=PLATFORM_WEB
-    compile to wasm:
-        source ~/emsdk/emsdk_env.fish && make web
-
-    start server:
-        python3 -m http.server
-        then go to http://localhost:8000/wasm/main.html
-*/
 
 #define WIDGET_WIDTH 400
 #define WIDGET_HEIGHT 100
@@ -466,49 +452,48 @@ int visualizationTest(int *data)
 
 int main(void)
 {
-  // int *dummy = (int *)malloc(sizeof(int));
-  // printf("Number of arguments: %d\n", argc);
-  // for (int i = 0; i < argc; i++) {
-  //     printf("Argument %d: %s\n", i, argv[i]);
-  // }
-
-  // if (argc < 2)
-  // {
-  //   fprintf(stderr, "Error: Missing argument. Usage: %s <type of sort>\n",
-  //           argv[0]);
-  //   return EXIT_FAILURE; // Non-zero to indicate error
-  // }
-
-  // printf("raw test? (y/n)\n");
-  // char input;
-  // scanf(" %c", &input); // ✅ Recommended for reading single characters
-  // input = tolower(input);
-
   // MUST have this seed before using initializeArray() calls
   srand((unsigned int)time(NULL));
   int data[ELEMENT_COUNT];
-
   visualizationTest(data);
-
-  // make sure the string is writeable
-  // char arg[] = "q";
-  // rawTest(arg, data);
-
-  // printf("===========================================\n");
-
-  // switch (input)
-  // {
-  // case 'y':
-  //   initializeArray(data);
-  //   rawTest(argv[1], data);
-  //   break;
-  // case 'n':
-  //   visualizationTest(argv[1], data);
-  //   break;
-  // default:
-  //   fprintf(stderr, "Error: Invalid input\n");
-  //   break;
-  // }
 
   return 0;
 }
+
+// int *dummy = (int *)malloc(sizeof(int));
+// printf("Number of arguments: %d\n", argc);
+// for (int i = 0; i < argc; i++) {
+//     printf("Argument %d: %s\n", i, argv[i]);
+// }
+
+// if (argc < 2)
+// {
+//   fprintf(stderr, "Error: Missing argument. Usage: %s <type of sort>\n",
+//           argv[0]);
+//   return EXIT_FAILURE; // Non-zero to indicate error
+// }
+
+// printf("raw test? (y/n)\n");
+// char input;
+// scanf(" %c", &input); // ✅ Recommended for reading single characters
+// input = tolower(input);
+
+// make sure the string is writeable
+// char arg[] = "q";
+// rawTest(arg, data);
+
+// printf("===========================================\n");
+
+// switch (input)
+// {
+// case 'y':
+//   initializeArray(data);
+//   rawTest(argv[1], data);
+//   break;
+// case 'n':
+//   visualizationTest(argv[1], data);
+//   break;
+// default:
+//   fprintf(stderr, "Error: Invalid input\n");
+//   break;
+// }

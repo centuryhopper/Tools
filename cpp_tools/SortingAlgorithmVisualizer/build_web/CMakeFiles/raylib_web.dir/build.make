@@ -70,7 +70,7 @@ CMakeFiles/raylib_web: /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingA
 
 /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/raylib/src/web/libraylib.web.a:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/build_web/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building Raylib for Web..."
-	cd /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/raylib/src && /usr/local/bin/cmake -E chdir /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/raylib/src emmake make PLATFORM=PLATFORM_WEB
+	cd /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/raylib/src && /usr/local/bin/cmake -E chdir /home/leo_zhang/Documents/GitHub/Tools/cpp_tools/SortingAlgorithmVisualizer/raylib/src emmake make PLATFORM=PLATFORM_WEB USE_EVENTS=1
 
 CMakeFiles/raylib_web.dir/codegen:
 .PHONY : CMakeFiles/raylib_web.dir/codegen
