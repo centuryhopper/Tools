@@ -1,0 +1,6 @@
+{
+    "packages": [
+        "Eigen3",
+        "fmt"
+    ]
+}
