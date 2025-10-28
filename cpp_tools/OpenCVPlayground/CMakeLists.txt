@@ -8,8 +8,17 @@ find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(fmt REQUIRED)
 
+set(SRC_FILES
+    src/main.cpp
+    src/virtual_painter.cpp
+)
 
+add_executable(${PROJECT_NAME} ${SRC_FILES})
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+# Register include folder
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS} Eigen3::Eigen fmt::fmt)
 
