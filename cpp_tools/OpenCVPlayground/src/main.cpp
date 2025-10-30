@@ -26,6 +26,7 @@
 #include <filesystem>
 
 #include "virtual_painter.hpp"
+#include <document_scanner.hpp>
 
 using namespace std;
 using namespace cv;
@@ -57,8 +58,35 @@ int main()
   // faceDetection();
   // shapesContourDetection();
 
-  VirtualPainter vp;
-  vp.getColors();
+  // VirtualPainter vp;
+  // vp.getColors();
+
+  // DocumentScanner ds;
+  // auto imgOriginal = ds.getImgOriginal();
+  // ds.preProcess(imgOriginal);
+
+  // // get contours (biggest)
+  // auto imgThreshold = ds.getImgThreshold();
+  // ds.setInitialPoints(ds.getContours(imgThreshold));
+  // // ds.drawPoints(ds.getInitialPoints(), Scalar(0, 0, 255));
+  // auto reorderedPoints = ds.reorderPoints();
+  // ds.drawPoints(reorderedPoints, Scalar(0, 255, 0));
+
+  // // warp
+  // float w=250, h=350;
+  // Mat imgWarp = ds.getWarp(imgOriginal, reorderedPoints, w, h);
+
+  // // crop
+  // Rect roi(5, 5, w-(2*5), h-(2*5));
+  // Mat imgCrop = imgWarp(roi);
+
+  // imshow("Original Image", ds.getImgOriginal());
+  // imshow("Scanned Image", imgThreshold);
+  // imshow("Image Warp", imgWarp);
+  // imshow("Image Crop", imgCrop);
+  // waitKey(0);
+
+
   return 0;
 }
 
