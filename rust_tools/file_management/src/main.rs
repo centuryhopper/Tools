@@ -1,78 +1,99 @@
+mod file_deduper_hashing;
+mod file_deduper_hashing_parallel;
+mod file_deduper_naive;
+mod grep;
+mod journal;
+
+use file_deduper_hashing::find_duplicates_by_hashing;
+use file_deduper_hashing_parallel::{delete_duplicates, get_all_files, get_file_hashes};
+use file_deduper_naive::file_deduper_naive;
+use grep::grep;
+use journal::create_journal_entry;
+
 use chrono::prelude::*;
 use chrono::{Datelike, Utc};
 use chrono_tz::US::Eastern;
+use std::collections::HashSet;
+use std::ffi::OsString;
 use std::fs::{self, metadata, read_dir, DirEntry};
 use std::io::{self, BufRead, BufReader, Error, ErrorKind, Result, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread::{self, JoinHandle};
+use std::time::Instant;
 
-// write a multi-threaded grep tool
-// make recursive flag optional
-// make sure no two threads are visiting the same directory/sub-directory
+use clap::{Parser, Subcommand};
 
-fn grep(dir: &str, target_file_name: &str, is_recursive: bool) -> io::Result<Vec<String>> {
-    let root_path = Path::new(dir);
-    if !root_path.try_exists()? {
-        let msg = format!("The root_path: {:?} doesn't exist", root_path.as_os_str());
-        // panic!("{}", msg);
-        return Ok(vec![]);
-    }
-
-    let mut result = vec![];
-    let mut entries: Vec<DirEntry> = fs::read_dir(root_path)?.filter_map(Result::ok).collect();
-
-    entries.sort_by(|a, b| {
-        a.file_name()
-            .to_string_lossy()
-            .to_lowercase()
-            .cmp(&b.file_name().to_string_lossy().to_lowercase())
-    });
-
-    for entry in entries {
-        let entry_full_path = entry.path();
-        // println!("{:?}", entry_full_path);
-        // drill into subdirectory
-        if is_recursive && entry_full_path.is_dir() {
-            result.extend(
-                grep(entry_full_path.to_str().unwrap(), target_file_name, true)
-                    .unwrap_or_else(|_| vec![]),
-            );
-        }
-
-        if let Some(file_name) = entry_full_path.file_name() {
-            // println!("{:?}",file_name);
-            if file_name
-                .to_string_lossy()
-                .to_lowercase()
-                .contains(&target_file_name.to_lowercase())
-            {
-                result.push(entry_full_path.to_string_lossy().into_owned());
-            }
-        }
-    }
-
-    return Ok(result);
+#[derive(Parser, Debug)]
+#[command(author, version, about = "Multi-threaded grep + journal CLI")]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Commands,
 }
 
-fn main() {
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    /// Finds and groups duplicate files into a collection of file paths, where each collection corresponds to a unique file content hash. This is done by first scanning the specified directory and its subdirectories to gather all file paths, then computing the hash of each file's content in parallel using multiple threads, and finally grouping the file paths by their computed hashes to identify duplicates.
+    #[command(name = "FileDeduper")]
+    FileDeduper {
+        /// Directory to scan for duplicate files
+        #[arg(required = true, short, long, default_value = "./test_duplicates")]
+        path: String,
+
+        #[arg(short, long)]
+        delete: bool,
+    },
+
+    /// Search directories for file names
+    Grep {
+        /// Directories to search
+        #[arg(required = true)]
+        dirs: Vec<String>,
+
+        /// Target file name
+        #[arg(short = 't', long, default_value = "test3")]
+        target: String,
+
+        /// Recursive search
+        #[arg(short, long)]
+        recursive: bool,
+
+        /// Max threads
+        #[arg(short = 'j', long = "threads", default_value_t = 5)]
+        threads: usize,
+    },
+
+    /// Create today's journal entry
+    Journal,
+}
+
+fn run_grep(dirs_to_search: Vec<String>, target: String, recursive: bool, threads: usize) {
     // println!("{:?}",home::home_dir().unwrap())
 
     let (tx, rx): (Sender<Vec<String>>, Receiver<Vec<String>>) = mpsc::channel();
 
     // just use up to 5 threads
-    let dirs_to_search = std::env::args().skip(1).take(5).collect::<Vec<String>>();
+    // make sure no two threads are visiting the same directory/sub-directory
+    // let dirs_to_search = std::env::args()
+    //     .skip(1)
+    //     .take(5)
+    //     .collect::<HashSet<String>>();
+
+    println!("dirs_to_search: {:#?}", dirs_to_search);
 
     let mut thread_handles = vec![];
 
     for dir in dirs_to_search {
         let tx_clone = tx.clone();
         // println!("{}", dir.as_str());
+        // multi-threaded grep tool
+        let target_str = target.clone();
         let t_handle = thread::spawn(move || {
-            let results = grep(dir.as_str(), "test3", true).unwrap_or_else(|_| vec![]);
+            let results = grep(dir.as_str(), target_str.as_str(), recursive).unwrap_or_default();
+            // .unwrap_or_else(|_| vec![]);
             tx_clone.send(results).ok();
         });
         thread_handles.push(t_handle);
@@ -107,55 +128,101 @@ fn main() {
     // println!("results: {:#?}", results);
 }
 
-// have an argument for journal (store private journal in journal github folder)
-fn create_journal_entry() -> io::Result<()> {
-    let JOURNAL_DIR = "/home/leo_zhang/Documents/GitHub/Journal".to_string();
-    let root_path = Path::new(&JOURNAL_DIR);
+fn run_cli() {
+    let cli = Cli::parse();
 
-    if !root_path.try_exists()? {
-        let msg = format!("The root_path: {:?} doesn't exist", root_path.as_os_str());
-        return Err(Error::new(ErrorKind::NotFound, msg));
+    match cli.command {
+        // example usage:
+        /*
+            cargo run -- grep ./test -r -t test3 -j 2
+            cargo run -- grep ./test --recursive --target test3 --threads 2
+        */
+        Commands::Grep {
+            dirs,
+            target,
+            recursive,
+            threads,
+        } => run_grep(dirs, target, recursive, threads),
+
+        Commands::Journal => {
+            journal::create_journal_entry().unwrap();
+        }
+
+        Commands::FileDeduper { path, delete } => {
+            let results = get_all_files(path.as_str()).unwrap_or_default();
+            println!("Number of files: {}", results.len());
+            let file_hashes = get_file_hashes(&results);
+            // println!("Number of unique hashes: {}", file_hashes.len());
+            // for (_, v) in &file_hashes {
+            //     if v.len() > 1 {
+            //         // println!("Hash: {:#?}", k);
+            //         println!("v size: {:#?}", v.len());
+            //         println!("Duplicate files: {:#?}", v);
+            //     }
+            // }
+            println!("Duplicate groups: {:#?}", file_hashes.values().filter(|v| v.len() > 1).collect::<Vec<_>>());
+            // println!("Found files: {:#?}", results);
+
+            if delete {
+                println!("Deleting duplicates...");
+                delete_duplicates(&file_hashes);
+            }
+        }
     }
+}
 
-    // Get the current date and time in UTC
-    let now_utc = Utc::now();
+fn main() -> io::Result<()> {
+    // if let Err(e) = file_deduper() {
+    //     eprintln!("Error during file deduplication: {}", e);
+    // }
+    // let duplicates = file_deduper().unwrap_or_else(|_| vec![]);
+    // println!("Found duplicates: {:#?}", duplicates);
+    // let duplicates = file_deduper_naive();
 
-    // Convert the UTC time to Eastern Time
-    let now_est = now_utc.with_timezone(&Eastern).format("%Y-%m-%d");
+    // let entries: Vec<DirEntry> = fs::read_dir(Path::new("./test_duplicates"))?
+    //     .filter_map(Result::ok)
+    //     .collect();
+    // let duplicates = find_duplicates_by_hashing(&entries);
 
-    println!("{:?}", &now_est.to_string());
+    // match duplicates {
+    //     Ok(dups) => {
+    //         println!("Found duplicates: {:#?}", dups);
+    //     }
+    //     Err(e) => {
+    //         eprintln!("Error during file deduplication: {}", e);
+    //     }
+    // };
 
-    // Extract the year, month, and day
-    let now_est_string = now_est.to_string();
-    let year = now_est_string.split("-").nth(0);
-    let month = now_est_string.split("-").nth(1);
-    let day = now_est_string.split("-").nth(2);
-    // println!("{}, {}, {}", year.unwrap(), month.unwrap(), day.unwrap());
+    let start = Instant::now();
 
-    let year_month_dir = root_path.join(&year.unwrap()).join(&month.unwrap());
+    run_cli();
 
-    if !year_month_dir.try_exists()? {
-        fs::create_dir_all(&year_month_dir)?;
-        println!(
-            "Directories created successfully: {:?}",
-            year_month_dir.as_os_str()
-        );
-    }
-
-    let final_path = year_month_dir.join(format!("{}.md", &day.unwrap()));
-
-    // Check if the file already exists
-    if !final_path.try_exists()? {
-        // Create the file if it doesn't exist
-        fs::write(&final_path, "# New Journal Entry\n")?;
-        println!("File created successfully: {:?}", final_path.as_os_str());
-    } else {
-        println!("File already exists: {:?}", final_path.as_os_str());
-    }
-
-    Command::new("nvim")
-        .arg(final_path.to_str().unwrap())
-        .status()?;
+    let duration = start.elapsed();
+    println!("Time elapsed: {:?}", duration);
 
     Ok(())
 }
+
+/*
+
+Main Thread (Scanner)
+┌─────────────────────────────┐
+│ Walk directories recursively │
+└─────────────┬───────────────┘
+              │ file path
+              ▼
+          Queue / Channel
+   ┌─────────┴─────────┐
+   │                   │
+Worker Thread 1     Worker Thread 2   ... Worker Thread N
+   │                   │
+   ▼                   ▼
+Compute hash         Compute hash
+   │                   │
+   └───────► Results Collector ◄─────┘
+               (group by hash)
+
+
+
+
+*/
