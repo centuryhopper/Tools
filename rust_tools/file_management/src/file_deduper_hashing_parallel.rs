@@ -22,11 +22,21 @@ pub fn get_all_files(str_path: &str) -> Result<Vec<PathBuf>> {
 }
 
 
-pub fn get_file_hashes(files: &[PathBuf]) -> HashMap<Vec<u8>, Vec<PathBuf>> {
+pub fn get_file_hashes(files: &[PathBuf], exclude: &[String]) -> HashMap<Vec<u8>, Vec<PathBuf>> {
     files
         .par_iter()
         // remove all files that cannot be hashed (e.g. permission issues)
         .filter_map(|path| {
+
+            // check if the file path matches any of the exclude patterns (case-insensitive)
+            for pattern in exclude {
+
+                if path.to_string_lossy().to_ascii_lowercase().contains(pattern.to_ascii_lowercase().as_str()) {
+                    // println!("Excluding file: {}", path.display());
+                    return None;
+                }
+            }
+
             match file_hash(&path) {
                 Ok(hash) => Some((hash, path)),
                 Err(_) => None,

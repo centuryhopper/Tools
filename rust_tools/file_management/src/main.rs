@@ -45,6 +45,9 @@ pub enum Commands {
 
         #[arg(short, long)]
         delete: bool,
+
+        #[arg(short = 'e', long = "exclude", value_delimiter = ',')]
+        exclude: Vec<String>,
     },
 
     /// Search directories for file names
@@ -148,10 +151,11 @@ fn run_cli() {
             journal::create_journal_entry().unwrap();
         }
 
-        Commands::FileDeduper { path, delete } => {
+        Commands::FileDeduper { path, delete, exclude } => {
+            // println!("exclude: {:#?}", exclude);
             let results = get_all_files(path.as_str()).unwrap_or_default();
             println!("Number of files: {}", results.len());
-            let file_hashes = get_file_hashes(&results);
+            let file_hashes = get_file_hashes(&results, &exclude);
             // println!("Number of unique hashes: {}", file_hashes.len());
             // for (_, v) in &file_hashes {
             //     if v.len() > 1 {
