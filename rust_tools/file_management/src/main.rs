@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 mod file_deduper_hashing;
 mod file_deduper_hashing_parallel;
 mod file_deduper_naive;
@@ -131,6 +133,7 @@ fn run_grep(dirs_to_search: Vec<String>, target: String, recursive: bool, thread
     // println!("results: {:#?}", results);
 }
 
+
 fn run_cli() {
     let cli = Cli::parse();
 
@@ -157,13 +160,6 @@ fn run_cli() {
             println!("Number of files: {}", results.len());
             let file_hashes = get_file_hashes(&results, &exclude);
             // println!("Number of unique hashes: {}", file_hashes.len());
-            // for (_, v) in &file_hashes {
-            //     if v.len() > 1 {
-            //         // println!("Hash: {:#?}", k);
-            //         println!("v size: {:#?}", v.len());
-            //         println!("Duplicate files: {:#?}", v);
-            //     }
-            // }
             println!("Duplicate groups: {:#?}", file_hashes.values().filter(|v| v.len() > 1).collect::<Vec<_>>());
             // println!("Found files: {:#?}", results);
 
@@ -211,7 +207,7 @@ fn main() -> io::Result<()> {
 
 Main Thread (Scanner)
 ┌─────────────────────────────┐
-│ Walk directories recursively │
+│Walk directories recursively │
 └─────────────┬───────────────┘
               │ file path
               ▼

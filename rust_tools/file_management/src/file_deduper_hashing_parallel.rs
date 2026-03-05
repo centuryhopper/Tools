@@ -23,6 +23,12 @@ pub fn get_all_files(str_path: &str) -> Result<Vec<PathBuf>> {
 
 
 pub fn get_file_hashes(files: &[PathBuf], exclude: &[String]) -> HashMap<Vec<u8>, Vec<PathBuf>> {
+
+    /*
+        Map → compute (hash, path)
+        Fold → build local HashMap
+        Reduce → merge the HashMaps
+    */
     files
         .par_iter()
         // remove all files that cannot be hashed (e.g. permission issues)
