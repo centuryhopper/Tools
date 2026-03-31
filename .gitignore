@@ -10,6 +10,7 @@ secrets.json
 **/PeopleFirstCareersOutput/*
 gmail_delete_service_secrets.json
 **/token files/*
+**/out/*
 
 **/raylib/*
 *.swp

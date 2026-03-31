@@ -154,6 +154,7 @@ fn run_cli() {
             journal::create_journal_entry().unwrap();
         }
 
+        // cargo run -- FileDeduper -dp ./test_duplicates -e "test3.txt,subdir/test3.txt"
         Commands::FileDeduper { path, delete, exclude } => {
             // println!("exclude: {:#?}", exclude);
             let results = get_all_files(path.as_str()).unwrap_or_default();

@@ -1,0 +1,90 @@
+
+
+
+when is it appropriate to return a vector of references?
+
+This is a great question — it gets right to the heart of Rust’s ownership model.
+
+🧠 The rule of thumb
+
+👉 You should return Vec<&T> only when the data you’re referencing lives longer than the function.
+
+If the data is owned outside the function, you’re good.
+If the data is created inside the function, you’re not.
+
+✅ When it is appropriate
+1️⃣ Borrowing from input data
+
+This is the most common and correct use case:
+
+fn filter_urls<'a>(urls: &'a Vec<String>) -> Vec<&'a String> {
+    urls.iter()
+        .filter(|url| url.contains("jobs"))
+        .collect()
+}
+Why this works:
+urls is passed into the function
+The returned references point into that same data
+Caller owns the data → references stay valid
+2️⃣ Borrowing from a struct that outlives the function
+struct Cache {
+    urls: Vec<String>,
+}
+
+impl Cache {
+    fn get_filtered(&self) -> Vec<&String> {
+        self.urls.iter()
+            .filter(|u| u.contains("jobs"))
+            .collect()
+    }
+}
+Why this works:
+self lives longer than the function call
+Returned references point into self
+3️⃣ Zero-copy performance scenarios
+
+When:
+
+Data is large
+You want to avoid cloning
+You already have a long-lived owner
+
+Example: parsing, indexing, search systems
+
+❌ When it is NOT appropriate
+❌ Returning references to locally created data
+
+Your case:
+
+let seen: HashSet<String> = ...
+let results = seen.iter().collect::<Vec<&String>>();
+return results;
+Why this fails:
+seen is created inside the function
+It gets dropped at the end
+Returned references would dangle
+❌ Returning references from async tasks (usually)
+
+Async often complicates lifetimes:
+
+Tasks may outlive the function scope
+Borrowed data may not live long enough
+
+👉 In async code, owned data is usually safer
+
+🔥 Mental model (this is the key)
+
+Ask yourself:
+
+“Who owns the data I’m returning references to?”
+
+Owner of data	Can return &T?
+Caller (input param)	✅ Yes
+Struct (self)	✅ Yes
+Function itself	❌ No
+⚖️ Vec<&T> vs Vec<T>
+Type	Pros	Cons
+Vec<&T>	No copies, fast	Lifetime constraints
+Vec<T>	Simple, safe	Copies/moves
+
+👉 Rust usually nudges you toward Vec<T> unless borrowing is clearly safe
