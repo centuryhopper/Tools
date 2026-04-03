@@ -1,7 +1,9 @@
+#[allow(warnings)]
+
 use std::{collections::HashSet, fs, path::Path, sync::{Arc, mpsc}};
 
 use futures::stream::{FuturesUnordered, StreamExt};
-use reqwest::Client;
+use reqwest::{Client, header::{HeaderMap, HeaderValue, USER_AGENT}};
 use scraper::{Html, Selector};
 use time::OffsetDateTime;
 use std::collections::VecDeque;
@@ -18,9 +20,14 @@ mod scrapers;
 use job_traits::job_scraper_trait::job_scraper_trait;
 use scrapers::publix_job_scraper::PublixJobScraper;
 use scrapers::people_first_scraper::PeopleFirstScraper;
+use scrapers::ucf_job_scraper::UCFJobScraper;
 
 
 /*
+
+TODO add these urls to the list of urls to crawl:
+    https://jobs.universalparks.com/job-search-results/?addtnl_categories[]=Digital%20Technology&location=FL%2C%20Orlando
+
 implement a multi-threaded web crawler to crawl all links that are under the same hostname as "start_url"
 
 return all urls obtained by your web crawler in any order
@@ -53,8 +60,28 @@ struct HtmlParser;
 
 impl HtmlParser {
     pub async fn fetch_links(client: &Client, url: &str) -> Result<Vec<String>, reqwest::Error> {
-        let body = client.get(url).send().await?.text().await?;
+        let mut headers = HeaderMap::new();
+
+        headers.insert(
+            USER_AGENT,
+            HeaderValue::from_static(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0"
+            ),
+        );
+
+        headers.insert("Accept", HeaderValue::from_static("text/html"));
+        headers.insert("Accept-Language", HeaderValue::from_static("en-US,en;q=0.9"));
+        headers.insert("Connection", HeaderValue::from_static("keep-alive"));
+
+        let body = client
+            .get(url)
+            .headers(headers)
+            .send()
+            .await?
+            .text()
+            .await?;
         let document = Html::parse_document(&body);
+        println!("document: {:?}", document.html());
         let selector = Selector::parse("a").unwrap();
 
         let base = Url::parse(url).expect("couldn't parse url"); // parse the base URL
@@ -133,6 +160,7 @@ async fn crawl(job_scraper: Box<dyn job_scraper_trait>) -> Result<(Vec<String>, 
                 // Once the task ends (or _permit is dropped), the permit is automatically released, allowing another task to start.
                 let _permit = permit; // hold permit while task runs
                 let links = HtmlParser::fetch_links(&client, url.as_str()).await;
+                println!("fetched links : {:?}", links);
                 (url, links)
             }));
         }
@@ -140,9 +168,14 @@ async fn crawl(job_scraper: Box<dyn job_scraper_trait>) -> Result<(Vec<String>, 
         if let Some(res) = tasks.next().await {
             match res {
                 Ok((_, Ok(links))) => {
+                    println!("fetched {} links", links.len());
+                    // println!("links: {:?}", links);
+
                     for link in links {
 
                         // skip if the link is not relevant to job postings
+                        // println!("checking url: {}", link);
+                        // println!("base_host: {}", base_host);
                         if link != base_host
                         {
                             if !job_scraper.should_visit(link.as_str())
@@ -212,8 +245,9 @@ fn save_to_csv(filename: &str, results: &[String]) -> Result<(), Box<dyn std::er
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let scrapers = vec![
-        Box::new(PeopleFirstScraper) as Box<dyn job_scraper_trait>,
-        Box::new(PublixJobScraper) as Box<dyn job_scraper_trait>,
+        // Box::new(PeopleFirstScraper) as Box<dyn job_scraper_trait>,
+        // Box::new(PublixJobScraper) as Box<dyn job_scraper_trait>,
+        Box::new(UCFJobScraper) as Box<dyn job_scraper_trait>,
     ];
 
     let mut accummulated_results : Vec<String> = vec![];
