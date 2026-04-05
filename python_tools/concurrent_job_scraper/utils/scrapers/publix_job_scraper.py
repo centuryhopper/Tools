@@ -36,6 +36,14 @@ class PublixJobScraper(JobScraper):
         
         return is_tech_job
     
+    def is_job_page(self, url: str) -> bool:
+        return "/job-opening/" in url
     
     def results_filter(self, url: str) -> bool:
-        return "fromsearch" not in url and "#main" not in url
+        # print(url)
+        return "/jobs/" not in url and "#main" not in url
+
+
+
+
+

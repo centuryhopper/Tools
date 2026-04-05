@@ -34,9 +34,12 @@ class UCFJobScraper(JobScraper):
         ]
         
         is_tech_job = any(keyword.lower() in url.lower() for keyword in keywords)
-        print(f"Filtering {url}: is_tech_job={is_tech_job}")
+        # print(f"Filtering {url}: is_tech_job={is_tech_job}")
         
         return is_tech_job
+    
+    def is_job_page(self, url: str) -> bool:
+        return "/jobs/" in url
     
     
     def results_filter(self, url: str) -> bool:

@@ -42,6 +42,8 @@ class PeopleFirstJobScraper(JobScraper):
         
         return is_tech_job
     
+    def is_job_page(self, url: str) -> bool:
+        return '/job/' in url
     
     def results_filter(self, url: str) -> bool:
         return '#content' not in url and "#" not in url and '/go/' not in url

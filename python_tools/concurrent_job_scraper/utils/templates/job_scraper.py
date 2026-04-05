@@ -16,9 +16,17 @@ class JobScraper(ABC):
         return self._name
 
     @abstractmethod
+    def is_job_page(self, url: str) -> bool:
+        """
+        Return True if this URL is an individual job posting page.
+        Must be implemented by subclass.
+        """
+        pass
+
+    @abstractmethod
     async def get_links(self, page: Page) -> List[str]:
         pass
-    
+
     @abstractmethod
     def should_visit(self, url: str) -> bool:
         """

@@ -45,9 +45,12 @@ class UniversalOrlandoJobs(JobScraper):
         # pdb.set_trace()
         
         return a_tags
+    
+    def is_job_page(self, url: str) -> bool:
+        return "/job/" in url
 
     def should_visit(self, url: str) -> bool:
-        
+
         # include other pages that list jobs, not just individual job postings
         if "job-search-results" in url:
             return True
@@ -64,7 +67,7 @@ class UniversalOrlandoJobs(JobScraper):
         ]
 
         is_tech_job = any(keyword.lower() in url.lower() for keyword in keywords)
-        
+
         return is_tech_job
     
     
