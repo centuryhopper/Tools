@@ -1,0 +1,95 @@
+CMAKE ESSENTIALS - CHEAT SHEET
+
+1. CMAKE MENTAL MODEL
+CMake is NOT a build system.
+It is a build generator.
+
+Flow:
+CMakeLists.txt -> CMake -> Make/Ninja/VS -> Compiler -> Executable
+
+----------------------------
+
+2. CORE IDEAS YOU MUST KNOW
+
+(1) Define a project
+cmake_minimum_required(VERSION 3.10)
+project(MyApp)
+
+(2) Create an executable
+add_executable(MyApp main.c)
+
+(3) Add multiple source files
+add_executable(MyApp
+    main.c
+    utils.c
+    math.c
+)
+
+(4) Link libraries
+target_link_libraries(MyApp m)
+
+----------------------------
+
+3. BASIC WORKFLOW
+
+Configure project:
+cmake -S . -B build
+
+Build project:
+cmake --build build
+
+----------------------------
+
+4. PROJECT STRUCTURE
+
+project/
+ ├── CMakeLists.txt
+ ├── main.c
+ ├── utils.c
+ └── build/
+
+----------------------------
+
+5. MINIMAL EXAMPLE
+
+CMakeLists.txt:
+cmake_minimum_required(VERSION 3.10)
+project(HelloC)
+add_executable(HelloC main.c)
+
+Build:
+cmake -S . -B build
+cmake --build build
+
+----------------------------
+
+6. TARGETS CONCEPT
+
+Everything in CMake revolves around TARGETS:
+- Executables
+- Libraries
+
+----------------------------
+
+7. IMPORTANT COMMANDS
+
+add_executable(name files...)
+add_library(name files...)
+target_link_libraries(name libs...)
+
+----------------------------
+
+8. MENTAL TRICK
+
+CMake = structured version of gcc commands
+
+Example:
+add_executable(app main.c utils.c)
+target_link_libraries(app m)
+
+≈ gcc main.c utils.c -lm -o app
+
+----------------------------
+
+END OF CHEAT SHEET
+
