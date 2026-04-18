@@ -11,7 +11,7 @@ RUN apt-get -y update && apt-get -y install cron tree vim less
 COPY files/* /home/
 
 # install any dependencies
-RUN pip install --no-cache-dir -r /home/requirements.txt
+RUN python -m pip install --upgrade pip && pip install --no-cache-dir -r /home/requirements.txt
 
 #RUN chmod 755 /script.sh /entry.sh
 RUN /usr/bin/crontab /home/crontab.txt
