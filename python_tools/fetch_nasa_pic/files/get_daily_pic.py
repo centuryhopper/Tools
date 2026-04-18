@@ -1,5 +1,3 @@
-#!/home/leo_zhang/miniconda3/envs/web_auto/bin/python
-
 import os
 import requests
 import platform
@@ -80,4 +78,3 @@ if __name__ == "__main__":
     print(os.getcwd())
     # os.chdir(file_directory)
     download_pic_of_the_day()
-
