@@ -8,5 +8,5 @@ services:
     network_mode: host
     restart: always
     volumes:
-      - /home/leozhang/files_from_docker/news_collection/:/home/news_collection/
+      - /home/leozhang/files_from_docker/news/:/home/news/
 # The provided Docker Compose file, with version 3.1, defines a service named news_scraper. This service, represented by the container named news_scraper, is built using the Dockerfile in the current directory. The service runs in host network mode, allowing it to share the host's network namespace. Additionally, the container is set to restart always, ensuring automatic restart in case of any exit.
