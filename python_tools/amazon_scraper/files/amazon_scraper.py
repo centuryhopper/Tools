@@ -142,17 +142,16 @@ def extract(node: Tag, title_desc: str):
     title_section = node.select_one("div[data-cy='title-recipe']")
     if not title_section:
         return None
-    if title_section.select_one("span"):
-        title_text = title_section.select_one("span").get_text(strip=True)
-        if 'Sponsored' in title_text:
-            return None
-        # print('title', title_text)
 
-    anchor = title_section.select_one("a.a-link-normal")
+    image_section = node.select_one("div[data-cy='image-container']")
+    if not image_section:
+        return None
+    
+    anchor: Tag | None = image_section.select_one("a.a-link-normal")
     if not anchor:
         return None
     
-    # print('anchor: ', anchor.get("href", ""))
+    print('anchor: ', anchor.get("href", ""))
 
     desc = title_section.get_text(strip=True)
     # print('desc: ', desc)
@@ -160,7 +159,8 @@ def extract(node: Tag, title_desc: str):
         # print('title_desc', title_desc)
         return None
 
-    url = "https://www.amazon.com" + anchor.get("href", "")
+    anchor_href = anchor.get("href", "")
+    url = "https://www.amazon.com" + anchor_href if anchor_href else ""
 
     price = node.select_one("span.a-price span.a-offscreen")
     if not price:
