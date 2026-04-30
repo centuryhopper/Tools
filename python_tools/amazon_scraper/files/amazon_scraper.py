@@ -1,16 +1,20 @@
 import os
 import asyncio
+from pathlib import Path
 import random
 import sqlite3
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup, Tag
 from playwright.async_api import async_playwright
 import matplotlib.pyplot as plt
 import resend
 from enum import Enum
-load_dotenv("secrets.env")
+
+
+env_path = Path(__file__).resolve().parent / "secrets.env"
+load_dotenv(env_path)
 
 resend.api_key = os.getenv('resend_api_key')
 
@@ -60,11 +64,11 @@ def init_db():
     conn.close()
 
 
-def insert_records(records: List[str]):
+def insert_records(records: List[Tuple[str, str, str, str, str, str]]):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     
-    print('records', records)
+    # print('records', records)
 
     for r in records:
         price = float(r[2].replace("$", ""))
@@ -151,7 +155,7 @@ def extract(node: Tag, title_desc: str):
     if not anchor:
         return None
     
-    print('anchor: ', anchor.get("href", ""))
+    # print('anchor: ', anchor.get("href", ""))
 
     desc = title_section.get_text(strip=True)
     # print('desc: ', desc)
@@ -191,7 +195,8 @@ def extract(node: Tag, title_desc: str):
     return retVal
 
 
-def alert_price_drops(records):
+def alert_price_drops(records: List[Tuple[str, str, str, str, str, str]]):
+    results = []
     for r in records:
         product = r[1]
         price = float(r[2].replace("$", ""))
@@ -201,6 +206,8 @@ def alert_price_drops(records):
         if last_price and price < last_price:
             print(f"🔥 PRICE DROP: {product}")
             print(f"{last_price} → {price}")
+            results.append((f"🔥 PRICE DROP: {product}", f"{last_price} → {price}"))
+    return results
 
 
 SEM = asyncio.Semaphore(4)
@@ -268,10 +275,18 @@ async def process_query(browser, query):
 
         await context.close()
 
+        # datetime
+        # title_desc
+        # price_text
+        # rating_text
+        # review_text
+        # url
         insert_records(records)
-        alert_price_drops(records)
-        
-        
+        results = alert_price_drops(records)
+        if results:
+            # Process the results, e.g., send an email or log the price drops
+            email_body = [f"<li>{result[0]}: {result[1]}</li>" for result in results]
+            await send_email_async("lynnfavor7@gmail.com", "Amazon Scraper Price Drop Alert", "<p>One or more of your tracked products have dropped in price!</p><ul>" + "".join(email_body) + "</ul>")
 
 async def send_email_async(to_email: str, subject: str, body: str, text_format: TextFormat = TextFormat.HTML):
     params: resend.Emails.SendParams = {
