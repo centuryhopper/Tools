@@ -11,6 +11,7 @@ secrets.json
 gmail_delete_service_secrets.json
 **/token files/*
 **/out/*
+**/transaction_files/*
 
 **/raylib/*
 *.swp

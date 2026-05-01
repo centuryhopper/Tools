@@ -1,0 +1,163 @@
+import pandas as pd
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit, input_file_name, regexp_extract, upper, when, abs as spark_abs, sum as spark_sum, to_date, month, year, date_format, round as spark_round
+from functools import reduce
+
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("BankTransactions").getOrCreate()
+
+
+
+# 1. Read all CSVs at once
+# FILE_NAME = './fidelity_credit_card.csv'
+# FILE_NAME = '/Workspace/Users/leotheasianlion@gmail.com/transaction_files/Discover-2026-YearToDateSummary.csv'
+FILE_NAME = '/Workspace/Users/leotheasianlion@gmail.com/transaction_files/fidelity_credit_card.csv'
+
+# exported sql table name
+TABLE_NAME = None
+if 'fidelity' in FILE_NAME:
+    TABLE_NAME = 'fidelity'
+elif 'discover' in FILE_NAME:
+    TABLE_NAME = 'discover'
+else:
+    raise FileNotFoundError("Please provide a valid CSV file.")
+
+df = spark.read.option("header", True).csv(FILE_NAME)
+# df = spark.read.option("header", True).csv()
+
+df.show()
+
+
+
+# 2. Normalize column names
+df = (
+    df.withColumnRenamed("Description", "Name")
+      .withColumnRenamed("Transaction Amt", "Amount")
+      .withColumnRenamed("TransactionDate", "Date")
+      .withColumnRenamed("Post Date", "Date")
+)
+
+df = df.drop("Trans. Date")
+
+df.show()
+
+
+
+
+
+
+# drop memo column
+df = df.drop("Memo")
+# only display money spent
+if 'Transaction' in df.columns:
+    df = df.filter(col("Transaction") == "DEBIT")
+    
+
+
+match FILE_NAME:
+    case '/Workspace/Users/leotheasianlion@gmail.com/transaction_files/fidelity_credit_card.csv':
+        # Specific processing for Fidelity CSV
+        df = df.withColumn("Date", to_date(col("Date")))
+        df = df.withColumn(
+            "Amount",
+            spark_round(col("Amount").cast("double"), 2)
+        )
+        pass
+    case '/Workspace/Users/leotheasianlion@gmail.com/transaction_files/Discover-2026-YearToDateSummary.csv':
+        # Specific processing for Discover CSV
+        df = df.withColumn("Date", to_date(col("Date"), "MM/dd/yyyy"))
+        df = df.withColumn(
+            "Amount",
+            spark_round(col("Amount").cast("double"), 2)
+        ).filter(col("Amount") > 0)
+        pass
+    case _:
+        raise FileNotFoundError("Please provide a valid CSV file.")
+
+# cast amount to double and take absolute value
+df = df.withColumn("Amount", spark_abs(col("Amount")))
+
+# df.show()
+df.toPandas()
+# df.head(200)
+
+
+
+# 3. Extract bank name from file path
+df = df.withColumn("file_path", col("_metadata.file_path"))
+
+df.select("file_path").head(1)
+
+
+
+# add a column
+df = df.withColumn(
+    "Bank",
+    regexp_extract(col("file_path"), r"/([^/]+)\.csv$", 1)
+).drop("file_path")
+
+df.select("Bank").head(1)
+
+
+
+# 4. Define categories
+categories = {
+    "Income": ["PAYROLL", "DIRECT DEP", "VENMO", "REFUND", ],
+    "Housing": ["RENT", "MORTGAGE", "ELECTRIC", "WATER", "GAS", ],
+    "Transportation & Gas": ["SHELL", "EXXON", "UBER", "LYFT", "7-ELEVEN", "Sam's Club Gas", "SAMS FUEL", ],
+    "Food & Dining": ["STARBUCKS", "DOMINOS", "DOORDASH", "TACO", "MCDONALDS", ],
+    "Grocery": ["COSTCO", "KROGER", "TRADER JOE", "WALMART", "ALDI", "WM SUPERCENTER", "BRAVO", "WHOLEFDS", "Enson Market Inc", "PUBLIX", "LOTTE PLAZA", "SAMS STORE"],
+    "Entertainment": ["NETFLIX", "SPOTIFY", "DISNEY", ],
+    "Health & Medical": ["CVS", "WALGREENS", "KAISER", ],
+    "Shopping & Personal": ["AMAZON", "BESTBUY", "MACY", ],
+    "Travel": ["HOTEL", "AIRBNB", "DELTA", ],
+    "Financial / Investments": ["CREDIT", "IRA", "401K", "LOAN", ]
+}
+
+# 5. Build categorization logic (Spark version of your function)
+category_expr = None
+
+for category, keywords in categories.items():
+    condition = col("Name").isNull()
+    for keyword in keywords:
+        keyword_cond = upper(col("Name")).contains(keyword)
+        condition = keyword_cond if condition is None else (condition | keyword_cond)
+    
+    if category_expr is None:
+        category_expr = when(condition, category)
+    else:
+        category_expr = category_expr.when(condition, category)
+
+# Default fallback
+category_expr = category_expr.otherwise("Miscellaneous")
+# category_expr
+
+
+
+
+df = df.withColumn("Category", category_expr)
+df = df.withColumn("Month", date_format(col("Date"), "yyyy-MM"))
+
+
+# 7. Show result
+# df.tail(20)
+df.groupBy("Category", "Month")\
+.agg(
+    spark_sum("Amount").alias("TotalAmount"))\
+.orderBy("Month")\
+.filter(col("Category") == "Grocery")\
+.show()
+
+
+if TABLE_NAME:
+    df.write.format("delta").mode("overwrite").saveAsTable(TABLE_NAME)
+
+'''
+
+-- SQL dataset query for bar chart visualization:
+    SELECT Category, Month, ROUND(SUM(Amount), 2) as TotalAmount
+    FROM fidelity_monthly_spending
+    GROUP BY Category, Month
+    ORDER BY Month
+'''
