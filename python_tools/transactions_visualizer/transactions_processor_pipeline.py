@@ -12,14 +12,7 @@ def load_uploaded_file(uploaded_file):
 # -------------------------
 # 🧹 Data Cleaning
 # -------------------------
-def normalize_columns(df):
-    df = df.rename(columns={
-        "Description": "Name",
-        "Transaction Amt": "Amount",
-        "TransactionDate": "Date",
-        "Post Date": "Date"
-    })
-    return df
+
 
 
 def cast_columns(df):
@@ -133,12 +126,11 @@ def main():
 
     source = st.selectbox("Select file type", ["", "fidelity", "discover"])
 
-    # df = normalize_columns(df)
-    df = cast_columns(df)
     df = process_by_source(df, source)
     if df is None:
         st.error(f"Please select a file type.")
         return
+    df = cast_columns(df)
 
     # TODO: Ask for a json file so users can tailor it to their own liking
     categories = {
