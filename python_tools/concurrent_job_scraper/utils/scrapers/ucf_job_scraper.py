@@ -20,7 +20,7 @@ class UCFJobScraper(JobScraper):
         )
 
     def should_visit(self, url: str) -> bool:
-        if "jobs/search" in url:
+        if "jobs/" in url:
             return True  # always visit search pages
 
         keywords =  [
@@ -31,6 +31,7 @@ class UCFJobScraper(JobScraper):
             "computer",
             "information",
             "tech",
+            "administrator",
         ]
         
         is_tech_job = any(keyword.lower() in url.lower() for keyword in keywords)
@@ -39,7 +40,7 @@ class UCFJobScraper(JobScraper):
         return is_tech_job
     
     def is_job_page(self, url: str) -> bool:
-        return "/jobs/" in url
+        return not "/jobs/search" in url
     
     
     def results_filter(self, url: str) -> bool:

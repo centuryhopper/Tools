@@ -23,10 +23,11 @@ INITIAL_BACKOFF = 0.5
 
 # --- Fetch links with retry ---
 async def fetch_links(page: Page, url: str, job_scraper: JobScraper) -> List[str]:
+    
     for attempt in range(MAX_RETRIES):
         try:
             await page.goto(url, timeout=30000)
-            await page.wait_for_load_state("networkidle")
+            await page.wait_for_load_state("networkidle")            
             links = await job_scraper.get_links(page)
             return list(dict.fromkeys(links))
         except Exception as e:
@@ -59,13 +60,16 @@ async def crawl(job_scraper: JobScraper, max_urls=2000, max_concurrent=20) -> Li
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context()
+        
 
         async def process_url(url: str):
             async with semaphore:
                 page = await context.new_page()
+                
                 try:
                     links = []
                     if not job_scraper.is_job_page(url):
+                        print(url)
                         links = await fetch_links(page, url, job_scraper)
                 finally:
                     await page.close()
@@ -128,10 +132,10 @@ def save_to_csv(filename: str, urls: list[str]):
 # --- Main ---
 async def main():
     scrapers : List[JobScraper] = [
-        UniversalOrlandoJobs(),
+        # UniversalOrlandoJobs(),
         UCFJobScraper(),
-        PeopleFirstJobScraper(),
-        PublixJobScraper(),
+        # PeopleFirstJobScraper(),
+        # PublixJobScraper(),
     ]
     results = []
     for scraper in scrapers:
