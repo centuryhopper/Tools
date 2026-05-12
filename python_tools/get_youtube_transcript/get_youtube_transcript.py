@@ -14,7 +14,7 @@ import pandas as pd
 from time import strftime
 from typing import Optional
 
-from playwright.async_api import async_playwright
+from playwright.async_api import Page, async_playwright
 
 
 os.chdir(os.path.dirname(__file__))
@@ -50,7 +50,7 @@ async def open_browser(url: str, mode: str = "headed"):
 # -----------------------------
 # Handle transcript UI
 # -----------------------------
-async def get_transcript(page):
+async def get_transcript(page: Page) -> Optional[str]:
     await page.reload()
     await page.wait_for_timeout(3000)
 
@@ -86,8 +86,8 @@ async def get_transcript(page):
 # -----------------------------
 # Convert transcript -> dataframe
 # -----------------------------
-def transcript2df(transcript: str):
-    lines = transcript.split("\n")
+def transcript2df(transcript: Optional[str]) -> pd.DataFrame:
+    lines = transcript.split("\n") if transcript else []
 
     timestamps = lines[1::2]
     text = lines[::2]
