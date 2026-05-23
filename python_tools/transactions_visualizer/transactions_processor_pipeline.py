@@ -286,6 +286,6 @@ def main():
 
     plot_data(df)
 
-# ❯ poetry run streamlit run transactions_processor_pipeline.py
+# ❯ poetry run streamlit run transactions_processor_pipeline.py 
 if __name__ == "__main__":
     main()
