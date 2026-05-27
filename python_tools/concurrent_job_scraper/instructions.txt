@@ -2,3 +2,72 @@ pip install playwright
 playwright install
 
 playwright install-deps
+
+
+
+DETAILS:
+
+# =========================
+# POETRY + PYTHON 3.12 FIX
+# =========================
+
+# Problem:
+# - Poetry project requires Python >= 3.12
+# - system Python is 3.10.x
+# - imports fail or packages "missing"
+
+# -------------------------
+# 1. CHECK CURRENT SETUP
+# -------------------------
+python --version
+poetry env info
+poetry show playwright
+
+# -------------------------
+# 2. FIX PYTHON VERSION
+# (DO NOT touch pyproject.toml)
+# -------------------------
+
+# Remove old broken venv (safe)
+poetry env remove python
+
+# Point Poetry to Python 3.12
+poetry env use python3.12
+
+# OR explicit path if needed:
+# poetry env use /usr/bin/python3.12
+
+# -------------------------
+# 3. REINSTALL DEPENDENCIES
+# -------------------------
+poetry install
+
+# -------------------------
+# 4. VERIFY INSTALLS
+# -------------------------
+poetry run python -c "import playwright; print('playwright OK')"
+
+poetry run python -c "from playwright.async_api import async_playwright; print('async OK')"
+
+# -------------------------
+# 5. INSTALL PLAYWRIGHT BROWSERS
+# -------------------------
+poetry run python -m playwright install
+
+# (Linux/WSL dependencies if needed)
+poetry run python -m playwright install-deps
+
+# -------------------------
+# 6. RUN PROJECT
+# -------------------------
+poetry run python app.py
+
+# =========================
+# KEY RULES (IMPORTANT)
+# =========================
+
+# ✔ DO NOT delete pyproject.toml
+# ✔ DO NOT reinstall Python system-wide on Ubuntu
+# ✔ ALWAYS reinstall venv after changing Python version
+# ✔ ALWAYS run playwright via: python -m playwright
+# ✔ VS Code must use .venv interpreter if in-project venv enabled

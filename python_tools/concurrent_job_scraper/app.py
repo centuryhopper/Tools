@@ -15,7 +15,6 @@ from utils.scrapers.universal_orlando_scraper import UniversalOrlandoJobs
 from utils.templates.job_scraper import JobScraper
 
 
-
 # --- Config ---
 MAX_RETRIES = 3
 INITIAL_BACKOFF = 0.5
@@ -135,7 +134,7 @@ async def main():
         # UniversalOrlandoJobs(),
         UCFJobScraper(),
         # PeopleFirstJobScraper(),
-        # PublixJobScraper(),
+        PublixJobScraper(),
     ]
     results = []
     for scraper in scrapers:
@@ -154,3 +153,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
+    
+# poetry run playwright install-deps
+# poetry run playwright install

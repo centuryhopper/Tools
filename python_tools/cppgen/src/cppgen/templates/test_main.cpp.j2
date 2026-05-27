@@ -1,0 +1,10 @@
+#include <cassert>
+#include <iostream>
+
+int main() {
+    assert(1 + 1 == 2);
+
+    std::cout << "Tests passed!" << std::endl;
+
+    return 0;
+}
