@@ -1,9 +1,10 @@
 import pandas as pd
+import sys
 
-FILE_NAME = r"./2025 DRM Data_Updated Zone_Habitat_Chris.csv"
+FILE_NAME = rf"./{sys.argv[1]}.csv"
 df = pd.read_csv(FILE_NAME)  # Reads the CSV file into a dataframe
 # table_name = "EAR_CoralDRM_MI"
-table_name = "CoralDRM"
+table_name = sys.argv[2]
 
 from datetime import datetime
 

@@ -1,9 +1,14 @@
 #include "Node.hpp"
 #include <optional>
 #include <queue>
+#include <fmt/core.h>
+#include <concepts>
+
+#pragma once
 
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
+// doesn't allow duplicates
 class BST
 {
 private:
@@ -11,6 +16,10 @@ private:
 
     // helper functions (recursive core logic)
 private:
+    // get smallest value larger than the current node
+    Node<T>* inOrderSuccessor(Node<T>* node) const;
+    // get largest value smaller than the current node
+    Node<T>* inOrderPredecessor(Node<T>* node) const;
     // Implemented with level-order traversal algorithm
     int height(Node<T>* node) const;
     Node<T>* insert(Node<T>* node, T value);
@@ -117,12 +126,13 @@ private:
 
     void destroy(Node<T>* node);
 
+    // core API
 public:
     BST();
     BST(T value);
     ~BST();
 
-    // core API
+    // doesn't allow duplicates
     void insert(T value);
     void remove(T value);
     bool contains(T value) const;
@@ -140,17 +150,42 @@ public:
 };
 
 
-#include <fmt/core.h>
 
-#pragma once
 
-template <typename T>
+
+template <typename T>requires std::totally_ordered<T>
+Node<T>* BST<T>::inOrderSuccessor(Node<T>* node) const
+{
+    if (!node) return nullptr;
+    node = node->right;
+    while (node && node->left)
+    {
+        node = node->left;
+    }
+
+    return node;
+}
+
+template <typename T>requires std::totally_ordered<T>
+Node<T>* BST<T>::inOrderPredecessor(Node<T>* node) const
+{
+    if (!node) return nullptr;
+    node = node->left;
+    while (node && node->right)
+    {
+        node = node->right;
+    }
+
+    return node;
+}
+
+template <typename T>requires std::totally_ordered<T>
 int BST<T>::height() const
 {
     return height(this->root);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 
 /*
                 50
@@ -187,20 +222,20 @@ int BST<T>::height(Node<T>* node) const
     return lvl;
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::remove(T value)
 {
     this->root = this->remove(this->root, value);
 }
 
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::insert(T value)
 {
     this->root = this->insert(this->root, value);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 std::optional<T> BST<T>::max() const
 {
     auto node = this->findMax(this->root);
@@ -212,7 +247,7 @@ std::optional<T> BST<T>::max() const
 }
 
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 std::optional<T> BST<T>::min() const
 {
     auto node = this->findMin(this->root);
@@ -223,43 +258,43 @@ std::optional<T> BST<T>::min() const
     return node->value;
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::printInOrder() const
 {
     this->inorder(this->root);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::printPreOrder() const
 {
     this->preorder(this->root);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::printPostOrder() const
 {
     this->postorder(this->root);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 bool BST<T>::empty() const
 {
     return this->root == nullptr;
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 BST<T>::BST()
 {
     root = nullptr;
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 BST<T>::~BST()
 {
     destroy(this->root);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::destroy(Node<T>* node)
 {
     if (node == nullptr)
@@ -274,13 +309,13 @@ void BST<T>::destroy(Node<T>* node)
     delete node;
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 BST<T>::BST(T value)
 {
     this->root = new Node<T>(value);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 Node<T>* BST<T>::insert(Node<T>* node, T value)
 {
     if (node == nullptr)
@@ -295,17 +330,30 @@ Node<T>* BST<T>::insert(Node<T>* node, T value)
     return node;
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 Node<T>* BST<T>::remove(Node<T>* node, T value)
 {
     if (!node)
         return nullptr;
-
-    // TODO: will implement later
-    return nullptr;
+    while (node && node->value != value)
+    {
+        if (value < node->value)
+        {
+            node = node->left;
+        }
+        else if (value > node->value)
+        {
+            node = node->right;
+        }
+        else
+        {
+            // handle 3 cases
+            
+        }
+    }
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::preorder(Node<T>* node) const
 {
     if (node == nullptr)
@@ -319,7 +367,7 @@ void BST<T>::preorder(Node<T>* node) const
     preorder(node->right);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::postorder(Node<T>* node) const
 {
     if (node == nullptr)
@@ -333,7 +381,7 @@ void BST<T>::postorder(Node<T>* node) const
 
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 void BST<T>::inorder(Node<T>* node) const
 {
     if (node == nullptr)
@@ -347,7 +395,7 @@ void BST<T>::inorder(Node<T>* node) const
 }
 
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 Node<T>* BST<T>::findMin(Node<T>* node) const
 {
     if (node == nullptr)
@@ -361,7 +409,7 @@ Node<T>* BST<T>::findMin(Node<T>* node) const
     return node;
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 Node<T>* BST<T>::findMax(Node<T>* node) const
 {
     if (node == nullptr)
@@ -375,13 +423,13 @@ Node<T>* BST<T>::findMax(Node<T>* node) const
     return node;
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 bool BST<T>::contains(T value) const
 {
     return this->contains(this->root, value);
 }
 
-template <typename T>
+template <typename T>requires std::totally_ordered<T>
 bool BST<T>::contains(Node<T>* node, T value) const
 {
     if (node == nullptr)
