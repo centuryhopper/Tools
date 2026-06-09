@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import csv
 import os
 
+
 from utils.scrapers.people_first_scraper import PeopleFirstJobScraper
 from utils.scrapers.publix_job_scraper import PublixJobScraper
 from utils.scrapers.ucf_job_scraper import UCFJobScraper

@@ -1,3 +1,0 @@
-poetry new project_name
-poetry add package_name
-poetry run python filename.py

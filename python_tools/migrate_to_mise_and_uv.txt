@@ -1,0 +1,87 @@
+# ==========================================
+# 1. Remove Poetry lock file
+# ==========================================
+
+rm poetry.lock
+
+# ==========================================
+# 2. Create/update .mise.toml
+# ==========================================
+
+printf '[tools]\npython = "3.12"\n' > .mise.toml
+
+# Install Python specified in .mise.toml
+mise install
+
+# ==========================================
+# 3. Ensure pyproject.toml uses PEP 621 format
+# ==========================================
+
+# Replace Poetry sections like:
+#
+# [tool.poetry]
+# [tool.poetry.dependencies]
+# [tool.poetry.group.dev.dependencies]
+#
+# with something like:
+
+cat > pyproject.toml << 'EOF'
+[project]
+name = "my-project"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+dependencies = [
+    "requests>=2.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.5.0",
+]
+EOF
+
+# ==========================================
+# 4. Generate uv lockfile
+# ==========================================
+
+uv lock
+
+# ==========================================
+# 5. Create virtual environment and install
+# ==========================================
+
+uv sync
+
+# ==========================================
+# 6. Verify
+# ==========================================
+
+uv run python --version
+uv tree
+
+# ==========================================
+# Common commands
+# ==========================================
+
+# Add dependency
+uv add requests
+
+# Add dev dependency
+uv add --dev pytest
+
+# Remove dependency
+uv remove requests
+
+# Run command in venv
+uv run pytest
+
+# Activate venv manually
+source .venv/bin/activate
+
+# Update lockfile
+uv lock
+
+# Sync environment
+uv sync

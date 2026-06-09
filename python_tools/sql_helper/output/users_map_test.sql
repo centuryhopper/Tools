@@ -1,0 +1,15 @@
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Leon.Cao@MyFWC.com', '1', '144195');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Alic.Bandy@myfwc.com', '2', '178439');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('paul.scharine@myfwc.com', '6', '1742');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('matt.chopp@myfwc.com', '7', '104494');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('wesley.seitz@myfwc.com', '8', '109416');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Justin.Davis@MyFWC.com', '11', '184600');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('brandon.stys@myfwc.com', '12', '184152');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Andrea.Boliek@MyFWC.com', '13', '1421');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Mark.Schulz@myfwc.com', '16', '141290');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('LexAnn.Thomas@MyFWC.com', '18', '184601');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Richard.Bingham@myfwc.com', '19', '184579');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Franklin.Alexander@MyFWC.com', '21', '181197');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Tony.Young@MyFWC.com', '22', '34596');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('Holli.Nichols@MyFWC.com', '26', '184581');
+INSERT INTO #TMP_USER_MAP (EmailAddress, StaffId, FWC_UMS_UserId) VALUES ('leo.zhang@myfwc.com', '28', '182347');
