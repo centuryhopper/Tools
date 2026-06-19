@@ -1,7 +1,9 @@
 #include "Node.hpp"
+#include <cstdio>
+#include <iostream>
 #include <optional>
 #include <queue>
-#include <fmt/core.h>
+// #include <fmt/core.h>
 #include <concepts>
 
 #pragma once
@@ -16,10 +18,10 @@ private:
 
     // helper functions (recursive core logic)
 private:
-    // get smallest value larger than the current node
-    Node<T>* inOrderSuccessor(Node<T>* node) const;
-    // get largest value smaller than the current node
-    Node<T>* inOrderPredecessor(Node<T>* node) const;
+    // get smallest value starting at the current node
+    Node<T>* findMin(Node<T>* node) const;
+    // get largest value starting at the current node
+    Node<T>* findMax(Node<T>* node) const;
     // Implemented with level-order traversal algorithm
     int height(Node<T>* node) const;
     Node<T>* insert(Node<T>* node, T value);
@@ -117,9 +119,6 @@ private:
     Node<T>* remove(Node<T>* node, T value);
     bool contains(Node<T>* node, T value) const;
 
-    Node<T>* findMin(Node<T>* node) const;
-    Node<T>* findMax(Node<T>* node) const;
-
     void inorder(Node<T>* node) const;
     void preorder(Node<T>* node) const;
     void postorder(Node<T>* node) const;
@@ -153,12 +152,11 @@ public:
 
 
 
-template <typename T>requires std::totally_ordered<T>
-Node<T>* BST<T>::inOrderSuccessor(Node<T>* node) const
+template <typename T> requires std::totally_ordered<T>
+Node<T>* BST<T>::findMin(Node<T>* node) const
 {
     if (!node) return nullptr;
-    node = node->right;
-    while (node && node->left)
+    while (node->left)
     {
         node = node->left;
     }
@@ -167,11 +165,10 @@ Node<T>* BST<T>::inOrderSuccessor(Node<T>* node) const
 }
 
 template <typename T>requires std::totally_ordered<T>
-Node<T>* BST<T>::inOrderPredecessor(Node<T>* node) const
+Node<T>* BST<T>::findMax(Node<T>* node) const
 {
     if (!node) return nullptr;
-    node = node->left;
-    while (node && node->right)
+    while (node->right)
     {
         node = node->right;
     }
@@ -185,17 +182,17 @@ int BST<T>::height() const
     return height(this->root);
 }
 
-template <typename T>requires std::totally_ordered<T>
 
 /*
-                50
-              /    \
-            30      70
-           /  \    /  \
-         20   40  60   80
-        /          \     \
-      10           65     90
+50
+/    \
+30      70
+/  \    /  \
+20   40  60   80
+/          \     \
+10           65     90
 */
+template <typename T>requires std::totally_ordered<T>
 int BST<T>::height(Node<T>* node) const
 {
     int lvl = -1;
@@ -203,7 +200,6 @@ int BST<T>::height(Node<T>* node) const
     std::queue<Node<T>*> q;
     q.push(node);
     q.push(nullptr);
-    int numNodesAtCurrentLevel = 0;
     while (!q.empty())
     {
         auto poppedNode = q.front();
@@ -262,18 +258,21 @@ template <typename T>requires std::totally_ordered<T>
 void BST<T>::printInOrder() const
 {
     this->inorder(this->root);
+    printf("\n");
 }
 
 template <typename T>requires std::totally_ordered<T>
 void BST<T>::printPreOrder() const
 {
     this->preorder(this->root);
+    printf("\n");
 }
 
 template <typename T>requires std::totally_ordered<T>
 void BST<T>::printPostOrder() const
 {
     this->postorder(this->root);
+    printf("\n");
 }
 
 template <typename T>requires std::totally_ordered<T>
@@ -292,6 +291,7 @@ template <typename T>requires std::totally_ordered<T>
 BST<T>::~BST()
 {
     destroy(this->root);
+    this->root = nullptr;
 }
 
 template <typename T>requires std::totally_ordered<T>
@@ -330,27 +330,106 @@ Node<T>* BST<T>::insert(Node<T>* node, T value)
     return node;
 }
 
+
+/*
+    CASE 3: Node has TWO children
+
+    Example:
+
+         10
+        /  \
+       5    15
+            /
+        12
+
+    Delete(10)
+
+    Step 1:
+    Find inorder successor
+    -> smallest value in right subtree
+
+    Right subtree:
+
+        15
+        /
+    12
+
+    Successor = 12
+
+    Step 2:
+    Copy successor value into current node
+
+        12
+        /  \
+        5    15
+            /
+        12
+
+    Step 3:
+    Delete the duplicate successor node from right subtree
+
+        12
+        /  \
+        5    15
+
+    Tree remains a valid BST.
+
+    ------------------------------------------------
+*/
 template <typename T>requires std::totally_ordered<T>
 Node<T>* BST<T>::remove(Node<T>* node, T value)
 {
     if (!node)
         return nullptr;
-    while (node && node->value != value)
+    if (value < node->value)
     {
-        if (value < node->value)
-        {
-            node = node->left;
-        }
-        else if (value > node->value)
-        {
-            node = node->right;
-        }
-        else
-        {
-            // handle 3 cases
-            
-        }
+        node->left = remove(node->left, value);
+        return node;
     }
+    else if (value > node->value)
+    {
+        node->right = remove(node->right, value);
+        return node;
+    }
+
+    // handle 3 cases
+    if (!node->left && !node->right)
+    {
+        delete node;
+        return nullptr;
+    }
+
+    // std::cout << "node to delete: " << node->value << std::endl;
+
+    // std::cout << "node left is null: " << (node->left == nullptr) << std::endl;
+    // std::cout << "node right is null: " << (node->right == nullptr) << std::endl;
+    
+
+    if (height(node->left) > height(node->right))
+    {
+        // go for inorder predecessor
+        Node<T>* predecessor = findMax(node->left);
+        node->value = predecessor->value;
+        node->left = remove(node->left, predecessor->value);
+        return node;
+    }
+    else
+    {
+        // go for inorder predecessor
+        // printf("hi\n");
+
+        Node<T>* successor = findMin(node->right);
+        // printf("hi\n");
+
+        // printf("successor: %d\n", successor == nullptr);
+        // printf("node->value: %d\n", node->value);
+
+
+        node->value = successor->value;
+        node->right = remove(node->right, successor->value);
+        return node;
+    }
+
 }
 
 template <typename T>requires std::totally_ordered<T>
@@ -361,8 +440,9 @@ void BST<T>::preorder(Node<T>* node) const
         return;
     }
 
-    fmt::print("{} ",node->value);;
+    // fmt::print("{} ",node->value);
 
+    std::cout << node->value << " " << std::endl;
     preorder(node->left);
     preorder(node->right);
 }
@@ -377,7 +457,8 @@ void BST<T>::postorder(Node<T>* node) const
 
     postorder(node->left);
     postorder(node->right);
-    fmt::print("{} ",node->value);;
+    // fmt::print("{} ",node->value);
+    std::cout << node->value << " ";
 
 }
 
@@ -390,37 +471,9 @@ void BST<T>::inorder(Node<T>* node) const
     }
 
     inorder(node->left);
-    fmt::print("{} ",node->value);;
+    // fmt::print("{} ",node->value);
+    std::cout << node->value << " " ;//<< std::endl;
     inorder(node->right);
-}
-
-
-template <typename T>requires std::totally_ordered<T>
-Node<T>* BST<T>::findMin(Node<T>* node) const
-{
-    if (node == nullptr)
-        return nullptr;
-
-    while (node->left != nullptr)
-    {
-        node = node->left;
-    }
-
-    return node;
-}
-
-template <typename T>requires std::totally_ordered<T>
-Node<T>* BST<T>::findMax(Node<T>* node) const
-{
-    if (node == nullptr)
-        return nullptr;
-
-    while (node->right != nullptr)
-    {
-        node = node->right;
-    }
-
-    return node;
 }
 
 template <typename T>requires std::totally_ordered<T>

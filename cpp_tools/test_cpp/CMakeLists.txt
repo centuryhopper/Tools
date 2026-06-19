@@ -17,15 +17,15 @@ include_directories(include)
 # -------------------------
 # Dependencies
 # -------------------------
-include(FetchContent)
+# include(FetchContent)
 
-FetchContent_Declare(
-    fmt
-    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG 10.2.1
-)
+# FetchContent_Declare(
+#     fmt
+#     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+#     GIT_TAG 10.2.1
+# )
 
-FetchContent_MakeAvailable(fmt)
+# FetchContent_MakeAvailable(fmt)
 
 # -------------------------
 # Main executable
@@ -36,7 +36,7 @@ add_executable(app
 )
 
 
-target_link_libraries(app PRIVATE fmt::fmt)
+# target_link_libraries(app PRIVATE fmt::fmt)
 
 
 target_compile_options(app PRIVATE
@@ -56,7 +56,7 @@ add_executable(tests
     tests/test_main.cpp
 )
 
-target_link_libraries(tests PRIVATE fmt::fmt)
+# target_link_libraries(tests PRIVATE fmt::fmt)
 
 
 add_test(NAME unit_tests COMMAND tests)

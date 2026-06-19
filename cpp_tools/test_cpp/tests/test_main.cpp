@@ -26,6 +26,16 @@ int main()
     tree.insert(12);
     tree.insert(20);
 
+
+    /*
+                                10
+                              /     \
+                             5       15
+                            / \     /  \
+                           3   7   12  20
+                            
+    */
+
     assert(tree.empty() == false);
 
     // -------------------------
@@ -64,25 +74,29 @@ int main()
     // Remove leaf node
     // -------------------------
 
-    // tree.remove(3);
+    // tree.printInOrder();
+    
+    tree.remove(3);
 
-    // assert(tree.contains(3) == false);
+    assert(tree.contains(3) == false);
+
+    // tree.printInOrder();
 
     // -------------------------
     // Remove node with one child
     // -------------------------
 
-    // tree.remove(5);
+    tree.remove(5);
 
-    // assert(tree.contains(5) == false);
+    assert(tree.contains(5) == false);
 
     // -------------------------
     // Remove node with two children
     // -------------------------
 
-    // tree.remove(10);
+    tree.remove(10);
 
-    // assert(tree.contains(10) == false);
+    assert(tree.contains(10) == false);
 
     // Remaining nodes should still exist
     assert(tree.contains(7) == true);
@@ -93,7 +107,7 @@ int main()
     // Remove non-existent value
     // -------------------------
 
-    // tree.remove(999);
+    tree.remove(999);
 
     // Should not crash
 

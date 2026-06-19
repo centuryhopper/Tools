@@ -1,6 +1,5 @@
 
-
-#include <fmt/core.h>
+// #include <fmt/core.h>
 #include <iostream>
 #include "../include/bst/BST.hpp"
 
@@ -9,6 +8,7 @@
 int main()
 {
   std::cout << "Hello from test_cpp!" << std::endl;
-  fmt::print("Hello {}\n", "world");
+  // fmt::print("Hello {}\n", "world");
   return 0;
 }
+
