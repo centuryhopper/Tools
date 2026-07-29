@@ -1,26 +1,18 @@
 [project]
 name = "transactions-visualizer"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "centuryhopper",email = "leotheasianlion@gmail.com"}
-]
+description = "Streamlit application for visualizing transaction data"
+authors = [{ name = "centuryhopper", email = "leotheasianlion@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12"
+
 dependencies = [
-    "pyspark (>=4.1.1,<5.0.0)",
-    "streamlit (>=1.57.0,<2.0.0)",
-    "plotly (>=6.7.0,<7.0.0)"
+  "pyspark>=4.1.1,<5.0.0",
+  "streamlit>=1.57.0,<2.0.0",
+  "plotly>=6.7.0,<7.0.0",
+  "pandas>=2.0.0",
+  "pyarrow>=15.0.0",
 ]
-
-[tool.poetry]
-packages = [{include = "transactions_visualizer", from = "src"}]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
 
 [dependency-groups]
-dev = [
-    "ipykernel (>=7.2.0,<8.0.0)"
-]
+dev = ["ipykernel>=7.2.0,<8.0.0"]
