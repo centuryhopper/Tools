@@ -1,0 +1,32 @@
+BUILD_DIR := build
+TARGET := {{ project_name }}
+TARGET_TESTS := tests
+
+TESTS := $(BUILD_DIR)/bin/$(TARGET_TESTS)
+APP := $(BUILD_DIR)/bin/$(TARGET)
+
+# .PHONY tells make that a target is not a real file,
+# so it will always run the associated commands.
+.PHONY: all configure build test run clean
+
+all: build
+
+configure:
+	cmake -S . -B $(BUILD_DIR)
+
+build: configure
+	cmake --build $(BUILD_DIR)
+
+run: build
+	./$(APP)
+
+test: build
+	./$(TESTS)
+
+clean:
+	rm -rf $(BUILD_DIR)
+
+
+
+
+

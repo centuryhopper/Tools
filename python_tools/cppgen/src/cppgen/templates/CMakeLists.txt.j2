@@ -11,20 +11,28 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include_directories(include)
+set(PROJECT_WARNINGS
+    -Wall
+    -Wextra
+    -Wpedantic
+)
 
 # -------------------------
 # Main executable
 # -------------------------
 
-add_executable(app
+add_executable(${PROJECT_NAME}
     src/main.cpp
 )
 
-target_compile_options(app PRIVATE
-    -Wall
-    -Wextra
-    -Wpedantic
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        include
+)
+
+target_compile_options(${PROJECT_NAME}
+    PRIVATE
+        ${PROJECT_WARNINGS}
 )
 
 {% if enable_tests %}
@@ -39,6 +47,19 @@ add_executable(tests
     tests/test_main.cpp
 )
 
+target_include_directories(tests
+    PRIVATE
+        include
+)
+
+target_compile_options(tests
+    PRIVATE
+        ${PROJECT_WARNINGS}
+)
+
 add_test(NAME unit_tests COMMAND tests)
 
 {% endif %}
+
+
+
