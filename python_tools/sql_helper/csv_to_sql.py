@@ -31,3 +31,6 @@ with open(f"{OUTPUT}/insert_statements_{formatted}.sql", "w", encoding="utf-8") 
         sql = f"INSERT INTO {table_name} ({columns}) VALUES ({values});\n"
 
         f.write(sql)
+
+
+# example: uv run csv_to_sql.py 'users_map_test' '#TMP_USER_MAP'

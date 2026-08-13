@@ -3,17 +3,22 @@
 import sys
 
 sys.dont_write_bytecode = True
-from github import Github
+from github import Github, Auth
 import datetime
 import pwd
 import os, argparse
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv("secrets.env")
 
 
 def main():
-    g = Github(os.getenv("github_api_token"))
+    # g = Github(os.getenv("github_api_token"))
+    # token = os.getenv("github_api_token")
+    # print(token)
+
+    auth = Auth.Token(os.getenv("github_api_token"))
+    g = Github(auth=auth)
 
     # repos = g.search_repositories(query='language:python')
     # for repo in g.get_user().get_repos():
@@ -32,7 +37,7 @@ def main():
 
     # creating local repository and connect with the created remote one from above
     try:
-        REPO_PATH = f"/home/{pwd.getpwuid(os.getuid()).pw_name}/Documents/GitHub"  # change this line to be your desired local repo path
+        REPO_PATH = f"/home/{pwd.getpwuid(os.getuid()).pw_name}/projects"  # change this line to be your desired local repo path
         os.chdir(REPO_PATH)
         os.system(f"mkdir {repoName}")
         os.chdir(os.path.join(REPO_PATH, repoName))

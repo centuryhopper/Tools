@@ -34,36 +34,13 @@ The project uses **Typer** for the CLI interface and **Jinja2** templates for fi
 ## Install from PyPI
 
 ```bash
-pip install cppgen
+pip install cppgen-cli
 ```
 
 or using `uv`:
 
 ```bash
-uv tool install cppgen
-```
-
----
-
-## Install From Source
-
-Clone the repository:
-
-```bash
-git clone https://github.com/<your_username>/cppgen.git
-cd cppgen
-```
-
-Install:
-
-```bash
-pip install .
-```
-
-or:
-
-```bash
-uv tool install .
+uv tool install cppgen-cli
 ```
 
 ---
@@ -447,37 +424,6 @@ Run:
 ```bash
 ./algorithms
 ```
-
----
-
-# Development Setup
-
-Clone the repository:
-
-```bash
-git clone https://github.com/<your_username>/cppgen.git
-cd cppgen
-```
-
-Install dependencies:
-
-```bash
-uv sync
-```
-
-Run locally:
-
-```bash
-uv run cppgen init example_project
-```
-
----
-
-# Dependencies
-
-- Python 3.10+
-- Typer
-- Jinja2
 
 ---
 

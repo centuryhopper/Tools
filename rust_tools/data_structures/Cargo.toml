@@ -3,6 +3,15 @@ name = "data_structures"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [
+    "avl_tree",
+    "doubly_linked_list",
+    "singly_linked_list",
+    "linked_list_trait",
+    "concurrency_primes",
+]
+
 [dependencies]
 concurrency_primes = { path = "./concurrency_primes" }
 doubly_linked_list = { version = "0.1.0", path = "doubly_linked_list" }
