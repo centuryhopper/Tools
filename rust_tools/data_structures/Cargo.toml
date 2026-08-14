@@ -9,7 +9,7 @@ members = [
     "doubly_linked_list",
     "singly_linked_list",
     "linked_list_trait",
-    "concurrency_primes",
+    "concurrency_primes", "union_find",
 ]
 
 [dependencies]

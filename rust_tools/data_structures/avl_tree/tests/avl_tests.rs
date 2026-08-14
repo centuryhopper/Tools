@@ -1,5 +1,8 @@
 use avl_tree::AvlTree;
 
+// cargo test -p avl_tree
+
+
 #[test]
 fn new_tree_is_empty() {
     let tree = AvlTree::<i32>::new();
