@@ -80,6 +80,8 @@ pub fn get_file_hashes(files: &[PathBuf], exclude: &[String]) -> HashMap<Vec<u8>
                 a
             },
         );
+        // TODO if file_size < 2 * CHUNK_SIZE then blake3 hash the whole file otherwise hash the first and last CHUNK_SIZE kb of the file
+        // then filter out those corresponding vectors less then 2 and then do a full blake3 hash of the remaining and then those vectors with size 2 or greater will be the duplicate arrays
         
         HashMap::new()
 
