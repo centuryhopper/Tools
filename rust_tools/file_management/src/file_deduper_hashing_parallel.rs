@@ -1,14 +1,13 @@
 use chrono::format;
+use rayon::prelude::*;
 use sha2::{Digest, Sha256};
-use walkdir::WalkDir;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Result};
 use std::path::PathBuf;
-use rayon::prelude::*;
+use walkdir::WalkDir;
 
-// sequentially find all the files by their absolute paths in the current directory and its subdirectories, compute their hashes in parallel, and group them by hash to find duplicates. 
-
+// sequentially find all the files by their absolute paths in the current directory and its subdirectories, compute their hashes in parallel, and group them by hash to find duplicates.
 
 pub fn get_all_files(str_path: &str) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
@@ -21,53 +20,88 @@ pub fn get_all_files(str_path: &str) -> Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-
 pub fn get_file_hashes(files: &[PathBuf], exclude: &[String]) -> HashMap<Vec<u8>, Vec<PathBuf>> {
-
     /*
         Map → compute (hash, path)
         Fold → build local HashMap
         Reduce → merge the HashMaps
+
+        size_groups = ...
+        size_groups.retain(...)
+
+        partial_groups = ...
+        partial_groups.retain(...)
+
+        full_groups = ...
+        full_groups.retain(...)
     */
     files
         .par_iter()
         // remove all files that cannot be hashed (e.g. permission issues)
         .filter_map(|path| {
-
             // check if the file path matches any of the exclude patterns (case-insensitive)
             for pattern in exclude {
-
-                if path.to_string_lossy().to_ascii_lowercase().contains(pattern.to_ascii_lowercase().as_str()) {
+                if path
+                    .to_string_lossy()
+                    .to_ascii_lowercase()
+                    .contains(pattern.to_ascii_lowercase().as_str())
+                {
                     // println!("Excluding file: {}", path.display());
                     return None;
                 }
             }
 
-            match file_hash(&path) {
-                Ok(hash) => Some((hash, path)),
-                Err(_) => None,
-            }
+            // get file size
+            // ok()? returns None if fails
+            let file_size = path.metadata().ok()?.len();
+            Some((file_size, path))
+
+            // match file_hash(&path) {
+            //     Ok(hash) => Some((hash, path)),
+            //     Err(_) => None,
+            // }
         })
         .fold(
-            || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
-            |mut acc, (hash, path)| {
-                // create a new entry for this hash if it doesn't exist, then push the file path into the vector
-                acc.entry(hash).or_default().push(path.clone());
+            || HashMap::<u64, Vec<PathBuf>>::new(),
+            |mut acc, (file_size, path)| {
+                acc.entry(file_size).or_default().push(path.clone());
                 acc
             },
         )
         .reduce(
-            || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
+            || HashMap::<u64, Vec<PathBuf>>::new(),
             |mut a, b| {
                 // merge two hash maps by extending the vectors of file paths for each hash
                 for (k, v) in b {
-                    a.entry(k).or_default().extend(v);
+                    if v.len() > 1 {
+                        a.entry(k).or_default().extend(v);
+                    }
                 }
                 a
             },
-        )
-}
+        );
+        
+        HashMap::new()
 
+        // .fold(
+        //     || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
+        //     |mut acc, (hash, path)| {
+        //         // create a new entry for this hash if it doesn't exist, then push the file path into the vector
+        //         acc.entry(hash).or_default().push(path.clone());
+        //         acc
+        //     },
+        // )
+        // .reduce(
+        //     || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
+        //     |mut a, b| {
+        //         // merge two hash maps by extending the vectors of file paths for each hash
+        //         for (k, v) in b {
+        //             a.entry(k).or_default().extend(v);
+        //         }
+        //         a
+        //     },
+        // )
+}
 
 fn file_hash(path: &std::path::Path) -> Result<Vec<u8>> {
     let mut f = File::open(path)?;
@@ -122,7 +156,8 @@ pub fn delete_duplicates(duplicates: &HashMap<Vec<u8>, Vec<PathBuf>>) {
             // }
             // delete duplicates, e.g. keep the first one and delete the rest
             for path in &paths[1..] {
-                std::fs::remove_file(path).expect(&format!("Failed to delete file: {}", path.display()));
+                std::fs::remove_file(path)
+                    .expect(&format!("Failed to delete file: {}", path.display()));
             }
         }
     }
