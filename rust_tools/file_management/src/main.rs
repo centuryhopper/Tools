@@ -133,7 +133,6 @@ fn run_grep(dirs_to_search: Vec<String>, target: String, recursive: bool, thread
     // println!("results: {:#?}", results);
 }
 
-
 fn run_cli() {
     let cli = Cli::parse();
 
@@ -155,13 +154,23 @@ fn run_cli() {
         }
 
         // cargo run -- FileDeduper -dp ./test_duplicates -e "test3.txt,subdir/test3.txt"
-        Commands::FileDeduper { path, delete, exclude } => {
+        Commands::FileDeduper {
+            path,
+            delete,
+            exclude,
+        } => {
             // println!("exclude: {:#?}", exclude);
             let results = get_all_files(path.as_str()).unwrap_or_default();
             println!("Number of files: {}", results.len());
             let file_hashes = get_file_hashes(&results, &exclude);
             // println!("Number of unique hashes: {}", file_hashes.len());
-            println!("Duplicate groups: {:#?}", file_hashes.values().filter(|v| v.len() > 1).collect::<Vec<_>>());
+            println!(
+                "Duplicate groups: {:#?}",
+                file_hashes
+                    .values()
+                    .filter(|v| v.len() > 1)
+                    .collect::<Vec<_>>()
+            );
             // println!("Found files: {:#?}", results);
 
             if delete {

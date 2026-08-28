@@ -3,11 +3,51 @@ use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Result};
-use std::path::PathBuf;
+use std::io::{Read, Result, Seek, SeekFrom};
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 // sequentially find all the files by their absolute paths in the current directory and its subdirectories, compute their hashes in parallel, and group them by hash to find duplicates.
+
+fn full_hash(path: &Path) -> std::io::Result<blake3::Hash> {
+    let file = File::open(path)?;
+
+    let mut hasher = blake3::Hasher::new();
+
+    hasher.update_reader(file)?;
+
+    Ok(hasher.finalize())
+}
+
+/// Read the first and last portion of the file and return its hash (effective for very large files since we can return early if two very large files are not duplicates of each other)
+fn partial_hash(path: &Path) -> std::io::Result<blake3::Hash> {
+    const CHUNK_SIZE: usize = 64 * 1024;
+
+    let mut file = File::open(path)?;
+    let file_size = file.metadata()?.len();
+    let mut hasher = blake3::Hasher::new();
+
+    // if file_size < 2 * CHUNK_SIZE then blake3 hash the whole file otherwise hash the first and last CHUNK_SIZE kb of the file
+    if file_size < (CHUNK_SIZE * 2) as u64 {
+        return full_hash(path);
+    }
+
+    let mut buffer = [0u8; CHUNK_SIZE];
+
+    // read first chunk
+    // let mut bytes_read = file.read(&mut buffer)?;
+    file.read_exact(&mut buffer);
+    hasher.update(&buffer);
+
+    // seek to final chunk
+    // read final chunk
+    let start = file_size.saturating_sub(CHUNK_SIZE as u64);
+    file.seek(SeekFrom::Start(start))?;
+    file.read_exact(&mut buffer);
+    hasher.update(&buffer);
+
+    Ok(hasher.finalize())
+}
 
 pub fn get_all_files(str_path: &str) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
@@ -20,7 +60,10 @@ pub fn get_all_files(str_path: &str) -> Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-pub fn get_file_hashes(files: &[PathBuf], exclude: &[String]) -> HashMap<Vec<u8>, Vec<PathBuf>> {
+pub fn get_file_hashes(
+    files: &[PathBuf],
+    exclude: &[String],
+) -> HashMap<blake3::Hash, Vec<PathBuf>> {
     /*
         Map → compute (hash, path)
         Fold → build local HashMap
@@ -34,6 +77,22 @@ pub fn get_file_hashes(files: &[PathBuf], exclude: &[String]) -> HashMap<Vec<u8>
 
         full_groups = ...
         full_groups.retain(...)
+
+        files
+        ↓
+        group by file size
+        ↓
+        discard unique sizes
+        ↓
+        partial hash remaining files
+        ↓
+        group by partial hash
+        ↓
+        discard unique partial hashes
+        ↓
+        full hash remaining files
+        ↓
+        actual duplicate groups
     */
     files
         .par_iter()
@@ -64,45 +123,95 @@ pub fn get_file_hashes(files: &[PathBuf], exclude: &[String]) -> HashMap<Vec<u8>
         .fold(
             || HashMap::<u64, Vec<PathBuf>>::new(),
             |mut acc, (file_size, path)| {
-                acc.entry(file_size).or_default().push(path.clone());
+                acc.entry(file_size).or_default().push(path.to_path_buf());
                 acc
             },
         )
+        // one global hashmap where each vector value contains duplicates
         .reduce(
             || HashMap::<u64, Vec<PathBuf>>::new(),
             |mut a, b| {
                 // merge two hash maps by extending the vectors of file paths for each hash
-                for (k, v) in b {
-                    if v.len() > 1 {
-                        a.entry(k).or_default().extend(v);
-                    }
+                for (size, paths) in b {
+                    a.entry(size).or_default().extend(paths);
                 }
                 a
             },
-        );
-        // TODO if file_size < 2 * CHUNK_SIZE then blake3 hash the whole file otherwise hash the first and last CHUNK_SIZE kb of the file
-        // then filter out those corresponding vectors less then 2 and then do a full blake3 hash of the remaining and then those vectors with size 2 or greater will be the duplicate arrays
-        
-        HashMap::new()
+        )
+        .into_values() // now its a vector of paths again but this time each value now has at least one duplicate
+        .filter(|paths| paths.len() > 1)
+        .flatten()
+        .collect::<Vec<PathBuf>>()
+        .into_par_iter()
+        .filter_map(|path| {
+            let ph = partial_hash(&path).ok()?;
+            Some((ph, path))
+        })
+        .fold(
+            || HashMap::<blake3::Hash, Vec<PathBuf>>::new(),
+            |mut acc, (partial_hash, path)| {
+                acc.entry(partial_hash).or_default().push(path);
+                acc
+            },
+        )
+        .reduce(
+            || HashMap::<blake3::Hash, Vec<PathBuf>>::new(),
+            |mut a, b| {
+                // merge two hash maps by extending the vectors of file paths for each hash
+                for (partial_hash, paths) in b {
+                    a.entry(partial_hash).or_default().extend(paths);
+                }
+                a
+            },
+        )
+        .into_values()
+        .filter(|paths| paths.len() > 1)
+        .flatten()
+        .collect::<Vec<PathBuf>>()
+        .into_par_iter()
+        .filter_map(|path| {
+            let ph = full_hash(&path).ok()?;
+            Some((ph, path))
+        })
+        .fold(
+            || HashMap::<blake3::Hash, Vec<PathBuf>>::new(),
+            |mut acc, (full_hash, path)| {
+                acc.entry(full_hash).or_default().push(path);
+                acc
+            },
+        )
+        .reduce(
+            || HashMap::<blake3::Hash, Vec<PathBuf>>::new(),
+            |mut a, b| {
+                for (full_hash, paths) in b {
+                    a.entry(full_hash).or_default().extend(paths);
+                }
+                a
+            },
+        )
 
-        // .fold(
-        //     || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
-        //     |mut acc, (hash, path)| {
-        //         // create a new entry for this hash if it doesn't exist, then push the file path into the vector
-        //         acc.entry(hash).or_default().push(path.clone());
-        //         acc
-        //     },
-        // )
-        // .reduce(
-        //     || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
-        //     |mut a, b| {
-        //         // merge two hash maps by extending the vectors of file paths for each hash
-        //         for (k, v) in b {
-        //             a.entry(k).or_default().extend(v);
-        //         }
-        //         a
-        //     },
-        // )
+    // then filter out those corresponding vectors less then 2 and then do a full blake3 hash of the remaining and then those vectors with size 2 or greater will be the duplicate arrays
+
+    // HashMap::new()
+
+    // .fold(
+    //     || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
+    //     |mut acc, (hash, path)| {
+    //         // create a new entry for this hash if it doesn't exist, then push the file path into the vector
+    //         acc.entry(hash).or_default().push(path.clone());
+    //         acc
+    //     },
+    // )
+    // .reduce(
+    //     || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
+    //     |mut a, b| {
+    //         // merge two hash maps by extending the vectors of file paths for each hash
+    //         for (k, v) in b {
+    //             a.entry(k).or_default().extend(v);
+    //         }
+    //         a
+    //     },
+    // )
 }
 
 fn file_hash(path: &std::path::Path) -> Result<Vec<u8>> {
@@ -148,8 +257,8 @@ fn file_hash(path: &std::path::Path) -> Result<Vec<u8>> {
     Ok(hasher.finalize().to_vec())
 }
 
-pub fn delete_duplicates(duplicates: &HashMap<Vec<u8>, Vec<PathBuf>>) {
-    for (hash, paths) in duplicates {
+pub fn delete_duplicates(duplicates: &HashMap<blake3::Hash, Vec<PathBuf>>) {
+    for (_, paths) in duplicates {
         if paths.len() > 1 {
             // We have a duplicate group
             // println!("Duplicate group (hash: {:x?}):", hash);
