@@ -16,3 +16,5 @@ members = [
 concurrency_primes = { path = "./concurrency_primes" }
 doubly_linked_list = { version = "0.1.0", path = "doubly_linked_list" }
 linked_list_trait = { version = "0.1.0", path = "linked_list_trait" }
+union_find = { version = "0.1.0", path = "union_find" }
+petgraph = "0.8.3"
