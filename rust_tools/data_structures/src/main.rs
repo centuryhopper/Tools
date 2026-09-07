@@ -1,5 +1,6 @@
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashSet};
+use std::fmt::Binary;
 
 use petgraph::dot::{Config, Dot};
 use petgraph::graph::UnGraph;
@@ -149,9 +150,7 @@ fn f(c: char) -> usize {
     (u32::from(c) - (if c.is_uppercase() { 65 } else { 97 })) as usize
 }
 
-// cargo run --quiet > graph.dot
-// dot -Tpng graph.dot -o graph.png
-fn main() {
+fn test_prims_and_kruskals() {
     let mut graph: [Vec<Edge>; 7] = std::array::from_fn(|_| Vec::new());
 
     // assign neighbors of vertex 0 and their edge weights
@@ -212,6 +211,81 @@ fn main() {
             .collect::<Vec<_>>()
     );
     println!("total_weight: {:?}", total_weight);
+}
+
+fn djikstras_algo(graph: &[Vec<Edge>], source: usize) -> Vec<usize> {
+    let n = graph.len();
+    let mut distances = vec![usize::MAX; n];
+    // initialize distance from the source to itself to 0
+    distances[source] = 0;
+    let mut seen: HashSet<usize> = HashSet::new();
+
+    /*
+        In Rust, a BinaryHeap<(A, B)> orders tuples lexicographically using the tuple's Ord implementation.
+
+        That means it compares:
+            The first element
+            If those are equal, the second element
+            Then the third, etc.
+    */
+    // (total distance from source, vertex)
+    let mut mh: BinaryHeap<Reverse<(usize, usize)>> = BinaryHeap::new();
+    mh.push(Reverse((0, source)));
+
+    while !mh.is_empty() {
+        let Reverse((_, cur)) = mh.pop().unwrap();
+
+        if seen.contains(&cur) {
+            continue;
+        }
+        seen.insert(cur);
+
+        // explore neighbors and update distance to that neighbor
+        for edge in &graph[cur] {
+            let new_dist = edge.weight + distances[cur];
+
+            if distances[edge.neighbor] > new_dist {
+                distances[edge.neighbor] = new_dist;
+                mh.push(Reverse((new_dist, edge.neighbor)));
+            }
+        }
+    }
+
+    distances
+}
+
+// cargo run --quiet > graph.dot
+// dot -Tpng graph.dot -o graph.png
+fn main() {
+    let mut graph = [
+        vec![],
+        vec![Edge::new(2, 2), Edge::new(3, 4)],
+        vec![Edge::new(4, 7), Edge::new(3, 1)],
+        vec![Edge::new(5, 3)],
+        vec![Edge::new(6, 1)],
+        vec![Edge::new(4, 2), Edge::new(6, 5)],
+        vec![],
+    ];
+
+    let mut graph2 = [
+        vec![Edge::new(f('B'), 4), Edge::new(f('C'), 2)],
+        vec![
+            Edge::new(f('D'), 2),
+            Edge::new(f('E'), 3),
+            Edge::new(f('C'), 3),
+        ],
+        vec![
+            Edge::new(f('B'), 1),
+            Edge::new(f('D'), 4),
+            Edge::new(f('E'), 5),
+        ],
+        vec![],
+        vec![Edge::new(f('D'), 1)],
+    ];
+
+    let result = djikstras_algo(&graph2, f('A'));
+    // println!("distances: {:?}", &result[1..]);
+    println!("distances: {:?}", result);
 
     // create_graph();
 }
