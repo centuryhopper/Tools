@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 #include <ranges>
+#include <queue>
 
 
 #include <fmt/core.h>
@@ -16,8 +17,8 @@
 
 #include "../include/bst/BST.hpp"
 
-
-#define vvpii std::vector<std::vector<std::pair<int, int>>>
+#define pii std::pair<int, int>
+#define vvpii std::vector<std::vector<pii>>
 #define vvi std::vector<std::vector<int>>
 #define vvtiii std::vector<std::vector<std::tuple<int, int, int>>>
 
@@ -213,6 +214,57 @@ std::vector<int> topologicalSort(const vvi& adj)
   return result;
 }
 
+/// Implemented using Khan's algorithm
+std::vector<int> topologicalSort_BFS(const vvi& adj)
+{
+  int n=adj.size();
+  std::vector<int> incomingEdges(n,0);
+
+  // populate incoming edges
+  for (const auto& edges : adj)
+  {
+    for (int i=0;i<edges.size();i++)
+    {
+      incomingEdges[edges[i]]+=1;
+    }
+  }
+
+  std::vector<int> result;
+  std::priority_queue<int, std::vector<int>, std::greater<int>> mh;
+
+  // use queue if you dont care about ordering of vertices
+  // std::queue<int> q;
+  for (int i=0;i<n;i++)
+  {
+    if (incomingEdges[i] == 0)
+    {
+      mh.push(i);
+    }
+  }
+  while (!mh.empty())
+  {
+    auto v = mh.top();
+    mh.pop();
+
+    for (const auto& neighbor : adj[v])
+    {
+      incomingEdges[neighbor]-=1;
+      if (incomingEdges[neighbor]==0)
+        mh.push(neighbor);
+    }
+
+    result.push_back(v);
+  }
+
+  if (result.size() != n)
+  {
+      return {};
+  }
+
+  return result;
+
+}
+
 int main()
 {
   vvi topoGraph = {
@@ -240,7 +292,8 @@ int main()
     },
   };
 
-  auto result = topologicalSort(topoGraph);
+  // auto result = topologicalSort(topoGraph);
+  auto result = topologicalSort_BFS(topoGraph);
   auto chars =
     result
     | std::views::transform([](int x) { return static_cast<char>('a'+x); })
