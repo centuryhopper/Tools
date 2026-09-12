@@ -1,0 +1,24 @@
+# Build output
+build/
+
+# Generated compilation database
+compile_commands.json
+
+# IDEs
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+
+# Editors
+*.swp
+*.swo
+*~
+
+# Visual Studio
+.vs/
