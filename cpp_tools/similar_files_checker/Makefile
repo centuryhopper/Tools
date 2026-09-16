@@ -11,7 +11,7 @@ APP := $(BUILD_DIR)/bin/$(TARGET)
 
 all: build
 
-configure: clean
+configure:
 	cmake -S . -B $(BUILD_DIR) \
         -DCMAKE_C_COMPILER=gcc-14 \
         -DCMAKE_CXX_COMPILER=g++-14 \
@@ -21,7 +21,7 @@ build: configure
 	cmake --build $(BUILD_DIR)
 
 run: build
-	./$(APP)
+	./$(APP) $(ARGS)
 
 test: build
 	./$(TESTS)

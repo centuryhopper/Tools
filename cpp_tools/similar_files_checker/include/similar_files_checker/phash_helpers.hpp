@@ -10,7 +10,11 @@ cv::Mat computePHash(const fs::path& path)
     cv::Mat image = cv::imread(path.string());
 
     if (image.empty())
-        throw std::runtime_error("Failed to read image: " + path.string());
+    {
+        // throw std::runtime_error("Failed to read image: " + path.string());
+        fmt::print(stderr, "Skipping unreadable image: {}\n", path.string());
+        return {};
+    }
 
     static cv::Ptr<cv::img_hash::PHash> hasher =
         cv::img_hash::PHash::create();
