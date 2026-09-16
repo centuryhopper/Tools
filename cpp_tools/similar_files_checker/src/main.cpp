@@ -234,7 +234,7 @@ void logImgCreationDateTime(std::vector<ImageInfo> images)
 
 // Loop thru all folders starting with group_  
 // Move first item out of each group_ folder into parent directory and remove that group_ folder
-const auto deleteGroups = []() -> void {
+const auto deleteGroups = [](const std::string& PARENT_PATH) -> void {
     for (const auto& entry : fs::directory_iterator(IMGS_PATH))
     {
         if (!entry.is_directory())
@@ -254,7 +254,7 @@ const auto deleteGroups = []() -> void {
                 continue;
 
             fs::path src = item.path();
-            fs::path dst = IMGS_PATH / src.filename();
+            fs::path dst = PARENT_PATH / src.filename();
 
             // move first item back into parent directory
             if (!fs::exists(dst))
@@ -292,15 +292,6 @@ void groupImages()
 
     std::unordered_map<int,std::vector<int>> imgGroups;
     custom_data_structures::UnionFind uf(images.size());
-
-    int i=0;
-    // for (const auto& image : images)
-    // {
-    //     // if (i==10) break;
-    //     std::cout << image.path << '\n';
-    //     // i+=1;
-    // }
-
 
     // O (n * (n-1) / 2) comparisons in the worst case
     for (int i=0;i<images.size();i++)
@@ -431,7 +422,7 @@ int main(int argc, char* argv[])
     switch (arg[1])
     {
         case 'd':
-            deleteGroups();
+            deleteGroups(IMGS_PATH);
             break;
         case 'v':
             // TODO: work on video grouping logic
