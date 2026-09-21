@@ -1,9 +1,0 @@
-graph {
-    0 [ label = "\"A\"" ]
-    1 [ label = "\"B\"" ]
-    2 [ label = "\"C\"" ]
-    0 -- 1 [ label = "5" ]
-    1 -- 2 [ label = "2" ]
-    0 -- 2 [ label = "8" ]
-}
-
