@@ -32,8 +32,9 @@ os.makedirs(PATH_TO_TRANSCRIPT, exist_ok=True)
 async def open_browser(url: str, mode: str = "headed"):
     playwright = await async_playwright().start()
 
-    browser = await playwright.firefox.launch(
-        headless=(mode == "headless")
+    browser = await playwright.chromium.launch(
+        headless=(mode == "headless"),
+        executable_path="/usr/bin/google-chrome",
     )
 
     context = await browser.new_context(
@@ -61,25 +62,41 @@ async def get_transcript(page: Page) -> Optional[str]:
         more_btn = page.locator("#expand")
         if await more_btn.count() > 0:
             await more_btn.first.click()
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
     # Try clicking "Show transcript"
     try:
         show_btn = page.locator("button[aria-label='Show transcript']")
         if await show_btn.count() > 0:
             await show_btn.first.click()
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
-    await page.wait_for_timeout(3000)
+    await page.wait_for_timeout(30000)
 
     # Grab transcript panel
     try:
-        panel = page.locator("#panels")
-        text = await panel.inner_text()
+        # panel = page.locator("#panels")
+        # text = await panel.inner_text()
+        # print(f'text: {text}')
+
+        # Wait for actual transcript segments
+        segments = page.locator("ytd-transcript-segment-renderer")
+
+        await segments.first.wait_for(
+            state="visible",
+            timeout=10_000,
+        )
+
+        print(f"Segments found: {await segments.count()}")
+
+        body = page.locator("#body")
+        text = await body.inner_text()
+        print(f"body: {text}")
         return text
-    except:
+    except Exception as e:
+        print(e)
         return ""
 
 
@@ -94,10 +111,12 @@ def transcript2df(transcript: Optional[str]) -> pd.DataFrame:
 
     min_len = min(len(timestamps), len(text))
 
-    df = pd.DataFrame({
-        "timestamp": timestamps[:min_len],
-        "text": text[:min_len],
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": timestamps[:min_len],
+            "text": text[:min_len],
+        }
+    )
 
     return df
 
@@ -114,7 +133,7 @@ async def main(url: str, mode: str = "headless"):
 
         print("Saving transcript...")
 
-        ts = strftime('%Y-%m-%d-%H_%M_%S')
+        ts = strftime("%Y-%m-%d-%H_%M_%S")
 
         df.to_csv(
             os.path.join(PATH_TO_TRANSCRIPT, f"transcript_{ts}.csv"),
@@ -139,17 +158,15 @@ async def main(url: str, mode: str = "headless"):
 # CLI
 # -----------------------------
 if __name__ == "__main__":
-
     while "https://www.youtube.com/watch?v=" not in (
         url := input("Enter YouTube URL: ")
     ):
         print("Invalid URL, try again.")
 
-    while (
-        mode := input("1 = headed, 2 = headless: ")
-    ) not in ["1", "2"]:
+    while (mode := input("1 = headed, 2 = headless: ")) not in ["1", "2"]:
         print("Try again.")
 
     import asyncio
 
     asyncio.run(main(url, "headed" if mode == "1" else "headless"))
+

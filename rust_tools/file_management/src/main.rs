@@ -154,13 +154,14 @@ fn run_cli() {
         }
 
         // cargo run -- FileDeduper -dp ./test_duplicates -e "test3.txt,subdir/test3.txt"
+        // cargo run -- FileDeduper -dp ~/synology/ -e '#recycle'
         Commands::FileDeduper {
             path,
             delete,
             exclude,
         } => {
-            // println!("exclude: {:#?}", exclude);
-            let results = get_all_files(path.as_str()).unwrap_or_default();
+            // println!("exclude: {:#?}", exclude); // exclude the #recycle path when calling the program on synology network drive
+            let results = get_all_files(path.as_str(), &exclude).unwrap_or_default();
             println!("Number of files: {}", results.len());
             let file_hashes = get_file_hashes(&results, &exclude);
             // println!("Number of unique hashes: {}", file_hashes.len());

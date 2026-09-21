@@ -56,6 +56,9 @@ target_include_directories(exiv2lib
 # OpenCV
 find_package(OpenCV REQUIRED)
 
+# OpenMP
+find_package(OpenMP REQUIRED)
+
 # -------------------------
 # Main executable
 # -------------------------
@@ -81,6 +84,7 @@ target_link_libraries(${PROJECT_NAME}
         fmt::fmt
         ${OpenCV_LIBS}
         Exiv2::exiv2lib
+        OpenMP::OpenMP_CXX
 )
 
 
@@ -97,6 +101,11 @@ add_executable(tests
 target_include_directories(tests
     PRIVATE
         include
+)
+
+target_link_libraries(tests
+    PRIVATE
+        OpenMP::OpenMP_CXX
 )
 
 target_compile_options(tests

@@ -1,6 +1,7 @@
 use chrono::format;
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
+use core::hash;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Result, Seek, SeekFrom};
@@ -49,10 +50,20 @@ fn partial_hash(path: &Path) -> std::io::Result<blake3::Hash> {
     Ok(hasher.finalize())
 }
 
-pub fn get_all_files(str_path: &str) -> Result<Vec<PathBuf>> {
+pub fn get_all_files(str_path: &str, exclude: &[String]) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
     for entry in WalkDir::new(str_path) {
         let entry = entry?;
+
+        let path = entry.path().to_string_lossy().to_ascii_lowercase();
+
+        if exclude
+            .iter()
+            .any(|pattern| path.contains(&pattern.to_ascii_lowercase()))
+        {
+            continue;
+        }
+
         if entry.file_type().is_file() {
             files.push(entry.path().to_path_buf());
         }
@@ -191,27 +202,6 @@ pub fn get_file_hashes(
         )
 
     // then filter out those corresponding vectors less then 2 and then do a full blake3 hash of the remaining and then those vectors with size 2 or greater will be the duplicate arrays
-
-    // HashMap::new()
-
-    // .fold(
-    //     || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
-    //     |mut acc, (hash, path)| {
-    //         // create a new entry for this hash if it doesn't exist, then push the file path into the vector
-    //         acc.entry(hash).or_default().push(path.clone());
-    //         acc
-    //     },
-    // )
-    // .reduce(
-    //     || HashMap::<Vec<u8>, Vec<PathBuf>>::new(),
-    //     |mut a, b| {
-    //         // merge two hash maps by extending the vectors of file paths for each hash
-    //         for (k, v) in b {
-    //             a.entry(k).or_default().extend(v);
-    //         }
-    //         a
-    //     },
-    // )
 }
 
 fn file_hash(path: &std::path::Path) -> Result<Vec<u8>> {
@@ -258,15 +248,14 @@ fn file_hash(path: &std::path::Path) -> Result<Vec<u8>> {
 }
 
 pub fn delete_duplicates(duplicates: &HashMap<blake3::Hash, Vec<PathBuf>>) {
-    for (_, paths) in duplicates {
+    for (hash, paths) in duplicates {
         if paths.len() > 1 {
-            // We have a duplicate group
-            // println!("Duplicate group (hash: {:x?}):", hash);
-            // for path in paths {
-            //     println!("  {}", path.display());
-            // }
+            println!("\nDuplicate group: {}", hash);
+            println!("KEEP:   {}", paths[0].display());
             // delete duplicates, e.g. keep the first one and delete the rest
             for path in &paths[1..] {
+
+                println!("DELETE: {}", path.display());
                 std::fs::remove_file(path)
                     .expect(&format!("Failed to delete file: {}", path.display()));
             }
