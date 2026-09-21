@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstring>
 #include <exception>
 #include <filesystem>
 #include <iostream>
@@ -139,7 +140,6 @@ std::vector<ImageInfo> getImages(const fs::path& directory)
 
     return images;
 }
-
 
 Timestamp getCaptureTime(const fs::path& path)
 {
@@ -288,20 +288,20 @@ std::vector<Match> findMatches(
 {
     const int TOLERABLE_PHASH_DISTANCE = 5;
     
-    const auto isSimilar = [](ImageInfo img1, ImageInfo img2) -> bool
+    const auto isSimilar = [](const ImageInfo& img1, const ImageInfo& img2) -> bool
     {
         double distance = comparePHash(img1.phash, img2.phash);
-        fmt::print(
-            "{} vs {} -> pHash distance: {}\n",
-            img1.path.string(),
-            img2.path.string(),
-            distance
-        );
+        // fmt::print(
+        //     "{} vs {} -> pHash distance: {}\n",
+        //     img1.path.string(),
+        //     img2.path.string(),
+        //     distance
+        // );
 
         // union the two image indices
         if (distance <= TOLERABLE_PHASH_DISTANCE)
         {
-            fmt::print("phash distance between {} and {}: {}", img1.path.filename().string(), img2.path.filename().string(), distance);
+            // fmt::print("phash distance between {} and {}: {}", img1.path.filename().string(), img2.path.filename().string(), distance);
             return true;
         }
 
@@ -481,14 +481,14 @@ int main(int argc, char* argv[])
     // fmt::print("argc: {}\n", argc);
     // fmt::print("argv[0]: {}\n", argv[0]);
 
-    if (argc > 2)
+    if (argc != 2)
     {
         displayInfo();
         return 1;
     }
 
     std::string arg = argv[1];
-    std::unordered_set<std::string> s{"-d", "-v", "-i", "-h"};
+    std::unordered_set<std::string> s{"-d", "-v", "-i", "-h", "-l"};
 
     // std::string test = "a b c d e";
     // auto parts = test
