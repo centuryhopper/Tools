@@ -2,7 +2,6 @@
 #include <cstring>
 #include <exception>
 #include <filesystem>
-#include <iostream>
 #include <stdexcept>
 #include <unordered_set>
 #include <vector>
@@ -26,6 +25,15 @@
 #include <iomanip>
 #include <sstream>
 #include <ctime>
+
+#include <omp.h>
+#include <utility>
+
+
+extern "C" {
+    #include <libavformat/avformat.h>
+    #include <libavutil/dict.h>
+}
 
 
 /*
@@ -75,6 +83,8 @@ find . -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png
 // const fs::path IMGS_PATH = "/home/leo_zhang/synology/le856501_export/iphone_11_15_2023/";
 const fs::path IMGS_PATH = "/home/leo_zhang/synology/export/memories_backup/Takeout_6_20_2023/Google Photos/Photos from 2023/";
 
+const fs::path VIDS_PATH = "/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/src/videos/";
+
 
 
 namespace fs = std::filesystem;
@@ -82,23 +92,25 @@ namespace fs = std::filesystem;
 using Timestamp = std::chrono::system_clock::time_point;
 
 Timestamp getCaptureTime(const fs::path& path);
-
-
-
+Timestamp getVideoCaptureTime(const fs::path& path);
 
 
 struct ImageInfo {
     fs::path path;
     Timestamp timestamp;
     cv::Mat phash;
-    // dimensions, filesize, etc.
+};
+
+struct VideoInfo {
+    fs::path path;
+    Timestamp timestamp;
 };
 
 bool isImage(const fs::path& path)
 {
     std::string ext = path.extension().string();
 
-    std::ranges::transform(ext, ext.begin(), [](unsigned char c) {
+    std::ranges::transform(ext, ext.begin(), [](char c) {
         return std::tolower(c);
     });
 
@@ -107,6 +119,17 @@ bool isImage(const fs::path& path)
            ext == ".png";
         //    ext == ".heic" ||
         //   ext == ".webp";
+}
+
+bool isVideo(const fs::path& path)
+{
+    std::string ext = path.extension().string();
+
+    std::ranges::transform(ext, ext.begin(), [](char c) {
+        return std::tolower(c);
+    });
+
+    return ext == ".mp4" || ext == ".mov";
 }
 
 std::vector<ImageInfo> getImages(const fs::path& directory)
@@ -237,7 +260,7 @@ void logImgCreationDateTime(const std::string& PARENT_PATH)
 
 // Loop thru all folders starting with group_  
 // Move first item out of each group_ folder into parent directory and remove that group_ folder
-const auto deleteGroups = [](const std::string& PARENT_PATH) -> void {
+void deleteGroups(const std::string& PARENT_PATH) {
     for (const auto& entry : fs::directory_iterator(PARENT_PATH))
     {
         if (!entry.is_directory())
@@ -277,8 +300,6 @@ const auto deleteGroups = [](const std::string& PARENT_PATH) -> void {
     }
 };
 
-#include <omp.h>
-#include <utility>
 
 using Match = std::pair<std::size_t, std::size_t>;
 
@@ -363,7 +384,7 @@ void groupImages(const std::string& PARENT_PATH)
 
     fmt::print("Number of images: {}\n", images.size());
 
-    const std::chrono::duration THRESHOLD = std::chrono::seconds{30};
+    const std::chrono::duration WINDOW = std::chrono::seconds{30};
 
     /*
         0–2: extremely similar / near-duplicate
@@ -372,42 +393,13 @@ void groupImages(const std::string& PARENT_PATH)
         >10: increasingly likely to be unrelated
     */
     std::unordered_map<int,std::vector<int>> imgGroups;
+    imgGroups.reserve(images.size());
     custom_data_structures::UnionFind uf(images.size());
 
-    // O (n * (n-1) / 2) comparisons in the worst case
-    // for (int i=0;i<images.size();i++)
-    // {
-    //     for (int j=i+1;j<images.size();j++)
-    //     {
-    //         auto diff = images[j].timestamp - images[i].timestamp;
+    // O (n * (n-1) / 2) comparisons in the worst case for sequential approach
 
-    //         // within 30 seconds
-    //         if (diff <= THRESHOLD)
-    //         {
-    //             double distance =
-    //             comparePHash(images[i].phash, images[j].phash);
-    //             fmt::print(
-    //                 "{} vs {} -> pHash distance: {}\n",
-    //                 images[i].path.string(),
-    //                 images[j].path.string(),
-    //                 distance
-    //             );
 
-    //             // union the two image indices
-    //             if (distance <= TOLERABLE_PHASH_DISTANCE)
-    //             {
-    //                 fmt::print("phash distance between {} and {}: {}", images[i].path.filename().string(), images[j].path.filename().string(), distance);
-    //                 uf.unite(i, j);
-    //             }
-    //         }
-    //         else
-    //         {
-    //             break;
-    //         }
-    //     }
-    // }
-
-    auto matches = findMatches(images, THRESHOLD);
+    auto matches = findMatches(images, WINDOW);
     for (const auto& [i,j] : matches)
     {
         uf.unite(i,j);
@@ -467,9 +459,240 @@ void displayInfo()
     )");
 }
 
+
+std::vector<VideoInfo> getVideos(const fs::path& PARENT_PATH)
+{
+    fmt::print("getting videos...\n");
+    std::vector<VideoInfo> videos;
+    for (const auto& file : fs::directory_iterator(PARENT_PATH))
+    {
+        // skip folders
+        if (!file.is_regular_file()) continue;
+        if (!isVideo(file.path())) continue;
+
+        VideoInfo video {
+            .path = file.path(),
+            .timestamp = getVideoCaptureTime(file.path()),
+        };
+
+        videos.push_back(std::move(video));
+    }
+
+    std::sort(videos.begin(), videos.end(), [](const VideoInfo& a, const VideoInfo& b) {
+        return a.timestamp < b.timestamp;
+    });
+
+    return videos;
+}
+
+std::vector<Match> findVideoMatches(const std::vector<VideoInfo>& videos, std::chrono::seconds window)
+{
+    const double MATCH_RATIO_THRESHOLD = 0.70;   // 70% of frames must match
+
+    // store each sample frames in a cache array
+    std::vector<VideoHashCache> vfcs(videos.size());
+    const int threadCount = omp_get_max_threads();
+    fmt::print("number of threads: {}\n", threadCount);
+
+    std::vector<std::vector<Match>> localMatches(threadCount);
+    std::vector<Match> matches;
+
+    const int NUM_SAMPLES = 30;
+    // const cv::Size TARGET_SIZE(320, 180);
+
+    #pragma omp parallel for schedule(dynamic)
+    for (size_t i = 0; i < videos.size(); i++)
+    {
+        try
+        {
+            vfcs[i] = extractFrameHashes(videos[i].path.string(), NUM_SAMPLES).value();
+        }
+        catch (const std::exception& e)
+        {
+            // vfcs[i] stays empty, so the comparison loop skips it.
+            #pragma omp critical
+            fmt::print(stderr, "Skipping {}: {}\n", videos[i].path.string(), e.what());
+        }
+    }
+
+    #pragma omp parallel
+    {
+        const int threadId = omp_get_thread_num();
+
+        // This thread owns this vector.
+        auto& localMatchVector = localMatches[threadId];
+
+        #pragma omp for schedule(dynamic)
+        for (std::size_t i = 0; i < videos.size(); ++i)
+        {
+            // no need to process a frameless video file
+            if (vfcs[i].hashes.empty()) continue;
+
+            for (std::size_t j = i + 1; j < videos.size(); ++j)
+            {
+                const auto difference =
+                    videos[j].timestamp - videos[i].timestamp;
+
+                // images are sorted by timestamp.
+                if (difference > window)
+                    break;
+
+                if (vfcs[j].hashes.empty()) continue;
+
+                VideoSimilarity sim = compareCachedHashes(vfcs[i], vfcs[j]);
+                
+                #pragma omp critical
+                fmt::print("{} vs {} => comparable: {}, matchRatio: {}\n",
+                    videos[i].path.filename().string(),
+                    videos[j].path.filename().string(),
+                    sim.comparable,
+                    sim.matchRatio);
+
+                if (sim.matchRatio >= MATCH_RATIO_THRESHOLD)
+                {
+                    localMatchVector.emplace_back(i, j);
+                }
+            }
+        }
+    }
+
+
+    for (const auto& local : localMatches)
+    {
+        matches.insert(
+            matches.end(),
+            local.begin(),
+            local.end()
+        );
+    }
+
+    fmt::print("matches: {}\n", matches);
+
+
+    return matches;
+}
+
+void groupVideos(const fs::path& PARENT_PATH)
+{
+    auto videos = getVideos(PARENT_PATH);
+    fmt::print("number of videos: {}\n", videos.size());
+    const std::chrono::duration WINDOW = std::chrono::seconds{30};
+    auto matches = findVideoMatches(videos, WINDOW);
+    custom_data_structures::UnionFind uf(videos.size());
+    std::unordered_map<int,std::vector<int>> videoGroups;
+    videoGroups.reserve(videos.size());
+
+    for (const auto& [i,j] : matches)
+    {
+        uf.unite(i,j);
+    }
+
+    for (int i=0;i<videos.size();i++)
+    {
+        int x = uf.find(i);
+        videoGroups[x].push_back(i);
+    }
+
+    // Create folders based off of the roots of the union find data structure and move each image their corresponding root folders
+    for (const auto& [root, indices] : videoGroups)
+    {
+        // fmt::print("root {} -> {}\n", root, indices);        
+
+        fs::path uniqueFolder = PARENT_PATH / "unique_vids";
+        fs::create_directories(uniqueFolder);
+
+        if (indices.size() == 1)
+        {
+            fs::path vidPath = videos[indices[0]].path;
+            fs::rename(vidPath, uniqueFolder / vidPath.filename());
+            continue;
+        }
+
+        fs::path folderName = PARENT_PATH / std::format("vid_group_{}", root);
+        fs::create_directories(folderName);
+
+        for (int idx : indices)
+        {
+            fs::path vidPath = videos[idx].path;
+            fs::rename(vidPath, folderName / vidPath.filename());
+        }
+    }
+
+
+}
+
+// Parses FFmpeg's "2023-06-20T14:03:12.000000Z" format (always UTC).
+// Returns nullopt if the string doesn't parse.
+static std::optional<Timestamp> parseFFmpegTime(const char* value)
+{
+    std::tm tm{};
+    std::istringstream ss(value);
+
+    ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");   // stops at the '.' or 'Z'
+
+    if (ss.fail())
+        return std::nullopt;
+
+    // timegm, not mktime: the tag is UTC, and mktime would apply your local
+    // timezone offset on top of it.
+    return std::chrono::system_clock::from_time_t(timegm(&tm));
+}
+
+Timestamp getVideoCaptureTime(const fs::path& path)
+{
+    AVFormatContext* ctx = nullptr;
+
+    // Returns 0 on success. On failure ctx is left null, nothing to free.
+    if (avformat_open_input(&ctx, path.c_str(), nullptr, nullptr) == 0)
+    {
+        std::optional<Timestamp> result;
+
+        // 1. Container-level metadata — where most cameras write it.
+        if (AVDictionaryEntry* tag = av_dict_get(ctx->metadata, "creation_time", nullptr, 0))
+        {
+            result = parseFFmpegTime(tag->value);
+        }
+
+        // 2. Some files only put it on an individual stream.
+        if (!result)
+        {
+            // Needed before the streams array is reliably populated.
+            if (avformat_find_stream_info(ctx, nullptr) >= 0)
+            {
+                for (unsigned i = 0; i < ctx->nb_streams && !result; ++i)
+                {
+                    if (AVDictionaryEntry* tag =
+                            av_dict_get(ctx->streams[i]->metadata, "creation_time", nullptr, 0))
+                    {
+                        result = parseFFmpegTime(tag->value);
+                    }
+                }
+            }
+        }
+
+        // Always free what FFmpeg allocated, whether or not we found a tag.
+        avformat_close_input(&ctx);
+
+        if (result)
+            return *result;
+    }
+    else
+    {
+        fmt::print(stderr, "Could not open video metadata for {}\n", path.string());
+    }
+
+    // 3. Fall back to filesystem modification time.
+    auto fileTime = fs::last_write_time(path);
+    return decltype(fileTime)::clock::to_sys(fileTime);
+}
+
 //  make run ARGS="-d" add -d flag to keep first file for every folder starting with group_ and remove the rest
 int main(int argc, char* argv[])
 {
+    // so OpenCV doesn't spawn its own threads inside yours.
+    cv::setNumThreads(0);
+
+
     // make sure argv is always -d, -v, -i, or -h
     /*
         -d = move first file (file to keep) from all group_ folders into parent directory then delete each group_ folder. This command naively keeps the first file for you and is useful if the number of group_ folders is large and you want to save time
@@ -490,15 +713,6 @@ int main(int argc, char* argv[])
     std::string arg = argv[1];
     std::unordered_set<std::string> s{"-d", "-v", "-i", "-h", "-l"};
 
-    // std::string test = "a b c d e";
-    // auto parts = test
-    // | std::views::split(' ')
-    // | std::views::transform([](auto&& r) {
-    //       return std::string(r.begin(), r.end());
-    //   })
-    // | std::ranges::to<std::vector<std::string>>();
-    // fmt::print("{}\n", parts);
-
     if (!s.contains(arg))
     {
         displayInfo();
@@ -511,7 +725,7 @@ int main(int argc, char* argv[])
             deleteGroups(IMGS_PATH);
             break;
         case 'v':
-            // TODO: work on video grouping logic (might scrap this feature tbh because I will eyeball my videos instead)
+            groupVideos(VIDS_PATH);
             break;
         case 'h':
             displayInfo();
@@ -534,3 +748,20 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+/*
+    finding and deleting exact duplicates (three passes):
+
+        - recursively check all folders starting at root folder
+            pass 1 dict[int, vector<paths>]:
+                - group each files with the same file size (files of the same file size might be duplicates of each other)
+                - filter out all value vectors with size of 1
+                - flatten all values from dict to vector<paths>
+            pass 2 dict[blake3::hash, vector<paths>]:
+                - group each files with the same partial hash (files with different partial hashes are definitely unrelated)
+                - filter out all value vectors with size of 1
+                - flatten all values from dict to vector<paths>
+            pass 3 dict[hash, vector<paths>] (at this point paths that still exist passed the first two checks so now we can go thru the trouble of fully hashing the files out and comparing them):
+                - group each files with the same full hash
+                - filter out all value vectors with size of 1
+                - flatten all values from dict to vector<paths>
+*/

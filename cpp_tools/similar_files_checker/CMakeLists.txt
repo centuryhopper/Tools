@@ -59,6 +59,11 @@ find_package(OpenCV REQUIRED)
 # OpenMP
 find_package(OpenMP REQUIRED)
 
+find_package(PkgConfig REQUIRED)
+
+# sudo apt install pkg-config libavformat-dev libavutil-dev
+pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavutil)
+
 # -------------------------
 # Main executable
 # -------------------------
@@ -85,6 +90,7 @@ target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}
         Exiv2::exiv2lib
         OpenMP::OpenMP_CXX
+        PkgConfig::FFMPEG
 )
 
 
