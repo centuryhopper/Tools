@@ -68,8 +68,10 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavutil)
 # Main executable
 # -------------------------
 
+file(GLOB SOURCES CONFIGURE_DEPENDS src/*.cpp)
+
 add_executable(${PROJECT_NAME}
-    src/main.cpp
+    ${SOURCES}
 )
 
 target_include_directories(${PROJECT_NAME}

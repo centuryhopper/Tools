@@ -1,34 +1,27 @@
-BUILD_DIR := build
-TARGET := similar_files_checker
-TARGET_TESTS := tests
+PRESET ?= release
+BUILD_DIR := build/$(PRESET)
+APP   := $(BUILD_DIR)/bin/similar_files_checker
+CACHE := $(BUILD_DIR)/CMakeCache.txt
 
-TESTS := $(BUILD_DIR)/bin/$(TARGET_TESTS)
-APP := $(BUILD_DIR)/bin/$(TARGET)
-
-# .PHONY tells make that a target is not a real file,
-# so it will always run the associated commands.
-.PHONY: all configure build test run clean
+.PHONY: all configure build run test clean
 
 all: build
 
-configure:
-	cmake -S . -B $(BUILD_DIR) \
-        -DCMAKE_C_COMPILER=gcc-14 \
-        -DCMAKE_CXX_COMPILER=g++-14 \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+# Configure only when the build tree is missing or the presets changed
+$(CACHE): CMakePresets.json
+	cmake --preset $(PRESET)
+	@touch $@
 
-build: configure
-	cmake --build $(BUILD_DIR)
+configure: $(CACHE)
+
+build: $(CACHE)
+	cmake --build --preset $(PRESET)
 
 run: build
 	./$(APP) $(ARGS)
 
 test: build
-	./$(TESTS)
+	ctest --preset $(PRESET)
 
 clean:
-	rm -rf $(BUILD_DIR)
-
-
-
-
+	rm -rf build

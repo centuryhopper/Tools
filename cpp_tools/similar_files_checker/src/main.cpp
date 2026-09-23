@@ -11,10 +11,14 @@
 #include <fmt/chrono.h>
 #include <ranges>
 #include <string>
+#include <print>
 
 #include "../include/similar_files_checker/phash_helpers.hpp"
 #include "../include/similar_files_checker/scoped_timer.hpp"
 #include "../include/similar_files_checker/union_find.hpp"
+
+#include "../include/structures/ImageInfo.hpp"
+#include "../include/structures/VideoInfo.hpp"
 
 // sudo apt install libopencv-dev libopencv-contrib-dev
 #include <opencv2/opencv.hpp>
@@ -78,33 +82,24 @@ echo "Created $count JPG files"
 # count number of jpgs in current directory
 find . -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.heic' \) | count
 
+# count videos in current directory
+find . -maxdepth 1 -type f \( -iname '*.mov' -o -iname '*.mp4' \) | count
+
 */
 
 // const fs::path IMGS_PATH = "/home/leo_zhang/synology/le856501_export/iphone_11_15_2023/";
 const fs::path IMGS_PATH = "/home/leo_zhang/synology/export/memories_backup/Takeout_6_20_2023/Google Photos/Photos from 2023/";
 
-const fs::path VIDS_PATH = "/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/src/videos/";
-
-
+const fs::path VIDS_PATH = "/home/leo_zhang/synology/root/le856501_export/iphone_11_15_2023/";
 
 namespace fs = std::filesystem;
 
 using Timestamp = std::chrono::system_clock::time_point;
 
-Timestamp getCaptureTime(const fs::path& path);
+Timestamp getImgCaptureTime(const fs::path& path);
 Timestamp getVideoCaptureTime(const fs::path& path);
+using Match = std::pair<std::size_t, std::size_t>;
 
-
-struct ImageInfo {
-    fs::path path;
-    Timestamp timestamp;
-    cv::Mat phash;
-};
-
-struct VideoInfo {
-    fs::path path;
-    Timestamp timestamp;
-};
 
 bool isImage(const fs::path& path)
 {
@@ -146,7 +141,7 @@ std::vector<ImageInfo> getImages(const fs::path& directory)
 
         ImageInfo image {
             .path = entry.path(),
-            .timestamp = getCaptureTime(entry.path()),
+            .timestamp = getImgCaptureTime(entry.path()),
             .phash = computePHash(entry.path())
         };
 
@@ -164,7 +159,7 @@ std::vector<ImageInfo> getImages(const fs::path& directory)
     return images;
 }
 
-Timestamp getCaptureTime(const fs::path& path)
+Timestamp getImgCaptureTime(const fs::path& path)
 {
     try
     {
@@ -301,9 +296,8 @@ void deleteGroups(const std::string& PARENT_PATH) {
 };
 
 
-using Match = std::pair<std::size_t, std::size_t>;
 
-std::vector<Match> findMatches(
+std::vector<Match> findImgMatches(
     const std::vector<ImageInfo>& images,
     std::chrono::seconds window)
 {
@@ -332,7 +326,7 @@ std::vector<Match> findMatches(
     // One vector for each possible OpenMP thread.
     const int threadCount = omp_get_max_threads();
 
-    fmt::print("number of threads: {}\n", threadCount);
+    std::println("number of threads: {}", threadCount);
 
     std::vector<std::vector<Match>> localMatches(threadCount);
 
@@ -399,7 +393,7 @@ void groupImages(const std::string& PARENT_PATH)
     // O (n * (n-1) / 2) comparisons in the worst case for sequential approach
 
 
-    auto matches = findMatches(images, WINDOW);
+    auto matches = findImgMatches(images, WINDOW);
     for (const auto& [i,j] : matches)
     {
         uf.unite(i,j);
@@ -458,7 +452,6 @@ void displayInfo()
         -l = log more information on each file
     )");
 }
-
 
 std::vector<VideoInfo> getVideos(const fs::path& PARENT_PATH)
 {
@@ -541,12 +534,12 @@ std::vector<Match> findVideoMatches(const std::vector<VideoInfo>& videos, std::c
 
                 VideoSimilarity sim = compareCachedHashes(vfcs[i], vfcs[j]);
                 
-                #pragma omp critical
-                fmt::print("{} vs {} => comparable: {}, matchRatio: {}\n",
-                    videos[i].path.filename().string(),
-                    videos[j].path.filename().string(),
-                    sim.comparable,
-                    sim.matchRatio);
+                // #pragma omp critical
+                // fmt::print("{} vs {} => comparable: {}, matchRatio: {}\n",
+                //     videos[i].path.filename().string(),
+                //     videos[j].path.filename().string(),
+                //     sim.comparable,
+                //     sim.matchRatio);
 
                 if (sim.matchRatio >= MATCH_RATIO_THRESHOLD)
                 {
@@ -638,6 +631,7 @@ static std::optional<Timestamp> parseFFmpegTime(const char* value)
     return std::chrono::system_clock::from_time_t(timegm(&tm));
 }
 
+
 Timestamp getVideoCaptureTime(const fs::path& path)
 {
     AVFormatContext* ctx = nullptr;
@@ -725,8 +719,11 @@ int main(int argc, char* argv[])
             deleteGroups(IMGS_PATH);
             break;
         case 'v':
-            groupVideos(VIDS_PATH);
-            break;
+            {
+                ScopedTimer timer("groupVideos execution time");
+                groupVideos(VIDS_PATH);
+                break;
+            }
         case 'h':
             displayInfo();
             break;
