@@ -22,3 +22,7 @@ Thumbs.db
 
 # Visual Studio
 .vs/
+
+**/archive/*
+**/videos/*
+**/images/*
