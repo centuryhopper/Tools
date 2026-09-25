@@ -295,8 +295,6 @@ void deleteGroups(const fs::path& PARENT_PATH) {
     }
 };
 
-
-
 std::vector<Match> findImgMatches(
     const std::vector<ImageInfo>& images,
     std::chrono::seconds window)

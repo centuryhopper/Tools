@@ -8,14 +8,14 @@ use std::io::{Read, Result, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-fn group_by<K, F>(paths: Vec<PathBuf>, key: F) -> HashMap<K, Vec<PathBuf>>
+fn group_by<K, F>(paths: Vec<PathBuf>, functionToApplyToEachElement: F) -> HashMap<K, Vec<PathBuf>>
 where
     K: Eq + std::hash::Hash + Send,
     F: Fn(&Path) -> Option<K> + Sync,
 {
     let keyed: Vec<(K, PathBuf)> = paths
         .into_par_iter()
-        .filter_map(|p| Some((key(&p)?, p)))
+        .filter_map(|p| Some((functionToApplyToEachElement(&p)?, p)))
         .collect();
 
     let mut groups = HashMap::new();
@@ -136,8 +136,6 @@ pub fn get_file_hashes(
 
     by_full.retain(|_, paths| paths.len() > 1);
     by_full
-
-    // then filter out those corresponding vectors less then 2 and then do a full blake3 hash of the remaining and then those vectors with size 2 or greater will be the duplicate arrays
 }
 
 fn file_hash(path: &std::path::Path) -> Result<Vec<u8>> {
