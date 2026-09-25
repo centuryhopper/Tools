@@ -12,6 +12,7 @@
 #include <ranges>
 #include <string>
 #include <print>
+#include <argparse/argparse.hpp>
 
 #include "../include/similar_files_checker/phash_helpers.hpp"
 #include "../include/similar_files_checker/scoped_timer.hpp"
@@ -88,9 +89,8 @@ find . -maxdepth 1 -type f \( -iname '*.mov' -o -iname '*.mp4' \) | count
 */
 
 // const fs::path IMGS_PATH = "/home/leo_zhang/synology/le856501_export/iphone_11_15_2023/";
-const fs::path IMGS_PATH = "/home/leo_zhang/synology/export/memories_backup/Takeout_6_20_2023/Google Photos/Photos from 2023/";
-
-const fs::path VIDS_PATH = "/home/leo_zhang/synology/root/le856501_export/iphone_11_15_2023/";
+// const fs::path IMGS_PATH = "/home/leo_zhang/synology/root/iphone/spring2024";
+// const fs::path VIDS_PATH = "/home/leo_zhang/synology/root/iphone/spring2024";
 
 namespace fs = std::filesystem;
 
@@ -221,7 +221,7 @@ Timestamp getImgCaptureTime(const fs::path& path)
     return decltype(fileTime)::clock::to_sys(fileTime);
 }
 
-void logImgCreationDateTime(const std::string& PARENT_PATH)
+void logImgCreationDateTime(const fs::path& PARENT_PATH)
 {
     auto images = getImages(PARENT_PATH);
     for (const auto& image : images)
@@ -255,7 +255,7 @@ void logImgCreationDateTime(const std::string& PARENT_PATH)
 
 // Loop thru all folders starting with group_  
 // Move first item out of each group_ folder into parent directory and remove that group_ folder
-void deleteGroups(const std::string& PARENT_PATH) {
+void deleteGroups(const fs::path& PARENT_PATH) {
     for (const auto& entry : fs::directory_iterator(PARENT_PATH))
     {
         if (!entry.is_directory())
@@ -372,7 +372,7 @@ std::vector<Match> findImgMatches(
     return matches;
 }
 
-void groupImages(const std::string& PARENT_PATH)
+void groupImages(const fs::path& PARENT_PATH)
 {
     auto images = getImages(PARENT_PATH);
 
@@ -406,12 +406,14 @@ void groupImages(const std::string& PARENT_PATH)
     }
 
     // Create folders based off of the roots of the union find data structure and move each image their corresponding root folders
+    fs::path uniqueFolder = PARENT_PATH / "unique_imgs";
+
+    fs::create_directories(uniqueFolder);
+
     for (const auto& [root, indices] : imgGroups)
     {
         // fmt::print("root {} -> {}\n", root, indices);        
 
-        fs::path uniqueFolder = IMGS_PATH / "unique_imgs";
-        fs::create_directories(uniqueFolder);
 
         if (indices.size() == 1)
         {
@@ -426,7 +428,7 @@ void groupImages(const std::string& PARENT_PATH)
             continue;
         }
 
-        fs::path folderName = IMGS_PATH / std::format("group_{}", root);
+        fs::path folderName = PARENT_PATH / std::format("group_{}", root);
         fs::create_directories(folderName);
 
         for (int idx : indices)
@@ -586,13 +588,13 @@ void groupVideos(const fs::path& PARENT_PATH)
         videoGroups[x].push_back(i);
     }
 
+    fs::path uniqueFolder = PARENT_PATH / "unique_vids";
+    fs::create_directories(uniqueFolder);
+
     // Create folders based off of the roots of the union find data structure and move each image their corresponding root folders
     for (const auto& [root, indices] : videoGroups)
     {
         // fmt::print("root {} -> {}\n", root, indices);        
-
-        fs::path uniqueFolder = PARENT_PATH / "unique_vids";
-        fs::create_directories(uniqueFolder);
 
         if (indices.size() == 1)
         {
@@ -686,61 +688,89 @@ int main(int argc, char* argv[])
     // so OpenCV doesn't spawn its own threads inside yours.
     cv::setNumThreads(0);
 
-
     // make sure argv is always -d, -v, -i, or -h
     /*
         -d = move first file (file to keep) from all group_ folders into parent directory then delete each group_ folder. This command naively keeps the first file for you and is useful if the number of group_ folders is large and you want to save time
         -v = group similar video files into their group_ folders
         -i = group similar img files into their group_ folders
         -h = show list of available commands
+        -l = log more information on each file
     */
 
-    // fmt::print("argc: {}\n", argc);
-    // fmt::print("argv[0]: {}\n", argv[0]);
+    argparse::ArgumentParser prog("Similar Files Checker", "1.0",
+                              argparse::default_arguments::help);
 
-    if (argc != 2)
-    {
-        displayInfo();
-        return 1;
-    }
+    prog.add_argument("-img-path", "--img-path")
+        .help("path to the directory containing images");
 
-    std::string arg = argv[1];
-    std::unordered_set<std::string> s{"-d", "-v", "-i", "-h", "-l"};
+    prog.add_argument("-vid-path", "--vid-path")
+        .help("path to the directory containing videos");
 
-    if (!s.contains(arg))
-    {
-        displayInfo();
-        return 1;
-    }
+    // make sure only one of the following flags can be passed at a time
+    auto& group = prog.add_mutually_exclusive_group(true);
 
-    switch (arg[1])
-    {
-        case 'd':
-            deleteGroups(IMGS_PATH);
-            break;
-        case 'v':
-            {
-                ScopedTimer timer("groupVideos execution time");
-                groupVideos(VIDS_PATH);
-                break;
-            }
-        case 'h':
-            displayInfo();
-            break;
-        case 'i':
-            {
-                ScopedTimer timer("groupImages execution time");
-                groupImages(IMGS_PATH);
-                break;
-            }
-        case 'l':
-            logImgCreationDateTime(IMGS_PATH);
-            break;
-        default:
-            throw std::runtime_error("invalid command");
-    }
+    group.add_argument("-d", "--delete-imgs")
+        .help("delete duplicate images")
+        .flag();   // default false, true when passed
 
+    group.add_argument("-v", "--videos")
+        .help("group similar video files")
+        .flag();
+
+    group.add_argument("-i", "--images")
+        .help("group similar image files")
+        .flag();
     
+    group.add_argument("-l", "--log")
+        .help("log image creation dates")
+        .flag();
+
+
+    try {
+        prog.parse_args(argc, argv);
+    } catch (const std::exception& err) {
+        std::cerr << err.what() << '\n' << prog;
+        return 1;
+    }
+
+    bool deleteImgsFlag  = prog.get<bool>("--delete-imgs");
+    bool groupVideosFlag = prog.get<bool>("--videos");
+    bool groupImagesFlag = prog.get<bool>("--images");
+    bool logFlag         = prog.get<bool>("--log");
+
+    bool needsImgs = groupImagesFlag || deleteImgsFlag || logFlag;
+    bool needsVids = groupVideosFlag;
+
+    const auto IMGS_PATH = prog.present<std::string>("--img-path");
+    const auto VIDS_PATH = prog.present<std::string>("--vid-path");
+
+    if (needsImgs && !IMGS_PATH) {
+        std::cerr << "error: --img-path is required for -i, -d, and -l\n" << prog;
+        return 1;
+    }
+    if (needsVids && !VIDS_PATH) {
+        std::cerr << "error: --vid-path is required for -v\n" << prog;
+        return 1;
+    }
+
+    if (deleteImgsFlag)
+    {
+        deleteGroups(*IMGS_PATH);
+    }
+    else if (groupVideosFlag)
+    {
+        ScopedTimer timer("groupVideos execution time");
+        groupVideos(*VIDS_PATH);
+    }
+    else if (groupImagesFlag)
+    {
+        ScopedTimer timer("groupImages execution time");
+        groupImages(*IMGS_PATH);
+    }
+    else if (logFlag)
+    {
+        logImgCreationDateTime(*IMGS_PATH);
+    } 
 
     return 0;
 }

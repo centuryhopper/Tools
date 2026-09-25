@@ -53,6 +53,14 @@ target_include_directories(exiv2lib
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
 )
 
+# fetch latest argparse
+include(FetchContent)
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
+
 # OpenCV
 find_package(OpenCV REQUIRED)
 
@@ -93,6 +101,7 @@ target_link_libraries(${PROJECT_NAME}
         Exiv2::exiv2lib
         OpenMP::OpenMP_CXX
         PkgConfig::FFMPEG
+        argparse
 )
 
 
