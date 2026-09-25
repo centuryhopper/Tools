@@ -493,21 +493,27 @@ std::vector<Match> findVideoMatches(const std::vector<VideoInfo>& videos, std::c
     std::vector<Match> matches;
 
     const int NUM_SAMPLES = 30;
-    // const cv::Size TARGET_SIZE(320, 180);
+    std::vector<bool> needsHash(videos.size(), false);
+    for (std::size_t i = 0; i + 1 < videos.size(); ++i) {
+        // if the next video is within the time window, mark both videos as needing hashes
+        if (videos[i + 1].timestamp - videos[i].timestamp <= window) {
+            needsHash[i] = needsHash[i + 1] = true;
+        }
+    }
 
     #pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < videos.size(); i++)
     {
-        try
-        {
-            vfcs[i] = extractFrameHashes(videos[i].path.string(), NUM_SAMPLES).value();
-        }
-        catch (const std::exception& e)
-        {
-            // vfcs[i] stays empty, so the comparison loop skips it.
+        if (!needsHash[i]) continue;   // vfcs[i] stays empty and gets skipped later
+
+        auto result = extractFrameHashes(videos[i].path.string(), NUM_SAMPLES);
+        if (result) {
+            vfcs[i] = std::move(*result);
+        } else {
             #pragma omp critical
-            fmt::print(stderr, "Skipping {}: {}\n", videos[i].path.string(), e.what());
-        }
+            fmt::print(stderr, "Skipping {}: {}\n", videos[i].path.string(), result.error());
+        };
+
     }
 
     #pragma omp parallel

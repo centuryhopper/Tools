@@ -87,23 +87,29 @@ std::expected<VideoHashCache, std::string> extractFrameHashes(const std::string&
 
         while (slot < samples)
         {
-            cv::Mat frame;
-            if (!cap.read(frame) || frame.empty())
+            if (!cap.grab())
                 break;   // end of video
 
+            cv::Mat frame;
+        
             bool isSampleFrame = (frameNumber % step == 0);
             ++frameNumber;
 
             if (!isSampleFrame)
                 continue;
 
+            if (!cap.retrieve(frame) || frame.empty())
+                break;
+
             cache.hashes[slot] = computeFramePHash(frame);
 
-            #pragma omp critical
+            //#pragma omp critical
             // fmt::print("{} slot {:2}: {}\n", std::filesystem::path(path).filename().string(), slot, fmt::join(cv::Mat_<uchar>(cache.hashes[slot]), ""));
 
             ++slot;
         }
+
+        cache.hashes.resize(slot);   // drop unfilled slots if the video ended early
 
         return cache;   // hand the filled-in cache back to the caller
         // cap is automatically closed here when it goes out of scope — C++ cleans up objects at the end of the block they were created in.
