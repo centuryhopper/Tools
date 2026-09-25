@@ -1,4 +1,6 @@
+
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 #include <exception>
 #include <filesystem>
@@ -18,6 +20,7 @@
 #include "../include/similar_files_checker/scoped_timer.hpp"
 #include "../include/similar_files_checker/union_find.hpp"
 
+#include "../include/structures/MediaInfo.hpp"
 #include "../include/structures/ImageInfo.hpp"
 #include "../include/structures/VideoInfo.hpp"
 
@@ -129,7 +132,7 @@ bool isVideo(const fs::path& path)
 
 std::vector<ImageInfo> getImages(const fs::path& directory)
 {
-    fmt::print("getting images...\n");
+    fmt::println("getting images...");
     std::vector<ImageInfo> images;
 
     for (const auto& entry : fs::directory_iterator(directory))
@@ -140,9 +143,11 @@ std::vector<ImageInfo> getImages(const fs::path& directory)
             continue;
 
         ImageInfo image {
-            .path = entry.path(),
-            .timestamp = getImgCaptureTime(entry.path()),
-            .phash = computePHash(entry.path())
+            {
+                entry.path(),
+                getImgCaptureTime(entry.path()),
+            },
+            computePHash(entry.path())
         };
 
         images.push_back(std::move(image));
@@ -189,27 +194,27 @@ Timestamp getImgCaptureTime(const fs::path& path)
     }
     catch (const Exiv2::Error& e)
     {
-        fmt::print(
+        fmt::println(
             stderr,
-            "Could not read EXIF from {}: {}\n",
+            "Could not read EXIF from {}: {}",
             path.string(),
             e.what()
         );
     }
     catch (const cv::Exception& e)
     {
-        fmt::print(
+        fmt::println(
             stderr,
-            "OpenCV ERROR for {}: {}\n",
+            "OpenCV ERROR for {}: {}",
             path.string(),
             e.what()
         );
     }
     catch (const std::exception& e)
     {
-        fmt::print(
+        fmt::println(
             stderr,
-            "ERROR for {}: {}\n",
+            "ERROR for {}: {}",
             path.string(),
             e.what()
         );
@@ -221,41 +226,9 @@ Timestamp getImgCaptureTime(const fs::path& path)
     return decltype(fileTime)::clock::to_sys(fileTime);
 }
 
-void logImgCreationDateTime(const fs::path& PARENT_PATH)
-{
-    auto images = getImages(PARENT_PATH);
-    for (const auto& image : images)
-    {
-        auto eastern = std::chrono::zoned_time {
-            "America/New_York",
-            image.timestamp
-        };
-
-        auto local = eastern.get_local_time();
-        auto info = eastern.get_info();
-
-        auto day = std::chrono::floor<std::chrono::days>(local);
-        std::chrono::year_month_day date{day};
-
-        auto time = std::chrono::hh_mm_ss{local - day};
-
-        fmt::print(
-            "{} -> {:04}-{:02}-{:02} {:02}:{:02}:{:02} {}\n",
-            image.path.string(),
-            int(date.year()),
-            unsigned(date.month()),
-            unsigned(date.day()),
-            time.hours().count(),
-            time.minutes().count(),
-            time.seconds().count(),
-            info.abbrev
-        );
-    }
-}
-
 // Loop thru all folders starting with group_  
 // Move first item out of each group_ folder into parent directory and remove that group_ folder
-void deleteGroups(const fs::path& PARENT_PATH) {
+void deleteImgGroups(const fs::path& PARENT_PATH) {
     for (const auto& entry : fs::directory_iterator(PARENT_PATH))
     {
         if (!entry.is_directory())
@@ -284,7 +257,7 @@ void deleteGroups(const fs::path& PARENT_PATH) {
             }
             else
             {
-                fmt::print("Skipping {}, destination already exists\n", src.string());
+                fmt::println("Skipping {}, destination already exists", src.string());
             }
 
             break;
@@ -293,7 +266,47 @@ void deleteGroups(const fs::path& PARENT_PATH) {
         // removes the group folder AND everything remaining inside it
         fs::remove_all(groupDir);
     }
-};
+}
+
+void deleteVideoGroups(const fs::path& PARENT_PATH) {
+    for (const auto& entry : fs::directory_iterator(PARENT_PATH))
+    {
+        if (!entry.is_directory())
+            continue;
+
+        const fs::path groupDir = entry.path();
+        const std::string name = groupDir.filename().string();
+
+        // only process folders starting with "group_"
+        if (!name.starts_with("vid_group_"))
+            continue;
+
+        // find the first regular file
+        for (const auto& item : fs::directory_iterator(groupDir))
+        {
+            if (!item.is_regular_file())
+                continue;
+
+            fs::path src = item.path();
+            fs::path dst = PARENT_PATH / src.filename();
+
+            // move first item back into parent directory
+            if (!fs::exists(dst))
+            {
+                fs::rename(src, dst);
+            }
+            else
+            {
+                fmt::println("Skipping {}, destination already exists", src.string());
+            }
+
+            break;
+        }
+
+        // removes the group folder AND everything remaining inside it
+        fs::remove_all(groupDir);
+    }
+}
 
 std::vector<Match> findImgMatches(
     const std::vector<ImageInfo>& images,
@@ -304,8 +317,8 @@ std::vector<Match> findImgMatches(
     const auto isSimilar = [](const ImageInfo& img1, const ImageInfo& img2) -> bool
     {
         double distance = comparePHash(img1.phash, img2.phash);
-        // fmt::print(
-        //     "{} vs {} -> pHash distance: {}\n",
+        // fmt::println(
+        //     "{} vs {} -> pHash distance: {}",
         //     img1.path.string(),
         //     img2.path.string(),
         //     distance
@@ -314,7 +327,7 @@ std::vector<Match> findImgMatches(
         // union the two image indices
         if (distance <= TOLERABLE_PHASH_DISTANCE)
         {
-            // fmt::print("phash distance between {} and {}: {}", img1.path.filename().string(), img2.path.filename().string(), distance);
+            // fmt::println("phash distance between {} and {}: {}", img1.path.filename().string(), img2.path.filename().string(), distance);
             return true;
         }
 
@@ -356,25 +369,27 @@ std::vector<Match> findImgMatches(
     }
 
     // Combine all thread-local vectors.
-    std::vector<Match> matches;
+    std::vector<Match> mergedMatches;
 
     for (const auto& local : localMatches)
     {
-        matches.insert(
-            matches.end(),
+        mergedMatches.insert(
+            mergedMatches.end(),
             local.begin(),
             local.end()
         );
     }
 
-    return matches;
+    fmt::println("matches: {}", mergedMatches);
+
+    return mergedMatches;
 }
 
 void groupImages(const fs::path& PARENT_PATH)
 {
     auto images = getImages(PARENT_PATH);
 
-    fmt::print("Number of images: {}\n", images.size());
+    fmt::println("Number of images: {}", images.size());
 
     const std::chrono::duration WINDOW = std::chrono::seconds{30};
 
@@ -397,7 +412,7 @@ void groupImages(const fs::path& PARENT_PATH)
         uf.unite(i,j);
     }
 
-    for (int i=0;i<images.size();i++)
+    for (size_t i=0;i<images.size();i++)
     {
         int x = uf.find(i);
         imgGroups[x].push_back(i);
@@ -410,12 +425,12 @@ void groupImages(const fs::path& PARENT_PATH)
 
     for (const auto& [root, indices] : imgGroups)
     {
-        // fmt::print("root {} -> {}\n", root, indices);        
+        // fmt::println("root {} -> {}", root, indices);        
 
 
         if (indices.size() == 1)
         {
-            // fmt::print("only one img found\n");
+            // fmt::println("only one img found");
             fs::path imgPath = images[indices[0]].path;
             fs::rename(imgPath, uniqueFolder / imgPath.filename());
             // fs::copy_file(
@@ -442,20 +457,9 @@ void groupImages(const fs::path& PARENT_PATH)
     }
 }
 
-void displayInfo()
-{
-    fmt::print(R"(
-        -d = move first file (file to keep) from all group_ folders into parent directory then delete each group_ folder. This command naively keeps the first file for you and is useful if the number of group_ folders is large and you want to save time
-        -v = group similar video files into their group_ folders
-        -i = group similar img files into their group_ folders
-        -h = show list of available commands
-        -l = log more information on each file
-    )");
-}
-
 std::vector<VideoInfo> getVideos(const fs::path& PARENT_PATH)
 {
-    fmt::print("getting videos...\n");
+    fmt::println("getting videos...");
     std::vector<VideoInfo> videos;
     for (const auto& file : fs::directory_iterator(PARENT_PATH))
     {
@@ -464,8 +468,9 @@ std::vector<VideoInfo> getVideos(const fs::path& PARENT_PATH)
         if (!isVideo(file.path())) continue;
 
         VideoInfo video {
-            .path = file.path(),
-            .timestamp = getVideoCaptureTime(file.path()),
+            {
+                .path = file.path(), .timestamp = getVideoCaptureTime(file.path())
+            }
         };
 
         videos.push_back(std::move(video));
@@ -485,10 +490,10 @@ std::vector<Match> findVideoMatches(const std::vector<VideoInfo>& videos, std::c
     // store each sample frames in a cache array
     std::vector<VideoHashCache> vfcs(videos.size());
     const int threadCount = omp_get_max_threads();
-    fmt::print("number of threads: {}\n", threadCount);
+    fmt::println("number of threads: {}", threadCount);
 
     std::vector<std::vector<Match>> localMatches(threadCount);
-    std::vector<Match> matches;
+    std::vector<Match> mergedMatches;
 
     const int NUM_SAMPLES = 30;
     std::vector<bool> needsHash(videos.size(), false);
@@ -509,7 +514,7 @@ std::vector<Match> findVideoMatches(const std::vector<VideoInfo>& videos, std::c
             vfcs[i] = std::move(*result);
         } else {
             #pragma omp critical
-            fmt::print(stderr, "Skipping {}: {}\n", videos[i].path.string(), result.error());
+            fmt::println(stderr, "Skipping {}: {}", videos[i].path.string(), result.error());
         };
 
     }
@@ -541,7 +546,7 @@ std::vector<Match> findVideoMatches(const std::vector<VideoInfo>& videos, std::c
                 VideoSimilarity sim = compareCachedHashes(vfcs[i], vfcs[j]);
                 
                 // #pragma omp critical
-                // fmt::print("{} vs {} => comparable: {}, matchRatio: {}\n",
+                // fmt::println("{} vs {} => comparable: {}, matchRatio: {}",',
                 //     videos[i].path.filename().string(),
                 //     videos[j].path.filename().string(),
                 //     sim.comparable,
@@ -558,23 +563,22 @@ std::vector<Match> findVideoMatches(const std::vector<VideoInfo>& videos, std::c
 
     for (const auto& local : localMatches)
     {
-        matches.insert(
-            matches.end(),
+        mergedMatches.insert(
+            mergedMatches.end(),
             local.begin(),
             local.end()
         );
     }
 
-    fmt::print("matches: {}\n", matches);
+    fmt::println("matches: {}", mergedMatches);
 
-
-    return matches;
+    return mergedMatches;
 }
 
 void groupVideos(const fs::path& PARENT_PATH)
 {
     auto videos = getVideos(PARENT_PATH);
-    fmt::print("number of videos: {}\n", videos.size());
+    fmt::println("number of videos: {}", videos.size());
     const std::chrono::duration WINDOW = std::chrono::seconds{30};
     auto matches = findVideoMatches(videos, WINDOW);
     custom_data_structures::UnionFind uf(videos.size());
@@ -586,7 +590,7 @@ void groupVideos(const fs::path& PARENT_PATH)
         uf.unite(i,j);
     }
 
-    for (int i=0;i<videos.size();i++)
+    for (size_t i=0;i<videos.size();i++)
     {
         int x = uf.find(i);
         videoGroups[x].push_back(i);
@@ -598,7 +602,7 @@ void groupVideos(const fs::path& PARENT_PATH)
     // Create folders based off of the roots of the union find data structure and move each image their corresponding root folders
     for (const auto& [root, indices] : videoGroups)
     {
-        // fmt::print("root {} -> {}\n", root, indices);        
+        // fmt::println("root {} -> {}", root, indices);        
 
         if (indices.size() == 1)
         {
@@ -636,7 +640,6 @@ static std::optional<Timestamp> parseFFmpegTime(const char* value)
     // timezone offset on top of it.
     return std::chrono::system_clock::from_time_t(timegm(&tm));
 }
-
 
 Timestamp getVideoCaptureTime(const fs::path& path)
 {
@@ -678,12 +681,54 @@ Timestamp getVideoCaptureTime(const fs::path& path)
     }
     else
     {
-        fmt::print(stderr, "Could not open video metadata for {}\n", path.string());
+        fmt::println(stderr, "Could not open video metadata for {}", path.string());
     }
 
     // 3. Fall back to filesystem modification time.
     auto fileTime = fs::last_write_time(path);
     return decltype(fileTime)::clock::to_sys(fileTime);
+}
+
+void logFileCreationDateTime(const fs::path& IMG_PATH, const fs::path& VID_PATH)
+{
+    const auto& displayFileInfo = [](const MediaInfo& file) {
+        auto eastern = std::chrono::zoned_time {
+            "America/New_York",
+            file.timestamp
+        };
+
+        auto local = eastern.get_local_time();
+        auto info = eastern.get_info();
+
+        auto day = std::chrono::floor<std::chrono::days>(local);
+        std::chrono::year_month_day date{day};
+
+        auto time = std::chrono::hh_mm_ss{local - day};
+
+        fmt::println(
+            "{} -> {:04}-{:02}-{:02} {:02}:{:02}:{:02} {}",
+            file.path.string(),
+            int(date.year()),
+            unsigned(date.month()),
+            unsigned(date.day()),
+            time.hours().count(),
+            time.minutes().count(),
+            time.seconds().count(),
+            info.abbrev
+        );
+    };
+    
+    auto images = getImages(IMG_PATH) | std::ranges::to<std::vector<MediaInfo>>();
+    auto vids = getVideos(VID_PATH) | std::ranges::to<std::vector<MediaInfo>>();
+    for (const auto& img : images)
+    {
+        displayFileInfo(img);
+    }
+
+    for (const auto& vid : vids)
+    {
+        displayFileInfo(vid);
+    }
 }
 
 //  make run ARGS="-d" add -d flag to keep first file for every folder starting with group_ and remove the rest
@@ -694,7 +739,8 @@ int main(int argc, char* argv[])
 
     // make sure argv is always -d, -v, -i, or -h
     /*
-        -d = move first file (file to keep) from all group_ folders into parent directory then delete each group_ folder. This command naively keeps the first file for you and is useful if the number of group_ folders is large and you want to save time
+        -di = delete duplicate images
+        -dv = delete duplicate videos
         -v = group similar video files into their group_ folders
         -i = group similar img files into their group_ folders
         -h = show list of available commands
@@ -713,8 +759,12 @@ int main(int argc, char* argv[])
     // make sure only one of the following flags can be passed at a time
     auto& group = prog.add_mutually_exclusive_group(true);
 
-    group.add_argument("-d", "--delete-imgs")
+    group.add_argument("-di", "--delete-imgs")
         .help("delete duplicate images")
+        .flag();   // default false, true when passed
+
+    group.add_argument("-dv", "--delete-vids")
+        .help("delete duplicate videos")
         .flag();   // default false, true when passed
 
     group.add_argument("-v", "--videos")
@@ -724,12 +774,11 @@ int main(int argc, char* argv[])
     group.add_argument("-i", "--images")
         .help("group similar image files")
         .flag();
-    
+
     group.add_argument("-l", "--log")
-        .help("log image creation dates")
+        .help("log file creation dates")
         .flag();
-
-
+    
     try {
         prog.parse_args(argc, argv);
     } catch (const std::exception& err) {
@@ -738,28 +787,33 @@ int main(int argc, char* argv[])
     }
 
     bool deleteImgsFlag  = prog.get<bool>("--delete-imgs");
+    bool deleteVidsFlag  = prog.get<bool>("--delete-vids");
     bool groupVideosFlag = prog.get<bool>("--videos");
     bool groupImagesFlag = prog.get<bool>("--images");
-    bool logFlag         = prog.get<bool>("--log");
+    bool logFilesFlag    = prog.get<bool>("--log");
 
-    bool needsImgs = groupImagesFlag || deleteImgsFlag || logFlag;
-    bool needsVids = groupVideosFlag;
+    bool needsImgs = groupImagesFlag || deleteImgsFlag || logFilesFlag;
+    bool needsVids = groupVideosFlag || deleteVidsFlag || logFilesFlag;
 
     const auto IMGS_PATH = prog.present<std::string>("--img-path");
     const auto VIDS_PATH = prog.present<std::string>("--vid-path");
 
     if (needsImgs && !IMGS_PATH) {
-        std::cerr << "error: --img-path is required for -i, -d, and -l\n" << prog;
+        std::cerr << "error: --img-path is required for -i, -di, and -l\n" << prog;
         return 1;
     }
     if (needsVids && !VIDS_PATH) {
-        std::cerr << "error: --vid-path is required for -v\n" << prog;
+        std::cerr << "error: --vid-path is required for -v, -dv, and -l\n" << prog;
         return 1;
     }
 
     if (deleteImgsFlag)
     {
-        deleteGroups(*IMGS_PATH);
+        deleteImgGroups(*IMGS_PATH);
+    }
+    else if (deleteVidsFlag)
+    {
+        deleteVideoGroups(*VIDS_PATH);
     }
     else if (groupVideosFlag)
     {
@@ -771,9 +825,9 @@ int main(int argc, char* argv[])
         ScopedTimer timer("groupImages execution time");
         groupImages(*IMGS_PATH);
     }
-    else if (logFlag)
+    else if (logFilesFlag)
     {
-        logImgCreationDateTime(*IMGS_PATH);
+        logFileCreationDateTime(*IMGS_PATH, *VIDS_PATH);
     } 
 
     return 0;

@@ -1,4 +1,4 @@
-
+#pragma once
 
 // A struct is a simple bundle of related data. This one holds everything we remember about one video after extracting its frames.
 #include <opencv4/opencv2/core/mat.hpp>

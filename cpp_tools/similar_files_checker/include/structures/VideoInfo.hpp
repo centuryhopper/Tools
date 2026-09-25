@@ -1,9 +1,9 @@
+#pragma once
 
 #include <filesystem>
 #include <chrono>
+#include "MediaInfo.hpp"
 
-struct VideoInfo {
-    std::filesystem::path path;
-    std::chrono::system_clock::time_point timestamp;
-
+struct VideoInfo : MediaInfo {
+    // video-specific fields, if any
 };

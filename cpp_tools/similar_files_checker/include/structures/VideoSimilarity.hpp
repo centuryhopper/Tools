@@ -1,3 +1,4 @@
+#pragma once
 
 struct VideoSimilarity {
     double matchRatio;   // fraction of comparable frames that matched
