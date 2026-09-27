@@ -4,6 +4,47 @@ use std::fs::{self, DirEntry};
 use std::path::Path;
 use std::io::{self, BufRead, BufReader, Error, ErrorKind, Result, Write};
 
+    // if let Err(e) = file_deduper() {
+    //     eprintln!("Error during file deduplication: {}", e);
+    // }
+    // let duplicates = file_deduper().unwrap_or_else(|_| vec![]);
+    // println!("Found duplicates: {:#?}", duplicates);
+    // let duplicates = file_deduper_naive();
+
+    // let entries: Vec<DirEntry> = fs::read_dir(Path::new("./test_duplicates"))?
+    //     .filter_map(Result::ok)
+    //     .collect();
+    // let duplicates = find_duplicates_by_hashing(&entries);
+
+    // match duplicates {
+    //     Ok(dups) => {
+    //         println!("Found duplicates: {:#?}", dups);
+    //     }
+    //     Err(e) => {
+    //         eprintln!("Error during file deduplication: {}", e);
+    //     }
+    // };
+
+
+    // println!("Number of unique hashes: {}", file_hashes.len());
+
+            // let duplicates: Vec<_> = file_hashes.values().filter(|v| v.len() > 1).collect();
+            // let output = format!("Duplicate groups: {:#?}", duplicates);
+
+            // println!("duplicates written to text file.");
+
+            // let mut buffer = BufWriter::new(File::create("duplicates.txt")?);
+
+            // for group in &duplicates {
+            //     for path in *group {
+            //         writeln!(buffer, "{}", path.display())?;
+            //     }
+            //     writeln!(buffer)?; // blank line between groups
+            // }
+
+            // // println!("Found files: {:#?}", results);
+
+            // buffer.flush()?;
 
 fn files_identical_simple(path1: &str, path2: &str) -> std::io::Result<bool> {
     let b1 = fs::read(path1)?;

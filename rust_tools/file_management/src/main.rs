@@ -1,14 +1,14 @@
 #![allow(warnings)]
 
-mod file_deduper_hashing;
+// mod file_deduper_hashing;
+// mod file_deduper_naive;
 mod file_deduper_hashing_parallel;
-mod file_deduper_naive;
 mod grep;
 mod journal;
 
-use file_deduper_hashing::find_duplicates_by_hashing;
-use file_deduper_hashing_parallel::{delete_duplicates, get_all_files, get_file_hashes};
-use file_deduper_naive::file_deduper_naive;
+// use file_deduper_hashing::find_duplicates_by_hashing;
+// use file_deduper_naive::file_deduper_naive;
+use file_deduper_hashing_parallel::{get_all_files, get_file_hashes, handle_duplicates};
 use grep::grep;
 use journal::create_journal_entry;
 
@@ -17,8 +17,8 @@ use chrono::{Datelike, Utc};
 use chrono_tz::US::Eastern;
 use std::collections::HashSet;
 use std::ffi::OsString;
-use std::fs::{self, metadata, read_dir, DirEntry};
-use std::io::{self, BufRead, BufReader, Error, ErrorKind, Result, Write};
+use std::fs::{self, metadata, read_dir, DirEntry, File};
+use std::io::{self, BufRead, BufReader, BufWriter, Error, ErrorKind, Result, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -26,6 +26,8 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::Instant;
+mod utils;
+use utils::now;
 
 use clap::{Parser, Subcommand};
 
@@ -104,7 +106,7 @@ fn run_grep(dirs_to_search: Vec<String>, target: String, recursive: bool, thread
         thread_handles.push(t_handle);
     }
 
-    // ✅ Drop the original sender here otherwise receiver hangs forever
+    // Drop the original sender here otherwise receiver hangs forever
     drop(tx);
 
     let mut results = vec![];
@@ -133,7 +135,7 @@ fn run_grep(dirs_to_search: Vec<String>, target: String, recursive: bool, thread
     // println!("results: {:#?}", results);
 }
 
-fn run_cli() {
+fn run_cli() -> std::io::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -160,53 +162,40 @@ fn run_cli() {
             delete,
             exclude,
         } => {
-            // println!("exclude: {:#?}", exclude); // exclude the #recycle path when calling the program on synology network drive
+            println!("delete flag: {}", delete);
+            println!("[{}] Collecting all files...", now());
             let results = get_all_files(path.as_str(), &exclude).unwrap_or_default();
-            println!("Number of files: {}", results.len());
+            println!("[{}] Number of files collected: {}", now(), results.len());
             let file_hashes = get_file_hashes(&results, &exclude);
-            // println!("Number of unique hashes: {}", file_hashes.len());
-            println!(
-                "Duplicate groups: {:#?}",
-                file_hashes
-                    .values()
-                    .filter(|v| v.len() > 1)
-                    .collect::<Vec<_>>()
-            );
-            // println!("Found files: {:#?}", results);
-
-            if delete {
-                println!("Deleting duplicates...");
-                delete_duplicates(&file_hashes);
-            }
+            
+            println!("[{}] Handling duplicates...", now());
+            handle_duplicates(&file_hashes, delete).unwrap_or_else(|e| {
+                eprintln!("Error during handling duplicates: {}", e);
+            });
+            println!("[{}] Finished handling duplicates.", now());
         }
     }
+
+    Ok(())
 }
 
 fn main() -> io::Result<()> {
-    // if let Err(e) = file_deduper() {
-    //     eprintln!("Error during file deduplication: {}", e);
-    // }
-    // let duplicates = file_deduper().unwrap_or_else(|_| vec![]);
-    // println!("Found duplicates: {:#?}", duplicates);
-    // let duplicates = file_deduper_naive();
+    
+    // let mut test = BufWriter::new(File::create("./output/test.txt")?);
+    // writeln!(test, "Test output")?;
+    // test.flush()?;
 
-    // let entries: Vec<DirEntry> = fs::read_dir(Path::new("./test_duplicates"))?
-    //     .filter_map(Result::ok)
-    //     .collect();
-    // let duplicates = find_duplicates_by_hashing(&entries);
+    // return Ok(());
 
-    // match duplicates {
-    //     Ok(dups) => {
-    //         println!("Found duplicates: {:#?}", dups);
-    //     }
-    //     Err(e) => {
-    //         eprintln!("Error during file deduplication: {}", e);
-    //     }
-    // };
+    // limit to just 4 threads for now, otherwise the program will be slow for large directories over a network drive since the program will spawn too many threads and overwhelm the network drive with too many requests at once.
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(4)
+        .build_global()
+        .unwrap();
 
     let start = Instant::now();
 
-    run_cli();
+    run_cli()?;
 
     let duration = start.elapsed();
     println!("Time elapsed: {:?}", duration);

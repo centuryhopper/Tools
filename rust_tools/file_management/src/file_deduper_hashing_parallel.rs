@@ -1,11 +1,12 @@
-use chrono::format;
+use crate::utils::now;
+use chrono::{format, Local};
 use core::hash;
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{Read, Result, Seek, SeekFrom};
-use std::path::{Path, PathBuf};
+use std::fs::{self, File};
+use std::io::{BufWriter, Error, Read, Result, Seek, SeekFrom, Write};
+use std::path::{self, Path, PathBuf};
 use walkdir::WalkDir;
 
 fn group_by<K, F>(paths: Vec<PathBuf>, functionToApplyToEachElement: F) -> HashMap<K, Vec<PathBuf>>
@@ -130,11 +131,19 @@ pub fn get_file_hashes(
         ↓
         actual duplicate groups
     */
-    let by_size = group_by(files.to_vec(), |p| p.metadata().ok().map(|m| m.len()));
+    println!("[{}] grouping by size...", now());
+    let by_size = group_by(files.to_vec(), |p| {
+        p.metadata().ok().map(|m| m.len()).filter(|&len| len > 0) // exclude empty files
+    });
+    println!("[{}] partial hashing files...", now());
     let by_partial = group_by(keep_duplicates(by_size), |p| partial_hash(p).ok());
+
+    println!("[{}] full hashing...", now());
     let mut by_full = group_by(keep_duplicates(by_partial), |p| full_hash(p).ok());
 
     by_full.retain(|_, paths| paths.len() > 1);
+
+    println!("[{}] finished with full hashing.", now());
     by_full
 }
 
@@ -181,17 +190,62 @@ fn file_hash(path: &std::path::Path) -> Result<Vec<u8>> {
     Ok(hasher.finalize().to_vec())
 }
 
-pub fn delete_duplicates(duplicates: &HashMap<blake3::Hash, Vec<PathBuf>>) {
+pub fn handle_duplicates(
+    duplicates: &HashMap<blake3::Hash, Vec<PathBuf>>,
+    delete: bool,
+) -> Result<()> {
+    /// Lower rank = more preferred. Paths matching no keyword rank last.
+    fn path_rank(path: &Path, keywords: &[&str]) -> usize {
+        let p = path.to_string_lossy().to_ascii_lowercase();
+        keywords
+            .iter()
+            .position(|k| p.contains(k))
+            .unwrap_or(keywords.len())
+    }
+
+    // greater priority        lesser priority
+    // <--                           -->
+    let priority_path_keywords = [
+        "iphone/iphone_11_15_2023",
+        "iphone",
+        "le856501_export",
+        "export",
+    ];
+
+    let out_dir = Path::new("./logs");
+    fs::create_dir_all(out_dir)?;
+    let stamp = now().replace(['/', ':'], "-").replace(' ', "_");
+    let report_path = out_dir.join(format!("duplicates_with_keep_{stamp}.txt"));
+    let mut report = BufWriter::new(File::create(&report_path)?);
+
     for (hash, paths) in duplicates {
         if paths.len() > 1 {
-            println!("\nDuplicate group: {}", hash);
-            println!("KEEP:   {}", paths[0].display());
-            // delete duplicates, e.g. keep the first one and delete the rest
-            for path in &paths[1..] {
-                println!("DELETE: {}", path.display());
-                std::fs::remove_file(path)
-                    .expect(&format!("Failed to delete file: {}", path.display()));
+            // lower the index, the higher the priority. If no keywords match, the index will be equal to the length of the keywords array, which is the lowest priority.
+            let keep = paths
+                .iter()
+                .min_by_key(|p| (path_rank(p, &priority_path_keywords), p.as_os_str().len()))
+                .unwrap();
+
+            writeln!(report, "KEEP: {}", keep.display())?;
+
+            for path in paths.iter().filter(|p| *p != keep) {
+                writeln!(report, "{}", path.display())?;
+
+                // println!("DELETE: {}", path.display());
+                if (delete) {
+                    if let Err(e) = std::fs::remove_file(path) {
+                        eprintln!("Failed to delete {}: {e}", path.display());
+                        writeln!(report, "  ^ DELETE FAILED: {e}")?;
+                        // no return, no panic, so the loop carries on
+                    }
+                }
             }
+
+            writeln!(report)?; // blank line between groups
         }
     }
+
+    report.flush()?;
+
+    Ok(())
 }
