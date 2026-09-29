@@ -21,7 +21,7 @@ The project uses **Typer** for the CLI interface and **Jinja2** templates for fi
 
 - Generate modern C++ projects instantly
 - CMake-based build system
-- C++20 support
+- C++23 support
 - Optional test setup
 - Template-driven file generation
 - Installable Python CLI tool

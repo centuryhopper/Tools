@@ -1,0 +1,148 @@
+GCC VERSION SWITCHING WITH update-alternatives
+Reference for Pop!_OS / Ubuntu
+==============================================================================
+
+HOW IT WORKS
+------------------------------------------------------------------------------
+update-alternatives puts a switchable link between the command you type and
+the real program:
+
+    /usr/bin/gcc  ->  /etc/alternatives/gcc  ->  /usr/bin/gcc-16
+
+Switching versions only changes the middle link. A "group" (here named gcc)
+holds every registered version. "Slave" links (g++, gcc-ar, ...) always move
+together with the main gcc link, so the tools can never end up on different
+versions.
+
+
+1. SEE WHICH VERSIONS ARE INSTALLED
+------------------------------------------------------------------------------
+ls /usr/bin/gcc-* /usr/bin/g++-*
+    Lists every installed gcc/g++ version (gcc-13, gcc-14, gcc-16, ...).
+
+ls /usr/bin/gcov-*
+    Checks which gcov versions exist. If one is missing, drop its --slave
+    gcov part below (or ignore the harmless "skip creation" warning).
+
+gcc --version
+    Shows which version the plain "gcc" command runs right now.
+
+
+2. REGISTER EACH VERSION (one-time setup)
+------------------------------------------------------------------------------
+Run each command on a single line. Highest priority wins in automatic mode.
+
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 160 --slave /usr/bin/g++ g++ /usr/bin/g++-16 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-16 --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-16 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-16 --slave /usr/bin/gcov gcov /usr/bin/gcov-16
+
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 140 --slave /usr/bin/g++ g++ /usr/bin/g++-14 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-14 --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-14 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-14 --slave /usr/bin/gcov gcov /usr/bin/gcov-14
+
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 130 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-13 --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-13 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
+
+What each part means:
+
+  sudo                      Run as root; the links live in /usr/bin.
+  update-alternatives       Debian/Ubuntu tool for switchable commands.
+  --install                 Register one choice in a group (creates the
+                            group if it doesn't exist yet).
+  /usr/bin/gcc              The link you actually type.
+  gcc                       The group's name, used with --config/--display.
+  /usr/bin/gcc-16           The real program this choice points to.
+  160                       Priority. In auto mode the highest wins.
+                            Numbers are arbitrary; matching the version
+                            (160 = GCC 16) just makes them easy to read.
+  --slave LINK NAME PATH    Ties another link to this choice. When gcc
+                            points to 16, this link points to its -16
+                            version too. Slaves can't be switched alone.
+
+The slaves:
+
+  g++                       The C++ compiler. Must match gcc.
+  gcc-ar, gcc-nm,           Wrappers around ar/nm/ranlib that understand
+  gcc-ranlib                GCC's link-time optimization (LTO) objects.
+                            A mismatched version breaks LTO builds. CMake
+                            uses these when LTO/IPO is enabled.
+  gcov                      GCC's code-coverage tool. Its data format
+                            changes between GCC versions.
+
+
+3. VERIFY
+------------------------------------------------------------------------------
+update-alternatives --display gcc
+    Shows the group: auto or manual mode, the current choice, and every
+    registered version with its priority and slaves.
+    "error: no alternatives for gcc" means step 2 never ran successfully.
+
+gcc --version; g++ --version; c++ --version
+    All three should report the chosen version. c++ is in its own existing
+    group that points to /usr/bin/g++, so it follows automatically.
+    CMake looks for c++ first when no compiler is set.
+
+readlink -f /usr/bin/gcc-ar
+    Follows every link and prints the final file (should end in -16).
+    Don't use "gcc-ar --version": it reports the system ar (binutils)
+    version, not GCC's.
+
+ls -l /usr/bin/gcc
+    Should show /usr/bin/gcc -> /etc/alternatives/gcc.
+    If it still points straight to gcc-13, the install didn't take effect.
+
+type -a gcc
+    Lists every gcc on your PATH, in order. Something like ~/.local/bin/gcc
+    listed before /usr/bin/gcc would win regardless of alternatives.
+    (/bin/gcc is the same file; /bin links to /usr/bin on Ubuntu.)
+
+
+4. SWITCH VERSIONS
+------------------------------------------------------------------------------
+sudo update-alternatives --config gcc
+    Shows a numbered menu of the registered versions. Picking one switches
+    gcc and all its slaves, and puts the group into MANUAL mode.
+
+sudo update-alternatives --auto gcc
+    Returns to AUTOMATIC mode: the highest-priority version wins again,
+    including newer versions registered later.
+
+sudo update-alternatives --set gcc /usr/bin/gcc-14
+    Switches directly without the menu (also sets manual mode).
+    Handy in scripts.
+
+
+5. ADD A NEW VERSION LATER (e.g. GCC 17)
+------------------------------------------------------------------------------
+Install it (e.g. sudo apt install gcc-17 g++-17), then run the same
+--install command as in step 2 with every 16 changed to 17 and priority 170.
+In auto mode it becomes the default right away.
+In manual mode, run --auto or --config afterward.
+
+
+6. REMOVE A VERSION
+------------------------------------------------------------------------------
+sudo update-alternatives --remove gcc /usr/bin/gcc-13
+    Unregisters just that version. If it was the current one, the group
+    falls back to the next-highest priority.
+
+sudo update-alternatives --remove-all gcc
+    Deletes the whole group, INCLUDING the /usr/bin/gcc and /usr/bin/g++
+    links. Afterward, "gcc" won't exist until you recreate the links:
+        sudo ln -s gcc-13 /usr/bin/gcc
+        sudo ln -s g++-13 /usr/bin/g++
+    or reinstall the default packages:
+        sudo apt install --reinstall gcc g++
+
+
+7. THINGS TO REMEMBER
+------------------------------------------------------------------------------
+* CMake caches the compiler the first time it configures a build folder.
+  After switching versions, delete build/ (or run "make clean") in each
+  project so the new compiler is detected.
+
+* A system update to the distro's gcc/g++ packages can occasionally reset
+  /usr/bin/gcc back to a direct link. If "gcc --version" suddenly shows the
+  old version, check with "ls -l /usr/bin/gcc" and re-run the step 2
+  commands.
+
+* Alternative to changing the system default: set the compiler only for
+  your shell. In fish:
+      set -Ux CXX g++-16
+      set -Ux CC gcc-16
+  CMake reads CXX/CC when configuring a new build folder.
