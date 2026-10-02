@@ -1,6 +1,6 @@
 [project]
 name = "cppgen-cli"
-version = "0.1.3"
+version = "0.1.5"
 description = "A lightweight C++ project generator that creates a clean, reusable CMake-based C++ project structure."
 authors = [{ name = "Leo Zhang", email = "leotheasianlion@gmail.com" }]
 readme = "README.md"

@@ -1,0 +1,14 @@
+# 1. Bump the version (PyPI won't accept the same version twice)
+uv version --bump patch      # 0.1.4 -> 0.1.5  (or: minor / major)
+
+# 2. Clear out old builds
+rm -rf dist/
+
+# 3. Build the sdist + wheel
+uv build
+
+# 4. Optional: check the templates made it into the wheel
+unzip -l dist/*.whl | grep templates
+
+# 5. Publish
+uv publish --token pypi-XXXXXXXX
