@@ -3,12 +3,18 @@ BUILD_DIR := build/$(PRESET)
 APP   := $(BUILD_DIR)/bin/similar_files_checker
 CACHE := $(BUILD_DIR)/CMakeCache.txt
 
-.PHONY: all configure build run test clean
+# Changing either presets file triggers a reconfigure.
+# $(wildcard ...) is empty when CMakeUserPresets.json doesn't exist.
+PRESET_FILES := CMakePresets.json $(wildcard CMakeUserPresets.json)
+
+.PHONY: all configure build run clean{% if enable_tests %} test{% endif %}
+
 
 all: build
 
-# Configure only when the build tree is missing or the presets changed
-$(CACHE): CMakePresets.json
+# Configure only when the build tree is missing or the presets changed.
+# Assumes each configure preset uses binaryDir = ${sourceDir}/build/${presetName}.
+$(CACHE): $(PRESET_FILES)
 	cmake --preset $(PRESET)
 	@touch $@
 
@@ -17,6 +23,7 @@ configure: $(CACHE)
 build: $(CACHE)
 	cmake --build --preset $(PRESET)
 
+# Pass program arguments with: make run ARGS="--flag value"
 run: build
 	./$(APP) $(ARGS)
 
