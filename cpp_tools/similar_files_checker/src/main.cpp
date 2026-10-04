@@ -33,6 +33,7 @@
 #include <sstream>
 #include <ctime>
 
+// sudo apt install libomp-23-dev
 #include <omp.h>
 #include <utility>
 
