@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.4)
 
 project(similar_files_checker
     VERSION 1.0
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 set(CMAKE_CXX_STANDARD 23)
@@ -63,7 +63,6 @@ target_include_directories(exiv2lib
 )
 
 # fetch latest argparse
-include(FetchContent)
 FetchContent_Declare(
     argparse
     GIT_REPOSITORY https://github.com/p-ranav/argparse.git
@@ -82,6 +81,12 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavutil)
 
 find_package(TBB REQUIRED)
+
+FetchContent_Declare(blake3
+    GIT_REPOSITORY https://github.com/BLAKE3-team/BLAKE3
+    GIT_TAG        1.8.2        # pin a release tag
+    SOURCE_SUBDIR  c)
+FetchContent_MakeAvailable(blake3)
 
 # -------------------------
 # Main executable
@@ -112,6 +117,7 @@ target_link_libraries(${PROJECT_NAME}
         PkgConfig::FFMPEG
         argparse
         TBB::tbb
+        BLAKE3::blake3
 )
 
 
@@ -160,6 +166,7 @@ target_link_libraries(tests
         OpenMP::OpenMP_CXX
         PkgConfig::FFMPEG
         argparse
+        BLAKE3::blake3
 )
 
 add_test(NAME unit_tests COMMAND tests)
