@@ -81,6 +81,8 @@ find_package(PkgConfig REQUIRED)
 # sudo apt install pkg-config libavformat-dev libavutil-dev
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavutil)
 
+find_package(TBB REQUIRED)
+
 # -------------------------
 # Main executable
 # -------------------------
@@ -109,6 +111,7 @@ target_link_libraries(${PROJECT_NAME}
         OpenMP::OpenMP_CXX
         PkgConfig::FFMPEG
         argparse
+        TBB::tbb
 )
 
 
@@ -136,6 +139,7 @@ target_include_directories(tests
 target_link_libraries(tests
     PRIVATE
         OpenMP::OpenMP_CXX
+        TBB::tbb
 )
 
 target_compile_options(tests

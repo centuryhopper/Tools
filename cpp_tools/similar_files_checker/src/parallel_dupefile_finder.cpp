@@ -1,11 +1,5 @@
 #include "../include/similar_files_checker/parallel_dupefile_finder.hpp"
-#include <condition_variable>
-#include <filesystem>
-#include <mutex>
-#include <print>
-#include <algorithm>
-#include <system_error>
-#include <thread>
+
 
 namespace similar_files_checker {
     std::vector<fs::path> walkDirectoryRecursively(const fs::path &path)
@@ -42,8 +36,7 @@ namespace similar_files_checker {
         return results;
     }
 
-
-    std::vector<fs::path> walkDirectoryRecursivelyParallel(const fs::path& path)
+    std::vector<fs::path> walkDirectoryRecursivelyParallel(const fs::path& path, uint numThreads)
     {
         using namespace std;
 
@@ -62,8 +55,6 @@ namespace similar_files_checker {
         shared_stack.push_back(path);
         bool areAllThreadsDone = false;
                 
-        // int numThreads = std::thread::hardware_concurrency();
-
         auto threadWork = [&]() {
 
             while (true)
@@ -156,7 +147,7 @@ namespace similar_files_checker {
         // the block exists so threads join before the return
         {
             vector<jthread> threads;
-            const int numThreads = std::thread::hardware_concurrency();
+            numThreads = std::min(std::thread::hardware_concurrency(), numThreads);
             println("numThreads: {}", numThreads);
 
             for (int i=0;i<numThreads;i++)
@@ -165,12 +156,122 @@ namespace similar_files_checker {
             }
         }
 
-        
-
-
-
         return shared_results;
     }
+
+    [[nodiscard]] std::expected<std::vector<fs::path>, std::string> findSameSizeFiles(const std::vector<fs::path>& files)
+    {
+        using namespace std;
+
+         struct SizedFile {
+            uintmax_t size = 0;
+            error_code ec;
+            fs::path path;
+        };
+
+        vector<SizedFile> sized(files.size());
+
+        transform(execution::par, files.begin(), files.end(), sized.begin(),
+            [](const fs::path& p) {
+                SizedFile f{.path = p};
+                f.size = fs::file_size(p, f.ec);
+                return f;
+            });
+
+        // Report the first file whose size couldn't be read
+        // if (auto it = ranges::find_if(sized, [](const SizedFile& f) { return static_cast<bool>(f.ec); });
+        //     it != sized.end())
+        // {
+        //     return unexpected(
+        //         FileSizeError{std::move(it->path), it->ec}
+        //     );
+        // }
+
+        erase_if(sized, [](const SizedFile& entry) { return entry.size == 0 || static_cast<bool>(entry.ec); });  // C++20
+
+        auto groupBySize = [&]
+        (
+    std::vector<SizedFile> files
+            ) -> std::unordered_map<std::uintmax_t, std::vector<fs::path>>
+        {
+            std::unordered_map<uintmax_t, vector<fs::path>> groups;
+            for (auto& [size, _, path] : files)
+                groups[size].push_back(std::move(path));
+            return groups;
+        };
+
+        auto map = groupBySize(sized);
+
+        auto groups = map
+                    | views::values
+                    | views::filter([](const auto& g) { return g.size() > 1; })
+                    | views::join
+                    | views::as_rvalue // moves values from map into result instead of copying
+                    | ranges::to<vector<fs::path>>();
+
+        return groups;
+    }
+
+    std::optional<std::uint64_t> partialHash(const fs::path& p, std::size_t n)
+    {
+        std::error_code ec;
+        const auto size = fs::file_size(p, ec);
+        if (ec) return std::nullopt;
+
+        std::ifstream in(p, std::ios::binary);
+        if (!in) return std::nullopt;
+
+        std::string buf;
+        if (size <= 2 * n) {
+            // Small file: just hash the whole thing
+            buf.resize(size);
+            in.read(buf.data(), static_cast<std::streamsize>(size));
+        } else {
+            buf.resize(2 * n);
+            in.read(buf.data(), static_cast<std::streamsize>(n));
+            in.seekg(-static_cast<std::streamoff>(n), std::ios::end);
+            in.read(buf.data() + n, static_cast<std::streamsize>(n));
+        }
+        if (!in) return std::nullopt;
+
+        return XXH3_64bits(buf.data(), buf.size());
+    }
+
+    [[nodiscard]] std::expected<std::vector<fs::path>, std::string> findSamePartialHashFiles(const std::vector<fs::path>& files)
+    {
+        using namespace std;
+
+        struct PartialHashedFile {
+            optional<uint64_t> hash = 0;
+            fs::path path;
+        };
+
+        vector<PartialHashedFile> partialHashedFiles(files.size());
+
+        transform(execution::par, files.begin(), files.end(), partialHashedFiles.begin(),
+            [](const fs::path& p) {
+                PartialHashedFile f{.path = p};
+                f.hash = partialHash(p, 32);
+                return f;
+            });
+
+        erase_if(partialHashedFiles, [](const PartialHashedFile& f) { return static_cast<bool>(f.hash == nullopt); });  // C++20
+
+        std::unordered_map<uint64_t, vector<fs::path>> groups;
+        for (auto& [hash, path] : partialHashedFiles)
+            groups[*hash].push_back(std::move(path));
+
+        auto result = groups
+                    | views::values
+                    | views::filter([](const auto& g) { return g.size() > 1; })
+                    | views::join
+                    | views::as_rvalue // moves values from map into result instead of copying
+                    | ranges::to<vector<fs::path>>();
+
+        return result;
+    }
+
+
 
 }
 
