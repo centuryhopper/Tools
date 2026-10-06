@@ -10,12 +10,6 @@ int main() {
       fs::path("/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/"
                "tests/");
 
-  const fs::path OUTPUT_PATH =
-      DIR_PATH / std::format("output/output_{:%Y-%m-%d_%H-%M-%S}.txt",
-                             floor<std::chrono::seconds>(
-                                 std::chrono::system_clock::now()));
-  fs::create_directories(OUTPUT_PATH.parent_path());
-
   auto start = std::chrono::steady_clock::now();
   auto files = similar_files_checker::walkDirectoryRecursivelyParallel(
       DIR_PATH / "directory_contents/", 4);
@@ -34,12 +28,7 @@ int main() {
     return 1;
   }
 
-  std::ofstream out(OUTPUT_PATH);
-  for (const auto &[digestHash, paths] : *result) {
-    for (const fs::path &path : paths)
-      std::println(out, "{}", path.string());
-    std::println(out, "");
-  }
+  similar_files_checker::handleDuplicates(*result, false);
 
   return 0;
 }

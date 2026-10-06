@@ -1,0 +1,7 @@
+KEEP: /home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests/directory_contents/child_dir2/1.txt
+/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests/directory_contents/child_dir3/child_dir4/2.txt
+
+KEEP: /home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests/directory_contents/child_dir1/3 copy 2.txt
+/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests/directory_contents/child_dir5/3.txt
+/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests/directory_contents/child_dir3/3 copy.txt
+

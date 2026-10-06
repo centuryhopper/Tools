@@ -1,4 +1,6 @@
 #include "../include/similar_files_checker/parallel_dupefile_finder.hpp"
+#include <algorithm>
+#include <chrono>
 
 namespace similar_files_checker {
 std::vector<fs::path> walkDirectoryRecursively(const fs::path &path) {
@@ -309,6 +311,73 @@ findSameFullHashFiles(const std::vector<fs::path> &files) {
   });
 
   return groups;
+}
+
+void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>,
+                                               DigestHash> &duplicates,
+                      bool deleteFlag) {
+
+  auto pathRank = [](const fs::path &path,
+                     const std::vector<std::string> keywords) -> size_t {
+    for (auto [i, kw] : std::views::enumerate(keywords)) {
+      if (strcasestr(path.c_str(), kw.c_str())) {
+        return i;
+      }
+    }
+    return keywords.size();
+  };
+
+  std::vector<std::string> priorityKeywords{
+      "dir5",
+      "dir4",
+  };
+  // {
+  //     "iphone/iphone_11_15_2023",
+  //     "iphone",
+  //     "le856501_export",
+  //     "export",
+  // };
+
+  const fs::path DIR_PATH =
+      fs::path("/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/"
+               "tests/");
+
+  const fs::path OUTPUT_PATH =
+      DIR_PATH / std::format("logs/output_{:%Y-%m-%d_%H-%M-%S}.txt",
+                             floor<std::chrono::seconds>(
+                                 std::chrono::system_clock::now()));
+  fs::create_directories(OUTPUT_PATH.parent_path());
+
+  std::ofstream out(OUTPUT_PATH);
+  for (const auto &[digestHash, paths] : duplicates) {
+    if (paths.size() > 1) {
+
+      // grab the path that takes the most priority which would contain a value
+      // from the keywords array with the lowest index
+      const fs::path &keep =
+          *std::ranges::min_element(paths, {}, [&](const auto &p) {
+            return std::pair{pathRank(p, priorityKeywords), p.native().size()};
+          });
+      std::println(out, "KEEP: {}", keep.string());
+
+      for (const fs::path &p : paths | std::views::filter([&](const auto &p) {
+                                 return p != keep;
+                               })) {
+        std::println(out, "{}", p.string());
+        if (deleteFlag) {
+          std::error_code ec;
+          if (!fs::remove(p, ec)) {
+            auto msg = ec ? ec.message() : "file not found";
+            std::println(stderr, "Failed to delete {}: {}", p.string(), msg);
+            std::println(out, "  ^ DELETE FAILED: {}", msg);
+            // no return, no throw, so the loop carries on
+          }
+        }
+      }
+
+      std::println(out);
+    }
+  }
 }
 
 } // namespace similar_files_checker

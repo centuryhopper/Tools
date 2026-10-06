@@ -55,5 +55,7 @@ std::optional<Digest> fullHash(const fs::path& path);
 
 [[nodiscard]] std::expected<std::unordered_map<Digest, std::vector<fs::path>, DigestHash>, std::string> findSameFullHashFiles(const std::vector<fs::path>& files);
 
+void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>, DigestHash>& duplicates, bool deleteFlag);
+
 }
 
