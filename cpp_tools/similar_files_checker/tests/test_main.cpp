@@ -1,5 +1,4 @@
 #include <cassert>
-#include <chrono>
 #include <print>
 
 #include "../include/similar_files_checker/parallel_dupefile_finder.hpp"
@@ -12,19 +11,12 @@ int main() {
   // /home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests/directory_contents/
   const fs::path DIR_PATH = fs::path("/home/leo_zhang/synology/root/");
 
-  auto start = std::chrono::steady_clock::now();
   std::println("walking the directory in parallel...");
   const std::vector<fs::path> files = [&]() {
     ScopedTimer timer("walkDirectoryRecursivelyParallel execution time");
     return similar_files_checker::walkDirectoryRecursivelyParallel(DIR_PATH,
                                                                    16);
   }();
-
-  // auto files = similar_files_checker::walkDirectoryRecursively("");
-  std::chrono::duration<double, std::milli> elapsed =
-      std::chrono::steady_clock::now() - start;
-
-  std::println("{} files in {}", files.size(), elapsed);
 
   auto result =
       similar_files_checker::findSameSizeFiles(files)
