@@ -1,4 +1,5 @@
-PRESET ?= release
+# toggle between debug and release
+PRESET ?= debug
 BUILD_DIR := build/$(PRESET)
 APP   := $(BUILD_DIR)/bin/similar_files_checker
 CACHE := $(BUILD_DIR)/CMakeCache.txt

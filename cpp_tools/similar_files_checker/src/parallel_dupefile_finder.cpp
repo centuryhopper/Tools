@@ -1,8 +1,30 @@
 #include "../include/similar_files_checker/parallel_dupefile_finder.hpp"
+#include "../include/similar_files_checker/scoped_timer.hpp"
 #include <algorithm>
-#include <chrono>
+#include <chrono> // chr::zoned_time, current_zone
+#include <condition_variable>
+#include <cstring> // strcasestr
+#include <execution>
+#include <expected>
+#include <format>  // std::format
+#include <fstream> // ifstream / ofstream
+#include <mutex>
+#include <print>
+#include <ranges>
+#include <thread>
+#include <unordered_map>
 
 namespace similar_files_checker {
+
+namespace fs = std::filesystem; // the most widespread one; cppreference uses it
+namespace rng = std::ranges;    // sometimes 'sr' or just 'ranges'
+namespace rv = std::ranges::views;
+namespace chr = std::chrono; // 'ch' and 'chrono' are also common
+
+using namespace std::chrono_literals; // 10ms, 2s, 1h
+using namespace std::string_literals; // "abc"s
+using namespace std::literals;        // all std literal suffixes at once
+
 std::vector<fs::path> walkDirectoryRecursively(const fs::path &path) {
   using namespace std;
   vector<fs::path> results, stack;
@@ -71,7 +93,7 @@ std::vector<fs::path> walkDirectoryRecursivelyParallel(const fs::path &path,
         ++shared_counter; // same locked region as the pop
       }
 
-      // Phase B: read the directory (unlocked)
+      // Phase B: read the directory (unlocked) so the speed up is here
       std::vector<fs::path> localDirs;
       std::vector<fs::path> localFiles;
 
@@ -153,6 +175,8 @@ findSameSizeFiles(const std::vector<fs::path> &files) {
 
   vector<SizedFile> sized(files.size());
 
+  ScopedTimer timer("findSameSizeFiles execution time");
+
   transform(execution::par, files.begin(), files.end(), sized.begin(),
             [](const fs::path &p) {
               SizedFile f{.path = p};
@@ -161,7 +185,7 @@ findSameSizeFiles(const std::vector<fs::path> &files) {
             });
 
   // Report the first file whose size couldn't be read
-  // if (auto it = ranges::find_if(sized, [](const SizedFile& f) { return
+  // if (auto it = rng::find_if(sized, [](const SizedFile& f) { return
   // static_cast<bool>(f.ec); });
   //     it != sized.end())
   // {
@@ -185,10 +209,10 @@ findSameSizeFiles(const std::vector<fs::path> &files) {
   auto map = groupBySize(sized);
 
   auto groups =
-      map | views::values |
-      views::filter([](const auto &g) { return g.size() > 1; }) | views::join |
-      views::as_rvalue // moves values from map into result instead of copying
-      | ranges::to<vector<fs::path>>();
+      map | rv::values |
+      rv::filter([](const auto &g) { return g.size() > 1; }) | rv::join |
+      rv::as_rvalue // moves values from map into result instead of copying
+      | rng::to<vector<fs::path>>();
 
   return groups;
 }
@@ -247,10 +271,10 @@ findSamePartialHashFiles(const std::vector<fs::path> &files) {
     groups[*hash].push_back(std::move(path));
 
   auto result =
-      groups | views::values |
-      views::filter([](const auto &g) { return g.size() > 1; }) | views::join |
-      views::as_rvalue // moves values from map into result instead of copying
-      | ranges::to<vector<fs::path>>();
+      groups | rv::values |
+      rv::filter([](const auto &g) { return g.size() > 1; }) | rv::join |
+      rv::as_rvalue // moves values from map into result instead of copying
+      | rng::to<vector<fs::path>>();
 
   return result;
 }
@@ -319,7 +343,7 @@ void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>,
 
   auto pathRank = [](const fs::path &path,
                      const std::vector<std::string> keywords) -> size_t {
-    for (auto [i, kw] : std::views::enumerate(keywords)) {
+    for (auto [i, kw] : rv::enumerate(keywords)) {
       if (strcasestr(path.c_str(), kw.c_str())) {
         return i;
       }
@@ -327,25 +351,29 @@ void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>,
     return keywords.size();
   };
 
-  std::vector<std::string> priorityKeywords{
-      "dir5",
-      "dir4",
+  std::vector<std::string> priorityKeywords
+      //{
+      //    "dir5",
+      //    "dir4",
+      //};
+      {
+          "iphone/iphone_11_15_2023",
+          "iphone",
+          "le856501_export",
+          "export",
   };
-  // {
-  //     "iphone/iphone_11_15_2023",
-  //     "iphone",
-  //     "le856501_export",
-  //     "export",
-  // };
 
   const fs::path DIR_PATH =
       fs::path("/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/"
                "tests/");
 
-  const fs::path OUTPUT_PATH =
-      DIR_PATH / std::format("logs/output_{:%Y-%m-%d_%H-%M-%S}.txt",
-                             floor<std::chrono::seconds>(
-                                 std::chrono::system_clock::now()));
+  auto now = chr::zoned_time{
+      chr::current_zone(), chr::floor<chr::seconds>(chr::system_clock::now())};
+
+  auto filename = std::format("logs/output_{:%Y-%m-%d_%H-%M-%S}.txt", now);
+
+  const fs::path OUTPUT_PATH = DIR_PATH / filename;
+
   fs::create_directories(OUTPUT_PATH.parent_path());
 
   std::ofstream out(OUTPUT_PATH);
@@ -354,15 +382,14 @@ void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>,
 
       // grab the path that takes the most priority which would contain a value
       // from the keywords array with the lowest index
-      const fs::path &keep =
-          *std::ranges::min_element(paths, {}, [&](const auto &p) {
-            return std::pair{pathRank(p, priorityKeywords), p.native().size()};
-          });
+      // the {} is the default std::ranges::less comparator
+      const fs::path &keep = *rng::min_element(paths, {}, [&](const auto &p) {
+        return std::pair{pathRank(p, priorityKeywords), p.native().size()};
+      });
       std::println(out, "KEEP: {}", keep.string());
 
-      for (const fs::path &p : paths | std::views::filter([&](const auto &p) {
-                                 return p != keep;
-                               })) {
+      for (const fs::path &p :
+           paths | rv::filter([&](const auto &p) { return p != keep; })) {
         std::println(out, "{}", p.string());
         if (deleteFlag) {
           std::error_code ec;
