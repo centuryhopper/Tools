@@ -1,4 +1,4 @@
-PRESET ?= release
+PRESET ?= debug
 BUILD_DIR := build/$(PRESET)
 APP   := $(BUILD_DIR)/bin/data_structures
 CACHE := $(BUILD_DIR)/CMakeCache.txt

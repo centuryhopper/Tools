@@ -2,6 +2,7 @@
 #include <cctype>
 #include <cstdint>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <optional>
 #include <print>
@@ -13,7 +14,6 @@
 #include <vector>
 
 #include <chrono>          // std::chrono, std::chrono_literals
-#include <execution>       // std::execution
 #include <filesystem>      // std::filesystem
 #include <memory_resource> // std::pmr
 #include <ranges>          // std::ranges, std::ranges::views
@@ -25,7 +25,6 @@ namespace fs = std::filesystem;
 namespace rng = std::ranges;
 namespace rv = std::views;
 namespace chr = std::chrono;
-namespace ex = std::execution;
 namespace pmr = std::pmr;
 
 using namespace std::literals;
@@ -214,12 +213,12 @@ std::vector<int> topologicalSort_BFS(const vvi &adj) {
   }
 
   std::vector<int> result;
-  std::priority_queue<int, std::vector<int>, std::greater<int>> mh;
+  std::priority_queue<int, std::vector<int>, std::greater<>> mh;
 
   // use queue if you dont care about ordering of vertices
   // std::queue<int> q;
   for (int i = 0; i < n; i++) {
-    if (incomingEdges[i] == 0) {
+    if (incomingEdges.at(i) == 0) {
       mh.push(i);
     }
   }
@@ -228,9 +227,10 @@ std::vector<int> topologicalSort_BFS(const vvi &adj) {
     mh.pop();
 
     for (const auto &neighbor : adj[v]) {
-      incomingEdges[neighbor] -= 1;
-      if (incomingEdges[neighbor] == 0)
+      incomingEdges.at(neighbor) -= 1;
+      if (incomingEdges.at(neighbor) == 0) {
         mh.push(neighbor);
+      }
     }
 
     result.push_back(v);

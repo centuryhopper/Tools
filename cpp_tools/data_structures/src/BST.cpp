@@ -1,7 +1,6 @@
 #include "../include/data_structures/BST.hpp"
 
 #include <chrono>          // std::chrono, std::chrono_literals
-#include <execution>       // std::execution
 #include <filesystem>      // std::filesystem
 #include <memory_resource> // std::pmr
 #include <ranges>          // std::ranges, std::ranges::views
@@ -11,7 +10,6 @@ namespace fs = std::filesystem;
 namespace rng = std::ranges;
 namespace rv = std::views;
 namespace chr = std::chrono;
-namespace ex = std::execution;
 namespace pmr = std::pmr;
 
 using namespace std::literals;
