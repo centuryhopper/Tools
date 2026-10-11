@@ -1,0 +1,33 @@
+PRESET ?= release
+BUILD_DIR := build/$(PRESET)
+APP   := $(BUILD_DIR)/bin/data_structures
+CACHE := $(BUILD_DIR)/CMakeCache.txt
+
+# Changing either presets file triggers a reconfigure.
+# $(wildcard ...) is empty when CMakeUserPresets.json doesn't exist.
+PRESET_FILES := CMakePresets.json $(wildcard CMakeUserPresets.json)
+
+.PHONY: all configure build run clean test
+
+all: build
+
+# Configure only when the build tree is missing or the presets changed.
+# Assumes each configure preset uses binaryDir = ${sourceDir}/build/${presetName}.
+$(CACHE): $(PRESET_FILES)
+	cmake --preset $(PRESET)
+	@touch $@
+
+configure: $(CACHE)
+
+build: $(CACHE)
+	cmake --build --preset $(PRESET)
+
+# Pass program arguments with: make run ARGS="--flag value"
+run: build
+	./$(APP) $(ARGS)
+
+test: build
+	ctest --preset $(PRESET)
+
+clean:
+	rm -rf build
