@@ -30,11 +30,11 @@ int main() {
           });
 
   return result
-      .transform([](auto &dupes) {
-        similar_files_checker::handleDuplicates(dupes, false);
+      .transform([](auto &&dupes) {
+        similar_files_checker::handleDuplicates(dupes, false, {}, "/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests");
         return 0; // success → exit code 0
       })
-      .transform_error([](const auto &err) {
+      .transform_error([](auto &&err) {
         std::println(stderr, "error: {}", err);
         return err; // log, keep the error
       })

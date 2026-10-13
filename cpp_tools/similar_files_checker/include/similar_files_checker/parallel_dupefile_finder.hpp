@@ -12,13 +12,10 @@
 #define XXH_INLINE_ALL
 #include <xxhash.h> // sudo apt install libxxhash-dev
 
-
-
 using Digest = std::array<uint8_t, BLAKE3_OUT_LEN>; // 32 bytes
 namespace fs = std::filesystem;
 
 namespace similar_files_checker {
-
 
 struct FileError {
   fs::path path;
@@ -56,6 +53,8 @@ findSameFullHashFiles(const std::vector<fs::path> &files);
 
 void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>,
                                                DigestHash> &duplicates,
-                      bool deleteFlag);
+                      bool deleteFlag,
+                      const std::vector<std::string> &priorityKeywords,
+                      const fs::path &outputPath);
 
 } // namespace similar_files_checker

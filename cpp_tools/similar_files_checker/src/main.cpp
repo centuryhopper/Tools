@@ -19,6 +19,7 @@
 #include "../include/similar_files_checker/scoped_timer.hpp"
 #include "../include/similar_files_checker/union_find.hpp"
 
+#include "../include/similar_files_checker/parallel_dupefile_finder.hpp"
 #include "../include/structures/ImageInfo.hpp"
 #include "../include/structures/MediaInfo.hpp"
 #include "../include/structures/VideoInfo.hpp"
@@ -97,8 +98,12 @@ find . -maxdepth 1 -type f \( -iname '*.mov' -o -iname '*.mp4' \) | count
 // VIDS_PATH = "/home/leo_zhang/synology/root/iphone/spring2024";
 
 namespace fs = std::filesystem;
+namespace chr = chr;
+namespace rng = std::ranges;
+namespace rv = std::views;
 
-using Timestamp = std::chrono::system_clock::time_point;
+using Timestamp = chr::system_clock::time_point;
+using namespace similar_files_checker;
 
 Timestamp getImgCaptureTime(const fs::path &path);
 Timestamp getVideoCaptureTime(const fs::path &path);
@@ -107,8 +112,7 @@ using Match = std::pair<std::size_t, std::size_t>;
 bool isImage(const fs::path &path) {
   std::string ext = path.extension().string();
 
-  std::ranges::transform(ext, ext.begin(),
-                         [](char c) { return std::tolower(c); });
+  rng::transform(ext, ext.begin(), [](char c) { return std::tolower(c); });
 
   return ext == ".jpg" || ext == ".jpeg" || ext == ".png";
   //    ext == ".heic" ||
@@ -118,8 +122,7 @@ bool isImage(const fs::path &path) {
 bool isVideo(const fs::path &path) {
   std::string ext = path.extension().string();
 
-  std::ranges::transform(ext, ext.begin(),
-                         [](char c) { return std::tolower(c); });
+  rng::transform(ext, ext.begin(), [](char c) { return std::tolower(c); });
 
   return ext == ".mp4" || ext == ".mov";
 }
@@ -167,7 +170,7 @@ Timestamp getImgCaptureTime(const fs::path &path) {
       ss >> std::get_time(&tm, "%Y:%m:%d %H:%M:%S");
 
       if (!ss.fail()) {
-        return std::chrono::system_clock::from_time_t(std::mktime(&tm));
+        return chr::system_clock::from_time_t(std::mktime(&tm));
       }
     }
   } catch (const Exiv2::Error &e) {
@@ -259,7 +262,7 @@ void deleteVideoGroups(const fs::path &PARENT_PATH) {
 }
 
 std::vector<Match> findImgMatches(const std::vector<ImageInfo> &images,
-                                  std::chrono::seconds window) {
+                                  chr::seconds window) {
   const int TOLERABLE_PHASH_DISTANCE = 5;
 
   const auto isSimilar = [](const ImageInfo &img1,
@@ -330,7 +333,7 @@ void groupImages(const fs::path &PARENT_PATH) {
 
   fmt::println("Number of images: {}", images.size());
 
-  const std::chrono::duration WINDOW = std::chrono::seconds{30};
+  const chr::duration WINDOW = chr::seconds{30};
 
   /*
       0–2: extremely similar / near-duplicate
@@ -415,7 +418,7 @@ std::vector<VideoInfo> getVideos(const fs::path &PARENT_PATH) {
 }
 
 std::vector<Match> findVideoMatches(const std::vector<VideoInfo> &videos,
-                                    std::chrono::seconds window) {
+                                    chr::seconds window) {
   const double MATCH_RATIO_THRESHOLD = 0.70; // 70% of frames must match
 
   // store each sample frames in a cache array
@@ -502,7 +505,7 @@ std::vector<Match> findVideoMatches(const std::vector<VideoInfo> &videos,
 void groupVideos(const fs::path &PARENT_PATH) {
   auto videos = getVideos(PARENT_PATH);
   fmt::println("number of videos: {}", videos.size());
-  const std::chrono::duration WINDOW = std::chrono::seconds{30};
+  const chr::duration WINDOW = chr::seconds{30};
   auto matches = findVideoMatches(videos, WINDOW);
   custom_data_structures::UnionFind uf(videos.size());
   std::unordered_map<int, std::vector<int>> videoGroups;
@@ -554,7 +557,7 @@ static std::optional<Timestamp> parseFFmpegTime(const char *value) {
 
   // timegm, not mktime: the tag is UTC, and mktime would apply your local
   // timezone offset on top of it.
-  return std::chrono::system_clock::from_time_t(timegm(&tm));
+  return chr::system_clock::from_time_t(timegm(&tm));
 }
 
 Timestamp getVideoCaptureTime(const fs::path &path) {
@@ -600,15 +603,15 @@ Timestamp getVideoCaptureTime(const fs::path &path) {
 void logFileCreationDateTime(const fs::path &IMG_PATH,
                              const fs::path &VID_PATH) {
   const auto &displayFileInfo = [](const MediaInfo &file) {
-    auto eastern = std::chrono::zoned_time{"America/New_York", file.timestamp};
+    auto eastern = chr::zoned_time{"America/New_York", file.timestamp};
 
     auto local = eastern.get_local_time();
     auto info = eastern.get_info();
 
-    auto day = std::chrono::floor<std::chrono::days>(local);
-    std::chrono::year_month_day date{day};
+    auto day = chr::floor<chr::days>(local);
+    chr::year_month_day date{day};
 
-    auto time = std::chrono::hh_mm_ss{local - day};
+    auto time = chr::hh_mm_ss{local - day};
 
     fmt::println("{} -> {:04}-{:02}-{:02} {:02}:{:02}:{:02} {}",
                  file.path.string(), int(date.year()), unsigned(date.month()),
@@ -616,8 +619,8 @@ void logFileCreationDateTime(const fs::path &IMG_PATH,
                  time.minutes().count(), time.seconds().count(), info.abbrev);
   };
 
-  auto images = getImages(IMG_PATH) | std::ranges::to<std::vector<MediaInfo>>();
-  auto vids = getVideos(VID_PATH) | std::ranges::to<std::vector<MediaInfo>>();
+  auto images = getImages(IMG_PATH) | rng::to<std::vector<MediaInfo>>();
+  auto vids = getVideos(VID_PATH) | rng::to<std::vector<MediaInfo>>();
   for (const auto &img : images) {
     displayFileInfo(img);
   }
@@ -629,6 +632,18 @@ void logFileCreationDateTime(const fs::path &IMG_PATH,
 
 //  make run ARGS="-d" add -d flag to keep first file for every folder starting
 //  with group_ and remove the rest
+
+/*
+gdb --tui --args ./build/debug/bin/similar_files_checker -dedup --dedup-path
+~/synology/root -keys 'iphone/iphone_11_15_2023,iphone,le856501_export,export'
+-output-path /home/leo_zhang/Downloads
+*/
+/*
+gdb --tui --args ./build/debug/bin/similar_files_checker -dedup -dedup-path
+/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests/directory_contents
+-keys 'iphone/iphone_11_15_2023,iphone,le856501_export,export' -output-path
+/home/leo_zhang/Downloads
+*/
 int main(int argc, char *argv[]) {
   // so OpenCV doesn't spawn its own threads inside yours.
   cv::setNumThreads(0);
@@ -652,15 +667,38 @@ int main(int argc, char *argv[]) {
   prog.add_argument("-vid-path", "--vid-path")
       .help("path to the directory containing videos");
 
+  prog.add_argument("-dedup-path", "--dedup-path")
+      .help("path to the directory containing duplicate files");
+
+  prog.add_argument("-output-path", "--output-path")
+      .help("path to the directory containing the output log file that "
+            "displays the grouped duplicates and which one is kept (should "
+            "only be used with dedup command)");
+
+  prog.add_argument("-d", "--delete")
+      .help("flag to determine whether to delete the duplicates")
+      .flag();
+
+  std::vector<std::string> keywords;
+  prog.add_argument("-keys", "--keywords")
+      .action([&keywords](const std::string &s) {
+        keywords = s | rv::split(',') |
+                   rv::filter([](auto &&p) { return !p.empty(); }) |
+                   rng::to<std::vector<std::string>>();
+      })
+      .help("priority folder names (delimited by commas) to determine which "
+            "duplicates to keep (first value takes highest priority and last "
+            "value takes lowest priority)");
+
   // make sure only one of the following flags can be passed at a time
   auto &group = prog.add_mutually_exclusive_group(true);
 
   group.add_argument("-di", "--delete-imgs")
-      .help("delete duplicate images")
+      .help("delete similar images")
       .flag(); // default false, true when passed
 
   group.add_argument("-dv", "--delete-vids")
-      .help("delete duplicate videos")
+      .help("delete similar videos")
       .flag(); // default false, true when passed
 
   group.add_argument("-v", "--videos").help("group similar video files").flag();
@@ -668,6 +706,10 @@ int main(int argc, char *argv[]) {
   group.add_argument("-i", "--images").help("group similar image files").flag();
 
   group.add_argument("-l", "--log").help("log file creation dates").flag();
+
+  group.add_argument("-dedup", "--dedup")
+      .help("group and optionally delete duplicate files (recursively)")
+      .flag();
 
   try {
     prog.parse_args(argc, argv);
@@ -681,12 +723,17 @@ int main(int argc, char *argv[]) {
   bool groupVideosFlag = prog.get<bool>("--videos");
   bool groupImagesFlag = prog.get<bool>("--images");
   bool logFilesFlag = prog.get<bool>("--log");
+  bool deDupFlag = prog.get<bool>("--dedup");
+  bool deleteDupsFlag = prog.get<bool>("--delete");
 
   bool needsImgs = groupImagesFlag || deleteImgsFlag || logFilesFlag;
   bool needsVids = groupVideosFlag || deleteVidsFlag || logFilesFlag;
+  bool needsDedupPath = deDupFlag;
 
   const auto IMGS_PATH = prog.present<std::string>("--img-path");
   const auto VIDS_PATH = prog.present<std::string>("--vid-path");
+  const auto DEDUP_PATH = prog.present<std::string>("--dedup-path");
+  const auto OUTPUT_PATH = prog.present<std::string>("--output-path");
 
   if (needsImgs && !IMGS_PATH) {
     std::cerr << "error: --img-path is required for -i, -di, and -l\n" << prog;
@@ -694,6 +741,12 @@ int main(int argc, char *argv[]) {
   }
   if (needsVids && !VIDS_PATH) {
     std::cerr << "error: --vid-path is required for -v, -dv, and -l\n" << prog;
+    return 1;
+  }
+  if (needsDedupPath && (!DEDUP_PATH || !OUTPUT_PATH)) {
+    std::println(
+        stderr,
+        "error: --dedup-path and --output-path are required for -dedup");
     return 1;
   }
 
@@ -709,6 +762,31 @@ int main(int argc, char *argv[]) {
     groupImages(*IMGS_PATH);
   } else if (logFilesFlag) {
     logFileCreationDateTime(*IMGS_PATH, *VIDS_PATH);
+  } else if (deDupFlag) {
+    const int NUM_THREADS = 16;
+    std::vector<fs::path> files =
+        walkDirectoryRecursivelyParallel(*DEDUP_PATH, NUM_THREADS);
+
+    // std::println("files size: {}", files.size());
+
+    ScopedTimer timer("Total execution time");
+
+    return findSameSizeFiles(files)
+        .and_then([](const std::vector<fs::path> &paths) {
+          return findSamePartialHashFiles(paths);
+        })
+        .and_then([](const std::vector<fs::path> &paths) {
+          return findSameFullHashFiles(paths);
+        })
+        .transform([&](auto &&dupes) {
+          handleDuplicates(dupes, deleteDupsFlag, keywords, *OUTPUT_PATH);
+          return 0; // success → exit code 0
+        })
+        .transform_error([](auto &&err) {
+          std::println(stderr, "error: {}", err);
+          return 1;
+        })
+        .value_or(1); // error → exit code 1;
   }
 
   return 0;

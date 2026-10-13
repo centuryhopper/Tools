@@ -1,29 +1,32 @@
 #include "../include/similar_files_checker/parallel_dupefile_finder.hpp"
 #include "../include/similar_files_checker/scoped_timer.hpp"
 #include <algorithm>
-#include <chrono> // chr::zoned_time, current_zone
+#include <chrono> // std::chrono, std::chrono_literals
 #include <condition_variable>
-#include <cstring> // strcasestr
-#include <execution>
+#include <cstring>   // strcasestr
+#include <execution> // std::execution
 #include <expected>
-#include <format>  // std::format
-#include <fstream> // ifstream / ofstream
+#include <filesystem>      // std::filesystem
+#include <format>          // std::format
+#include <fstream>         // ifstream / ofstream
+#include <memory_resource> // std::pmr
 #include <mutex>
 #include <print>
-#include <ranges>
+#include <ranges> // std::ranges, std::ranges::views
+#include <string> // std::string_literals ("abc"s)
 #include <thread>
 #include <unordered_map>
 
+namespace fs = std::filesystem;
+namespace rng = std::ranges;
+namespace rv = std::views;
+namespace chr = std::chrono;
+namespace ex = std::execution;
+namespace pmr = std::pmr;
+
+using namespace std::literals;
+
 namespace similar_files_checker {
-
-namespace fs = std::filesystem; // the most widespread one; cppreference uses it
-namespace rng = std::ranges;    // sometimes 'sr' or just 'ranges'
-namespace rv = std::ranges::views;
-namespace chr = std::chrono; // 'ch' and 'chrono' are also common
-
-using namespace std::chrono_literals; // 10ms, 2s, 1h
-using namespace std::string_literals; // "abc"s
-using namespace std::literals;        // all std literal suffixes at once
 
 std::vector<fs::path> walkDirectoryRecursively(const fs::path &path) {
   using namespace std;
@@ -149,6 +152,8 @@ std::vector<fs::path> walkDirectoryRecursivelyParallel(const fs::path &path,
     }
   };
 
+  ScopedTimer timer("walkDirectoryRecursivelyParallel execution time");
+
   // the block exists so threads join before the return
   {
     vector<jthread> threads;
@@ -255,6 +260,7 @@ findSamePartialHashFiles(const std::vector<fs::path> &files) {
 
   vector<PartialHashedFile> partialHashedFiles(files.size());
 
+  ScopedTimer timer("findSamePartialHashFiles execution time");
   transform(execution::par, files.begin(), files.end(),
             partialHashedFiles.begin(), [](const fs::path &p) {
               PartialHashedFile f{.path = p};
@@ -313,6 +319,7 @@ findSameFullHashFiles(const std::vector<fs::path> &files) {
 
   vector<FullHashedFile> fullHashedFiles(files.size());
 
+  ScopedTimer timer("findSameFullHashFiles execution time");
   transform(execution::par, files.begin(), files.end(), fullHashedFiles.begin(),
             [&](const fs::path &p) {
               return FullHashedFile{
@@ -339,42 +346,29 @@ findSameFullHashFiles(const std::vector<fs::path> &files) {
 
 void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>,
                                                DigestHash> &duplicates,
-                      bool deleteFlag) {
+                      bool deleteFlag,
+                      const std::vector<std::string> &priorityKeywords,
+                      const fs::path &outputPath) {
 
-  auto pathRank = [](const fs::path &path,
-                     const std::vector<std::string> keywords) -> size_t {
-    for (auto [i, kw] : rv::enumerate(keywords)) {
+  auto pathRank = [&](const fs::path &path) -> size_t {
+    for (auto [i, kw] : rv::enumerate(priorityKeywords)) {
       if (strcasestr(path.c_str(), kw.c_str())) {
         return i;
       }
     }
-    return keywords.size();
+    return priorityKeywords.size();
   };
-
-  std::vector<std::string> priorityKeywords
-      //{
-      //    "dir5",
-      //    "dir4",
-      //};
-      {
-          "iphone/iphone_11_15_2023",
-          "iphone",
-          "le856501_export",
-          "export",
-  };
-
-  const fs::path DIR_PATH =
-      fs::path("/home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/"
-               "tests/");
 
   auto now = chr::zoned_time{
       chr::current_zone(), chr::floor<chr::seconds>(chr::system_clock::now())};
 
   auto filename = std::format("logs/output_{:%Y-%m-%d_%H-%M-%S}.txt", now);
 
-  const fs::path OUTPUT_PATH = DIR_PATH / filename;
+  const fs::path OUTPUT_PATH = outputPath / filename;
 
   fs::create_directories(OUTPUT_PATH.parent_path());
+
+  ScopedTimer timer("handleDuplicates execution time");
 
   std::ofstream out(OUTPUT_PATH);
   for (const auto &[digestHash, paths] : duplicates) {
@@ -384,7 +378,7 @@ void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>,
       // from the keywords array with the lowest index
       // the {} is the default std::ranges::less comparator
       const fs::path &keep = *rng::min_element(paths, {}, [&](const auto &p) {
-        return std::pair{pathRank(p, priorityKeywords), p.native().size()};
+        return std::pair{pathRank(p), p.native().size()};
       });
       std::println(out, "KEEP: {}", keep.string());
 
