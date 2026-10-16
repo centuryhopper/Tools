@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 4.4)
+cmake_minimum_required(VERSION 4.3)
 
 project(similar_files_checker
     VERSION 1.0
     LANGUAGES C CXX
 )
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -20,10 +20,25 @@ set(PROJECT_WARNINGS
 )
 
 
+# -------------------------
+# Sanitizers
+# -------------------------
+# Set before FetchContent so fetched dependencies are instrumented too.
+
+option(ENABLE_ASAN "Build with AddressSanitizer" OFF)
 option(ENABLE_TSAN "Build with ThreadSanitizer" OFF)
 
+if(ENABLE_ASAN AND ENABLE_TSAN)
+    message(FATAL_ERROR "ENABLE_ASAN and ENABLE_TSAN can't be used together")
+endif()
+
+if(ENABLE_ASAN)
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=address)
+endif()
+
 if(ENABLE_TSAN)
-    add_compile_options(-fsanitize=thread -g -O1)
+    add_compile_options(-fsanitize=thread -fno-omit-frame-pointer -g -O1)
     add_link_options(-fsanitize=thread)
 endif()
 
@@ -73,7 +88,7 @@ FetchContent_MakeAvailable(argparse)
 find_package(OpenCV REQUIRED)
 
 # OpenMP
-find_package(OpenMP REQUIRED)
+# find_package(OpenMP REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 
@@ -107,13 +122,12 @@ target_compile_options(${PROJECT_NAME}
         ${PROJECT_WARNINGS}
 )
 
-
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         fmt::fmt
         ${OpenCV_LIBS}
         Exiv2::exiv2lib
-        OpenMP::OpenMP_CXX
+        # OpenMP::OpenMP_CXX
         PkgConfig::FFMPEG
         argparse
         TBB::tbb
@@ -142,12 +156,6 @@ target_include_directories(tests
         ${OpenCV_INCLUDE_DIRS}
 )
 
-target_link_libraries(tests
-    PRIVATE
-        OpenMP::OpenMP_CXX
-        TBB::tbb
-)
-
 target_compile_options(tests
     PRIVATE
         ${PROJECT_WARNINGS}
@@ -163,13 +171,11 @@ target_link_libraries(tests
         fmt::fmt
         ${OpenCV_LIBS}
         Exiv2::exiv2lib
-        OpenMP::OpenMP_CXX
+        # OpenMP::OpenMP_CXX
         PkgConfig::FFMPEG
         argparse
         BLAKE3::blake3
+        TBB::tbb
 )
 
 add_test(NAME unit_tests COMMAND tests)
-
-
-

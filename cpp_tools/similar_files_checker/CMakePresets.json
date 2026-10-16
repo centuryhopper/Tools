@@ -5,30 +5,42 @@
       "name": "base",
       "hidden": true,
       "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc-16",
         "CMAKE_CXX_COMPILER": "g++-16"
       }
     },
-    {
-      "name": "release",
-      "inherits": "base",
-      "binaryDir": "build/release",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
-    },
-    {
-      "name": "debug",
-      "inherits": "base",
-      "binaryDir": "build/debug",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
-    }
+    { "name": "asan", "hidden": true, "cacheVariables": { "ENABLE_ASAN": "ON" } },
+    { "name": "tsan", "hidden": true, "cacheVariables": { "ENABLE_TSAN": "ON" } },
+
+    { "name": "release", "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" } },
+    { "name": "debug",   "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" } },
+
+    { "name": "debug-asan",   "inherits": ["debug", "asan"] },
+    { "name": "debug-tsan",   "inherits": ["debug", "tsan"] },
+    { "name": "release-asan", "inherits": ["release", "asan"] },
+    { "name": "release-tsan", "inherits": ["release", "tsan"] }
   ],
   "buildPresets": [
-    { "name": "release", "configurePreset": "release" },
-    { "name": "debug",   "configurePreset": "debug" }
+    { "name": "release",      "configurePreset": "release" },
+    { "name": "debug",        "configurePreset": "debug" },
+    { "name": "debug-asan",   "configurePreset": "debug-asan" },
+    { "name": "debug-tsan",   "configurePreset": "debug-tsan" },
+    { "name": "release-asan", "configurePreset": "release-asan" },
+    { "name": "release-tsan", "configurePreset": "release-tsan" }
   ],
   "testPresets": [
-    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true, "verbosity": "verbose" } },
-    { "name": "debug",   "configurePreset": "debug",   "output": { "outputOnFailure": true, "verbosity": "verbose" } }
+    {
+      "name": "test-base",
+      "hidden": true,
+      "output": { "outputOnFailure": true, "verbosity": "verbose" }
+    },
+    { "name": "release",      "inherits": "test-base", "configurePreset": "release" },
+    { "name": "debug",        "inherits": "test-base", "configurePreset": "debug" },
+    { "name": "debug-asan",   "inherits": "test-base", "configurePreset": "debug-asan" },
+    { "name": "debug-tsan",   "inherits": "test-base", "configurePreset": "debug-tsan" },
+    { "name": "release-asan", "inherits": "test-base", "configurePreset": "release-asan" },
+    { "name": "release-tsan", "inherits": "test-base", "configurePreset": "release-tsan" }
   ]
 }

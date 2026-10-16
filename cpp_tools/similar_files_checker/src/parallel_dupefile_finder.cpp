@@ -189,16 +189,6 @@ findSameSizeFiles(const std::vector<fs::path> &files) {
               return f;
             });
 
-  // Report the first file whose size couldn't be read
-  // if (auto it = rng::find_if(sized, [](const SizedFile& f) { return
-  // static_cast<bool>(f.ec); });
-  //     it != sized.end())
-  // {
-  //     return unexpected(
-  //         FileSizeError{std::move(it->path), it->ec}
-  //     );
-  // }
-
   erase_if(sized, [](const SizedFile &entry) {
     return entry.size == 0 || static_cast<bool>(entry.ec);
   }); // C++20
@@ -402,3 +392,15 @@ void handleDuplicates(const std::unordered_map<Digest, std::vector<fs::path>,
 }
 
 } // namespace similar_files_checker
+
+/*
+   Report the first file whose size couldn't be read
+   if (auto it = rng::find_if(sized, [](const SizedFile& f) { return
+   static_cast<bool>(f.ec); });
+       it != sized.end())
+   {
+       return unexpected(
+           FileSizeError{std::move(it->path), it->ec}
+       );
+   }
+*/
