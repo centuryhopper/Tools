@@ -44,10 +44,6 @@ std::vector<fs::path> walkDirectoryRecursively(const fs::path &path) {
       for (const auto &childPath : fs::directory_iterator(parentPath))
         childDir.push_back(childPath);
 
-      // std::sort(childDir.begin(), childDir.end(), [](const fs::path& f1,
-      // const fs::path& f2) {
-      //     return f1.string() > f2.string();
-      // });
       for (const auto &childPath : childDir)
         stack.push_back(childPath);
     } else {

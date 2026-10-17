@@ -87,8 +87,6 @@ FetchContent_MakeAvailable(argparse)
 # OpenCV
 find_package(OpenCV REQUIRED)
 
-# OpenMP
-# find_package(OpenMP REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 
@@ -102,6 +100,16 @@ FetchContent_Declare(blake3
     GIT_TAG        1.8.2        # pin a release tag
     SOURCE_SUBDIR  c)
 FetchContent_MakeAvailable(blake3)
+
+# -------------------------
+# Bounds checking (Debug only)
+# -------------------------
+# libstdc++ reads the first macro, libc++ the second; each ignores the other.
+add_library(bounds_checks INTERFACE)
+target_compile_definitions(bounds_checks INTERFACE
+    _GLIBCXX_ASSERTIONS
+    _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST
+)
 
 # -------------------------
 # Main executable
@@ -127,11 +135,11 @@ target_link_libraries(${PROJECT_NAME}
         fmt::fmt
         ${OpenCV_LIBS}
         Exiv2::exiv2lib
-        # OpenMP::OpenMP_CXX
         PkgConfig::FFMPEG
         argparse
         TBB::tbb
         BLAKE3::blake3
+        bounds_checks
 )
 
 
@@ -171,11 +179,11 @@ target_link_libraries(tests
         fmt::fmt
         ${OpenCV_LIBS}
         Exiv2::exiv2lib
-        # OpenMP::OpenMP_CXX
         PkgConfig::FFMPEG
         argparse
         BLAKE3::blake3
         TBB::tbb
+        bounds_checks
 )
 
 add_test(NAME unit_tests COMMAND tests)

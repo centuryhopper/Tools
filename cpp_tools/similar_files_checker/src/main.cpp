@@ -300,7 +300,7 @@ std::vector<Match> findImgMatches(const std::vector<ImageInfo> &images,
     }
   });
 
-  return matches | rng::to<std::vector>();
+  return std::vector<Match>(matches.begin(), matches.end());
 }
 
 void groupImages(const fs::path &PARENT_PATH) {
@@ -452,7 +452,7 @@ std::vector<Match> findVideoMatches(const std::vector<VideoInfo> &videos,
     }
   });
 
-  return matches | rng::to<std::vector>();
+  return std::vector<Match>(matches.begin(), matches.end());
 }
 
 void groupVideos(const fs::path &PARENT_PATH) {
