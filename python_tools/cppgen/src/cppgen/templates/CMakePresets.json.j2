@@ -8,15 +8,22 @@
       "binaryDir": "${sourceDir}/build/${presetName}"
     },
     { "name": "release", "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" } },
-    { "name": "debug",   "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" } }
+    { "name": "debug",   "inherits": "base", "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" } },
+    { "name": "asan",    "inherits": "debug", "cacheVariables": { "SANITIZER": "address" } },
+    { "name": "tsan",    "inherits": "debug", "cacheVariables": { "SANITIZER": "thread" } }
   ],
   "buildPresets": [
     { "name": "release", "configurePreset": "release" },
-    { "name": "debug",   "configurePreset": "debug" }
+    { "name": "debug",   "configurePreset": "debug" },
+    { "name": "asan",    "configurePreset": "asan" },
+    { "name": "tsan",    "configurePreset": "tsan" }
   ]{% if enable_tests %},
   "testPresets": [
     { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } },
-    { "name": "debug",   "configurePreset": "debug",   "output": { "outputOnFailure": true } }
+    { "name": "debug",   "configurePreset": "debug",   "output": { "outputOnFailure": true } },
+    { "name": "asan",    "configurePreset": "asan",    "output": { "outputOnFailure": true } },
+    { "name": "tsan",    "configurePreset": "tsan",    "output": { "outputOnFailure": true } }
   ]{% endif %}
 
 }
+

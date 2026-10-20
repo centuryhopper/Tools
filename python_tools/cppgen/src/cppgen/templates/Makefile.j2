@@ -7,7 +7,12 @@ CACHE := $(BUILD_DIR)/CMakeCache.txt
 # $(wildcard ...) is empty when CMakeUserPresets.json doesn't exist.
 PRESET_FILES := CMakePresets.json $(wildcard CMakeUserPresets.json)
 
-.PHONY: all configure build run clean{% if enable_tests %} test{% endif %}
+# Under the tsan preset, `make run` uses tsan.supp (if present) to hide OpenMP
+# false positives. ctest gets the same file from CMakeLists.txt.
+TSAN_SUPP := $(wildcard $(CURDIR)/tsan.supp)
+RUN_ENV := $(if $(and $(filter tsan,$(PRESET)),$(TSAN_SUPP)),TSAN_OPTIONS="suppressions=$(TSAN_SUPP) $(TSAN_OPTIONS)")
+
+.PHONY: all configure build run clean asan tsan{% if enable_tests %} test{% endif %}
 
 
 all: build
@@ -25,11 +30,26 @@ build: $(CACHE)
 
 # Pass program arguments with: make run ARGS="--flag value"
 run: build
-	./$(APP) $(ARGS)
+	$(RUN_ENV) ./$(APP) $(ARGS)
 
 {% if enable_tests %}
 test: build
-	ctest --preset $(PRESET)
+	ctest --preset $(PRESET) --output-on-failure
+
+# Shortcuts: build and run the tests under a sanitizer
+asan:
+	$(MAKE) test PRESET=asan
+
+tsan:
+	$(MAKE) test PRESET=tsan
+
+{% else %}
+# Shortcuts: build and run the app under a sanitizer (pass ARGS as usual)
+asan:
+	$(MAKE) run PRESET=asan
+
+tsan:
+	$(MAKE) run PRESET=tsan
 
 {% endif %}
 clean:

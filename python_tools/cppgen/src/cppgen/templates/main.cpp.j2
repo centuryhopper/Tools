@@ -1,5 +1,22 @@
 #include <iostream>
 
+#include <chrono>           // std::chrono, std::chrono_literals
+#include <execution>        // std::execution
+#include <filesystem>       // std::filesystem
+#include <memory_resource>  // std::pmr
+#include <ranges>           // std::ranges, std::ranges::views
+#include <string>           // std::string_literals ("abc"s)
+
+namespace fs = std::filesystem;
+namespace rng = std::ranges;
+namespace rv = std::views;
+namespace chr = std::chrono;
+namespace ex = std::execution;
+namespace pmr = std::pmr;
+
+using namespace std::literals;
+
+
 int main() {
     std::cout << "Hello from {{ project_name }}!" << std::endl;
     return 0;

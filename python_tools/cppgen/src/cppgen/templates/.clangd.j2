@@ -1,0 +1,77 @@
+# Reusable clangd config for CMake-based C++ projects.
+# Requires compile_commands.json: add this to CMakeLists.txt
+#   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# and configure into ./build (or change CompilationDatabase below).
+
+CompileFlags:
+  CompilationDatabase: build
+  Add:
+    - -std=c++23
+    - -Wall
+    - -Wextra
+    - -Wpedantic
+  Remove:
+    # GCC-only flags clang doesn't understand (common with CMake + GCC)
+    - -fmodules-ts
+    - -fmodule-mapper=*
+    - -fdeps-format=*
+    - -fconcepts-diagnostics-depth=*
+
+Index:
+  Background: Build
+  StandardLibrary: Yes
+
+Diagnostics:
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+  ClangTidy:
+    Add:
+      - bugprone-*
+      - performance-*
+      - modernize-*
+      - readability-*
+      - cppcoreguidelines-*
+    Remove:
+      - modernize-use-trailing-return-type
+      - readability-identifier-length
+      - readability-magic-numbers
+      - cppcoreguidelines-avoid-magic-numbers
+      - cppcoreguidelines-pro-bounds-pointer-arithmetic
+      - cppcoreguidelines-avoid-do-while
+      - bugprone-easily-swappable-parameters
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  Designators: Yes
+  BlockEnd: No
+
+Hover:
+  ShowAKA: Yes
+
+Completion:
+  AllScopes: Yes
+
+---
+# CUDA sources: strip nvcc-only flags and parse as CUDA.
+# Delete this block if the project has no .cu files.
+If:
+  PathMatch: .*\.(cu|cuh)
+CompileFlags:
+  Add:
+    - -xcuda
+    - --no-cuda-version-check
+  Remove:
+    - -forward-unknown-to-host-compiler
+    - --generate-code*
+    - -gencode*
+    - -arch=*
+    - -rdc=*
+    - --relocatable-device-code=*
+    - -Xcompiler*
+    - -Xptxas*
+    - --expt-*
+    - --use_fast_math
+    - --options-file
+    - -G
