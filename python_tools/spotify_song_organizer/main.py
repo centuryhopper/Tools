@@ -1,5 +1,6 @@
 import base64
 import os
+import sys
 import webbrowser
 from pprint import pprint
 from urllib.parse import urlencode
@@ -76,6 +77,82 @@ user_headers = {"Authorization": "Bearer " + token, "Content-Type": "application
 session = requests.Session()
 session.headers.update(user_headers)
 
+
+def get_my_playlists():
+    """Return {name: id} for playlists you own."""
+    me = session.get("https://api.spotify.com/v1/me", headers=user_headers).json()
+    me = me["id"]
+
+    playlists = {}
+    url = "https://api.spotify.com/v1/me/playlists?limit=50"
+    while url:
+        r = session.get(url, headers=user_headers)
+        r.raise_for_status()
+        page = r.json()
+        for p in page["items"]:
+            if p["owner"]["id"] == me:  # skip playlists you only follow
+                playlists[p["name"]] = p["id"]
+        url = page["next"]
+    return playlists
+
+
+def get_or_create_playlist(name, playlists):
+    if name in playlists:
+        return playlists[name]
+
+    r = session.post(
+        "https://api.spotify.com/v1/me/playlists",
+        json={
+            "name": name,
+            "public": True,
+            "description": "Created by Spotify Song Organizer",
+        },
+    )
+    r.raise_for_status()
+    playlist_id = r.json()["id"]
+    playlists[name] = playlist_id  # remember it so later calls don't create it again
+    return playlist_id
+
+
+def add_to_playlist(playlist_id, uris):
+    r = session.post(
+        f"https://api.spotify.com/v1/playlists/{playlist_id}/items",
+        json={"uris": uris},
+    )
+    if r.status_code != 201:
+        print(r.text)
+    r.raise_for_status()
+    return r.json()["snapshot_id"]
+
+
+def add_many(playlist_id, uris):
+    for i in range(0, len(uris), 100):
+        add_to_playlist(playlist_id, uris[i : i + 100])
+
+
+def playlist_uris(playlist_id):
+    uris = set()
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/items?limit=50"
+    while url:
+        r = session.get(url)
+        r.raise_for_status()
+        page = r.json()
+        for entry in page["items"]:
+            if entry.get("item"):
+                uris.add(entry["item"]["uri"])
+        url = page["next"]
+    return uris
+
+
+# existing = playlist_uris(rock_id)
+# new_uris = [u for u in rock_uris if u not in existing]
+# add_many(rock_id, new_uris)
+
+
+playlists = get_my_playlists()  # fetch once
+
+sys.exit(1)
+
 url = "https://api.spotify.com/v1/me/tracks?limit=50"
 
 all_items = []
@@ -93,17 +170,46 @@ tracks = [
     (track["track"]["name"], track["track"]["artists"][0]["name"])
     for track in all_items
 ]
-pprint(tracks)
-print(len(tracks))
+# pprint(tracks)
+# print(len(tracks))
 # pprint(all_items)
 end = time.perf_counter()
 
 # https://ws.audioscrobbler.com/2.0/?method=track.gettoptags&artist=lakey inspired&track=goodnight&api_key=SECRET&format=json&autocorrect=1
 
+
 # pprint(genres_list)
+lastfm_session = requests.Session()
+for song_name, artist in tracks:
+    r = lastfm_session.get(
+        f"https://ws.audioscrobbler.com/2.0/?method=track.gettoptags&artist={artist}&track={song_name}&api_key={os.getenv('57673e262de15381fd45b9ecc555058d')}&format=json&autocorrect=1"
+    )
+    output = r.json()
+    tags = output["toptags"]["tag"]
+    if not tags:
+        # put song in "genre: unknown" playlist
+        pass
+    else:
+        didAddToPlaylist = False
+        for o in tags:
+            if o["name"] in genres_list:
+                # create playlist with the name of "genre: o['name'].upper()" (if it doesnt exist already)
+                # and add the song to that playlist
+                # remove this song from liked songs
+                didAddToPlaylist = True
+                new_playlist = get_or_create_playlist(
+                    f"Genre: {o['name'].upper()}", playlists=playlists
+                )
+                break
+        if not didAddToPlaylist:
+            # put song in "genre: unknown" playlist
+            new_playlist = get_or_create_playlist(
+                f"Genre: UNKNOWN", playlists=playlists
+            )
+            pass
+
 
 # group each song by their genre
-# if genre list from request is empty then group by the artist
+# if genre list from request is empty then put into "genre: unknown" playlist
 
 print("total time: {} seconds".format(end - start))
-
