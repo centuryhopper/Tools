@@ -1,0 +1,22 @@
+pop
+rock
+alternative
+punk
+metal
+hip hop
+r&b
+soul
+funk
+electronic
+ambient
+country
+folk
+blues
+jazz
+classical
+latin
+reggae
+world
+asian pop
+gospel
+spoken word
