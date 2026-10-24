@@ -1,0 +1,25 @@
+[project]
+name = "product-price-tracker"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "playwright>=1.64.1",
+    "playwright-stealth>=2.0.3",
+    "python-dotenv>=1.2.4",
+    "uiautodev>=0.14.0",
+    "uiautomator2>=3.7.1",
+]
+
+[project.scripts]
+product-price-tracker = "product_price_tracker:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pdbpp>=0.12.1",
+]
