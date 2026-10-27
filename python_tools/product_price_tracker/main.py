@@ -1,5 +1,8 @@
 import asyncio
+import csv
 import os
+import time
+from pathlib import Path
 from typing import List
 
 import uiautomator2 as u2
@@ -11,11 +14,12 @@ from product_price_tracker.amazon_bot import AmazonBot
 from product_price_tracker.bestbuy_bot import BestBuyBot
 from product_price_tracker.bot import PLATFORM, MobileBot, ProductInfo, WebBot
 
-load_dotenv('secrets.env')
+load_dotenv("secrets.env")
 
 amzn_bot = AmazonBot()
 bestbuy_bot = BestBuyBot(
-    package="com.bestbuy.android", device_serial=os.getenv("GALAXY_S26")
+    package="com.bestbuy.android", device_serial=os.getenv("GALAXY_S26"),
+    phone_pin=os.getenv('phone_pin')
 )
 
 
@@ -29,6 +33,7 @@ async def web_scrape_dispatcher(
             return await amzn_bot.scrape(product, context)
         case _:
             raise ValueError(f"No scraper for platform {product.platform}")
+
 
 # http://127.0.0.1:33299
 def mobile_scrape_dispatcher(product: ProductInfo, bot: MobileBot) -> float:
@@ -86,12 +91,26 @@ async def main():
                 f"{'ERROR: ' + str(exception) if isinstance(exception, Exception) else exception}\n  {p}\n"
             )
 
+    output = Path(f'./output')
+    output.mkdir(exist_ok=True)
+    output = output / f'data_{time.strftime("%Y_%m_%d_%H_%M_%S")}.csv'
+
+    data = [
+        ["product_name", "product_id", "platform", "product_price"],
+    ]
+
     for p in mobile_products:
         match p.platform:
             case PLATFORM.BESTBUY:
-                mobile_scrape_dispatcher(p, bestbuy_bot)
+                price = mobile_scrape_dispatcher(p, bestbuy_bot)
+                row = [p.product_name, p.product_id, p.platform, price]
+                data.append(row)
             case _:
                 raise ValueError(f"No scraper for platform {p.platform}")
+
+    with open(output, mode="w") as f:
+        writer = csv.writer(f)
+        writer.writerows(data)
 
 
 if __name__ == "__main__":

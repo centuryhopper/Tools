@@ -42,20 +42,44 @@ class WebBot(ABC):
 
 
 class MobileBot(ABC):
-    def __init__(self, package, device_serial) -> None:
+    def __init__(self, package, device_serial, phone_pin: str | None = None) -> None:
         self.package = package
+        self.phone_pin = phone_pin
         self.d = u2.connect(device_serial)
 
-        self.d.shell("input keyevent KEYCODE_WAKEUP")
-        self.d.shell(
-            "wm dismiss-keyguard"
-        )  # Android 8+, works when there's no secure lock
+        self.unlock()
 
         # set keyboard to adb keyboard
         self.d.shell("ime set com.github.uiautomator/.AdbKeyboard")
 
         self.min_delay = 1.5
         self.max_delay = 4.0
+
+    def is_locked(self) -> bool:
+        focus = self.d.shell("dumpsys window | grep mCurrentFocus").output
+        return "OFF_LOCKED" in focus or "ON_LOCKED" in focus
+
+    def unlock(self) -> None:
+        self.d.shell("input keyevent KEYCODE_WAKEUP")
+        self.d.shell(
+            "wm dismiss-keyguard"
+        )  # no lock: unlocks; PIN lock: shows the PIN pad
+        sleep(1)
+
+        if not self.is_locked():
+            return
+        if self.phone_pin is None:
+            raise RuntimeError("Phone is PIN-locked but no PIN was provided")
+
+        for d in list(self.phone_pin):
+            self.d(text=d).click_exists()
+        sleep(1)
+
+        if self.is_locked():
+            raise RuntimeError("Unlock failed (wrong PIN or lock screen not ready)")
+
+    def lock(self) -> None:
+        self.d.shell("input keyevent KEYCODE_SLEEP")
 
     def scroll_down(self):
         """makes the screen go down"""
@@ -83,7 +107,7 @@ class MobileBot(ABC):
         sleep(random.uniform(min_sec, max_sec))
 
     def launch_app(self):
-        """Start Bumble with random startup delay"""
+        """Start app with random startup delay"""
         self.d.app_start(self.package)
         # Wait for app to fully load (varies by device)
         self.human_delay(3, 6)
