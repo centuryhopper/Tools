@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ML From Scratch</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>ML From Scratch</h1>
+      <nav>
+        <button class="tab active" data-algo="knn">KNN</button>
+        <!-- add more algorithms here later -->
+      </nav>
+    </header>
+
+    <main>
+      <aside class="controls">
+        <h2>Data</h2>
+        <label>
+          Dataset
+          <select id="dataset-select">
+            <option value="data/dataset.csv">dataset.csv</option>
+          </select>
+        </label>
+        <label>
+          Or upload CSV
+          <input type="file" id="csv-upload" accept=".csv" />
+        </label>
+
+        <label>
+          X feature
+          <select id="x-feature"></select>
+        </label>
+        <label>
+          Y feature
+          <select id="y-feature"></select>
+        </label>
+
+        <label class="checkbox">
+          <input type="checkbox" id="normalize" checked />
+          Normalize features
+        </label>
+
+        <h2>Model</h2>
+        <label>
+          k = <span id="k-value">5</span>
+          <input
+            type="range"
+            id="k-slider"
+            min="1"
+            max="25"
+            step="1"
+            value="5"
+          />
+        </label>
+        <label>
+          Distance
+          <select id="distance-metric">
+            <option value="euclidean">Euclidean</option>
+            <option value="manhattan">Manhattan</option>
+          </select>
+        </label>
+        <label>
+          Test split = <span id="split-value">20</span>%
+          <input
+            type="range"
+            id="split-slider"
+            min="10"
+            max="50"
+            step="5"
+            value="20"
+          />
+        </label>
+
+        <div class="buttons">
+          <button id="train-btn" class="primary">Train &amp; Evaluate</button>
+          <button id="reset-btn">Reset</button>
+        </div>
+      </aside>
+
+      <section class="viz">
+        <canvas id="plot" width="600" height="600"></canvas>
+        <div id="legend" class="legend"></div>
+      </section>
+
+      <aside class="results">
+        <h2>Results</h2>
+        <div class="stat">
+          <span class="label">Accuracy</span>
+          <span id="accuracy" class="value">—</span>
+        </div>
+        <div class="stat">
+          <span class="label">Train / Test</span>
+          <span id="counts" class="value">—</span>
+        </div>
+
+        <h3>Confusion Matrix</h3>
+        <table id="confusion-matrix"></table>
+
+        <h3>Log</h3>
+        <pre id="log"></pre>
+      </aside>
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
