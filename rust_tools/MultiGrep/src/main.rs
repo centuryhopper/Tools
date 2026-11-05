@@ -41,7 +41,7 @@ fn search_files(files: &[&PathBuf], query: &str) {
 
         // 2. Grep the extracted text
         if let Ok(content) = text {
-            // println!("content: {}", content);
+            println!("content: {}", content);
             if content.to_lowercase().contains(&query.to_lowercase()) {
                 println!("Match found in: {:?}", path);
             }
@@ -80,6 +80,8 @@ fn main() {
     //let mut threads = vec![];
 
     // /home/leo_zhang/projects/Tools/rust_tools/MultiGrep/test
+    // cargo run -- -p /home/leo_zhang/Pictures/Screenshots/ -s my_file -f Screenshot
+
     let args = Args::parse();
 
     if args.path.is_none() {
@@ -122,10 +124,11 @@ fn main() {
 
     //println!("FIND: {:?}", FIND.unwrap_or(&PathBuf::from("")).as_os_str());
 
-    if let Some(file) = files
-        .iter()
-        .find(|p| p.to_str().unwrap().to_lowercase().contains(&query_lower))
-    {
+    if let Some(file) = files.iter().find(|p| {
+        p.file_name()
+            .map(|os| os.to_str().unwrap().to_lowercase().contains(&query_lower))
+            .unwrap_or(false)
+    }) {
         search_files(&[file], &args.search.unwrap());
     } else {
         eprintln!("your file was not found :/");
