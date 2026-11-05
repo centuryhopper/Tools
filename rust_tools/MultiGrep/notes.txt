@@ -1,0 +1,31 @@
+pseudocode of any one thread's work:
+    counter (indicate whether all threads have finished processing), bool (indicate whether all threads are done), shared_stack, shared_vector
+    loop {
+        phase 1: get work
+        lock {
+            wait if the shared stack still has files to process or not all threads are done
+            exit the function if all threads are done
+
+            otherwise pop from stack
+            and increment counter
+        }
+
+        phase 2: traverse popped value's children
+                if the file is a directory add to shared_stack
+                otherwise make sure file is not a symlink and add file to shared_collection
+
+        phase 3: publish results
+        lock {
+            decrement shared_counter
+            check if there's any new directories found. If so then notify all other threads
+            otherwise check if the shared_stack is empty and shared_counter is 0 and if so then set shared_bool to true and notify all threads that it's time to exit
+
+
+        }
+
+
+    }
+
+
+    850-488-6411
+
