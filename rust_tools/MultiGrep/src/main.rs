@@ -126,8 +126,13 @@ fn main() {
 
     if let Some(file) = files.iter().find(|p| {
         p.file_name()
-            .map(|os| os.to_str().unwrap().to_lowercase().contains(&query_lower))
-            .unwrap_or(false)
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_lowercase()
+            .contains(&query_lower)
+        //.map(|os| os.to_str().unwrap().to_lowercase().contains(&query_lower))
+        //.unwrap_or(false)
     }) {
         search_files(&[file], &args.search.unwrap());
     } else {
