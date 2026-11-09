@@ -130,6 +130,12 @@ bool isVideo(const fs::path &path) {
 }
 
 std::vector<ImageInfo> getImages(const fs::path &directory) {
+  std::error_code ec;
+  fs::directory_iterator it(directory, ec);
+  if (ec) {
+    fmt::println(stderr, "can't open {}: {}", directory.string(), ec.message());
+    return {};
+  }
   std::println("getting images...");
   std::vector<ImageInfo> images;
 
@@ -368,10 +374,16 @@ void groupImages(const fs::path &PARENT_PATH) {
   }
 }
 
-std::vector<VideoInfo> getVideos(const fs::path &PARENT_PATH) {
+std::vector<VideoInfo> getVideos(const fs::path &directory) {
+  std::error_code ec;
+  fs::directory_iterator it(directory, ec);
+  if (ec) {
+    fmt::println(stderr, "can't open {}: {}", directory.string(), ec.message());
+    return {};
+  }
   fmt::println("getting videos...");
   std::vector<VideoInfo> videos;
-  for (const auto &file : fs::directory_iterator(PARENT_PATH)) {
+  for (const auto &file : fs::directory_iterator(directory)) {
     // skip folders
     if (!file.is_regular_file())
       continue;
@@ -679,8 +691,8 @@ int main(int argc, char *argv[]) {
   bool deDupFlag = prog.get<bool>("--dedup");
   bool deleteDupsFlag = prog.get<bool>("--delete");
 
-  bool needsImgs = groupImagesFlag || deleteImgsFlag || logFilesFlag;
-  bool needsVids = groupVideosFlag || deleteVidsFlag || logFilesFlag;
+  bool needsImgs = groupImagesFlag || deleteImgsFlag;
+  bool needsVids = groupVideosFlag || deleteVidsFlag;
   bool needsDedupPath = deDupFlag;
 
   const auto IMGS_PATH = prog.present<std::string>("--img-path");
@@ -714,7 +726,7 @@ int main(int argc, char *argv[]) {
     ScopedTimer timer("groupImages execution time");
     groupImages(*IMGS_PATH);
   } else if (logFilesFlag) {
-    logFileCreationDateTime(*IMGS_PATH, *VIDS_PATH);
+    logFileCreationDateTime(IMGS_PATH.value_or(""), VIDS_PATH.value_or(""));
   } else if (deDupFlag) {
     const int NUM_THREADS = 16;
     std::vector<fs::path> files =

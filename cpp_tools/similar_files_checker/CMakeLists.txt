@@ -23,83 +23,44 @@ set(PROJECT_WARNINGS
 # -------------------------
 # Sanitizers
 # -------------------------
-# Set before FetchContent so fetched dependencies are instrumented too.
+# These instrument this project's code only. Dependencies come prebuilt
+# from vcpkg and are NOT instrumented.
 
 option(ENABLE_ASAN "Build with AddressSanitizer" OFF)
 option(ENABLE_TSAN "Build with ThreadSanitizer" OFF)
 
 if(ENABLE_ASAN AND ENABLE_TSAN)
-    message(FATAL_ERROR "ENABLE_ASAN and ENABLE_TSAN can't be used together")
+  message(FATAL_ERROR "ENABLE_ASAN and ENABLE_TSAN can't be used together")
 endif()
 
 if(ENABLE_ASAN)
-    add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
-    add_link_options(-fsanitize=address)
+  add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
+  add_link_options(-fsanitize=address)
 endif()
 
 if(ENABLE_TSAN)
-    add_compile_options(-fsanitize=thread -fno-omit-frame-pointer -g -O1)
-    add_link_options(-fsanitize=thread)
+  add_compile_options(-fsanitize=thread -fno-omit-frame-pointer -g -O1)
+  add_link_options(-fsanitize=thread)
 endif()
 
 
-include(FetchContent)
+# -------------------------
+# Dependencies (declared in vcpkg.json)
+# -------------------------
 
-FetchContent_Declare(
-    fmt
-    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG 10.2.1
-)
+find_package(fmt      CONFIG REQUIRED)
+find_package(exiv2    CONFIG REQUIRED)
+find_package(argparse CONFIG REQUIRED)
+find_package(BLAKE3   CONFIG REQUIRED)
+find_package(TBB      CONFIG REQUIRED)
+find_package(OpenCV   REQUIRED)
+find_package(FFMPEG   REQUIRED)   # vcpkg's FFmpeg find module
 
-FetchContent_MakeAvailable(fmt)
-
-FetchContent_Declare(
-    exiv2
-    GIT_REPOSITORY https://github.com/Exiv2/exiv2.git
-    GIT_TAG v0.28.7
-)
-
-# Don't build stuff you don't need
-set(EXIV2_BUILD_EXIV2_COMMAND OFF CACHE BOOL "" FORCE)
-set(EXIV2_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
-set(EXIV2_BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
-set(EXIV2_BUILD_DOC OFF CACHE BOOL "" FORCE)
-
-# We don't need Brotli/JPEG XL support
-set(EXIV2_ENABLE_BROTLI OFF CACHE BOOL "" FORCE)
-
-set(EXIV2_ENABLE_INIH OFF CACHE BOOL "" FORCE)
-
-FetchContent_MakeAvailable(exiv2)
-
-target_include_directories(exiv2lib
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-)
-
-# fetch latest argparse
-FetchContent_Declare(
-    argparse
-    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-)
-FetchContent_MakeAvailable(argparse)
-
-# OpenCV
-find_package(OpenCV REQUIRED)
-
-
-find_package(PkgConfig REQUIRED)
-
-# sudo apt install pkg-config libavformat-dev libavutil-dev
-pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavutil)
-
-find_package(TBB REQUIRED)
-
-FetchContent_Declare(blake3
-    GIT_REPOSITORY https://github.com/BLAKE3-team/BLAKE3
-    GIT_TAG        1.8.2        # pin a release tag
-    SOURCE_SUBDIR  c)
-FetchContent_MakeAvailable(blake3)
+# Wrap FFmpeg's variables in a target so it links like everything else
+add_library(ffmpeg_deps INTERFACE)
+target_include_directories(ffmpeg_deps INTERFACE ${FFMPEG_INCLUDE_DIRS})
+target_link_directories(ffmpeg_deps INTERFACE ${FFMPEG_LIBRARY_DIRS})
+target_link_libraries(ffmpeg_deps INTERFACE ${FFMPEG_LIBRARIES})
 
 # -------------------------
 # Bounds checking (Debug only)
@@ -135,8 +96,8 @@ target_link_libraries(${PROJECT_NAME}
         fmt::fmt
         ${OpenCV_LIBS}
         Exiv2::exiv2lib
-        PkgConfig::FFMPEG
-        argparse
+        ffmpeg_deps
+        argparse::argparse
         TBB::tbb
         BLAKE3::blake3
         bounds_checks
@@ -179,11 +140,199 @@ target_link_libraries(tests
         fmt::fmt
         ${OpenCV_LIBS}
         Exiv2::exiv2lib
-        PkgConfig::FFMPEG
-        argparse
+        ffmpeg_deps
+        argparse::argparse
         BLAKE3::blake3
         TBB::tbb
         bounds_checks
 )
 
 add_test(NAME unit_tests COMMAND tests)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

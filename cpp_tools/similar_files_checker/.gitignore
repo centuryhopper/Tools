@@ -4,6 +4,8 @@ build/
 # Generated compilation database
 compile_commands.json
 
+vcpkg_installed/
+
 # IDEs
 .vscode/
 .idea/

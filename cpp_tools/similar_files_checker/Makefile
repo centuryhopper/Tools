@@ -1,5 +1,5 @@
 # toggle between debug and release
-PRESET ?= debug
+PRESET ?= release
 
 # Optional sanitizer: empty (none), asan, or tsan.
 #   make run SAN=asan
@@ -15,7 +15,7 @@ endif
 CONFIG    := $(PRESET)$(if $(SAN),-$(SAN))
 BUILD_DIR := build/$(CONFIG)
 APP   := $(BUILD_DIR)/bin/similar_files_checker
-CACHE := $(BUILD_DIR)/CMakeCache.txt
+CACHE := $(BUILD_DIR)/.configured
 
 # TSan can abort at startup on newer kernels with high ASLR entropy
 # ("unexpected memory mapping"); disabling address randomization avoids it.
@@ -35,11 +35,15 @@ all: build
 $(CACHE): $(PRESET_FILES)
 	cmake --preset $(CONFIG)
 	@touch $@
+	# make sure clangd intellisense works in cpp files
+	ln -sf build/$(PRESET)/compile_commands.json .
+
 
 configure: $(CACHE)
 
 build: $(CACHE)
 	cmake --build --preset $(CONFIG)
+	ln -sf $(BUILD_DIR)/compile_commands.json compile_commands.json
 
 # Pass program arguments with: make run ARGS="--flag value"
 run: build
