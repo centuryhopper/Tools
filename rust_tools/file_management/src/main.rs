@@ -164,7 +164,8 @@ fn run_cli() -> std::io::Result<()> {
         } => {
             println!("delete flag: {}", delete);
             println!("[{}] Collecting all files...", now());
-            let results = get_all_files(path.as_str(), &exclude).unwrap_or_default();
+            let pathStr = path.as_str();
+            let results = get_all_files(pathStr, &exclude).unwrap_or_default();
             println!("[{}] Number of files collected: {}", now(), results.len());
             let file_hashes = get_file_hashes(&results, &exclude);
             
@@ -179,6 +180,11 @@ fn run_cli() -> std::io::Result<()> {
     Ok(())
 }
 
+// rust-gdb --tui --args target/debug/file_management FileDeduper -p /home/leo_zhang/synology/root (OLD WAY)
+
+// NEW WAY (has reversible debugging):
+// rr ./target/debug/your_binary
+// rr replay -d rust-gdb
 fn main() -> io::Result<()> {
     
     // let mut test = BufWriter::new(File::create("./output/test.txt")?);
@@ -194,6 +200,13 @@ fn main() -> io::Result<()> {
         .unwrap();
 
     let start = Instant::now();
+
+
+    let mut num = 5;
+
+    num = 6;
+
+    println!("{}", num);
 
     run_cli()?;
 

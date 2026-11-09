@@ -1,6 +1,6 @@
 // @ts-check
 
-export class Matrix {
+export default class Matrix {
   /** @type {number} */
   #rows;
   /** @type {number} */
@@ -24,7 +24,7 @@ export class Matrix {
    */
   static from2dArray(inputArray) {
     const m = new Matrix(inputArray.length, inputArray[0].length);
-    m.#data = inputArray.map((row) => [...row]);
+    m.data = inputArray.map((row) => [...row]);
     return m;
   }
 
@@ -36,7 +36,7 @@ export class Matrix {
   static fromArray(inputArray) {
     const m = new Matrix(inputArray.length, 1);
     for (let i = 0; i < inputArray.length; i++) {
-      m.#data[i][0] = inputArray[i];
+      m.data[i][0] = inputArray[i];
     }
     return m;
   }
@@ -46,7 +46,7 @@ export class Matrix {
    * @returns {number[]}
    */
   static toArray(m) {
-    return m.#data.map((row) => row[0]);
+    return m.data.map((row) => row[0]);
   }
 
   /**
@@ -54,10 +54,10 @@ export class Matrix {
    * @returns {Matrix}
    */
   static transpose(m) {
-    const result = new Matrix(m.#cols, m.#rows);
-    for (let i = 0; i < m.#cols; i++) {
-      for (let j = 0; j < m.#rows; j++) {
-        result.#data[i][j] = m.#data[j][i];
+    const result = new Matrix(m.cols, m.rows);
+    for (let i = 0; i < m.cols; i++) {
+      for (let j = 0; j < m.rows; j++) {
+        result.data[i][j] = m.data[j][i];
       }
     }
     return result;
@@ -68,7 +68,7 @@ export class Matrix {
    * @returns {[number, number]}
    */
   shape() {
-    return [this.#rows, this.#cols];
+    return [this.rows, this.cols];
   }
 
   /** @param {number} scalar */
@@ -89,11 +89,11 @@ export class Matrix {
 
   /** @param {number[]} biases */
   sumBias(biases) {
-    if (this.#cols !== biases.length) {
+    if (this.cols !== biases.length) {
       throw new Error("number of columns should match the number of biases");
     }
-    for (let i = 0; i < this.#rows; i++) {
-      for (let j = 0; j < this.#cols; j++) {
+    for (let i = 0; i < this.rows; i++) {
+      for (let j = 0; j < this.cols; j++) {
         this.#data[i][j] += biases[j];
       }
     }
@@ -135,22 +135,40 @@ export class Matrix {
 
   /** @param {number[][]} data */
   fill(data) {
-    if (data.length !== this.#rows || data[0].length !== this.#cols) {
+    if (data.length !== this.rows || data[0].length !== this.cols) {
       console.error("Shape mismatch in fill().");
       return;
     }
     this.#data = data.map((row) => [...row]);
   }
 
+  /** print the matrix */
   print() {
     // console.log(this.#data.map(row => row.map(v => v.toFixed(2)).join("\t")).join("\n"));
     console.table(this.#data);
   }
 
+  /** zero out the matrix */
   reset() {
-    this.#data = Array.from({ length: this.#rows }, () =>
-      Array(this.#cols).fill(0),
+    this.#data = Array.from({ length: this.rows }, () =>
+      Array(this.cols).fill(0),
     );
+  }
+
+  /**
+   * flattens the 2D matrix into 1D matrix
+   * @returns {Array<Number>} -
+   */
+  flatten() {
+    if (
+      !Array.isArray(this.#data) ||
+      this.#data.length === 0 ||
+      !Array.isArray(this.#data[0])
+    ) {
+      throw new TypeError("data must be a non-empty 2D array");
+    }
+
+    return this.#data.flat();
   }
 
   /**
@@ -158,7 +176,7 @@ export class Matrix {
    * @returns {number}
    */
   static determinantNaive(matrix) {
-    if (matrix.#rows !== matrix.#cols || matrix.#rows < 1) {
+    if (matrix.rows !== matrix.cols || matrix.rows < 1) {
       console.error("Matrix must be square for determinant.");
       return 0;
     }
@@ -171,11 +189,11 @@ export class Matrix {
     const getSubMatrix = (m, colToSkip) => {
       /** @type {number[][]} */
       const data = [];
-      for (let i = 1; i < m.#rows; i++) {
+      for (let i = 1; i < m.rows; i++) {
         /** @type {number[]} */
         const row = [];
-        for (let j = 0; j < m.#cols; j++) {
-          if (j !== colToSkip) row.push(m.#data[i][j]);
+        for (let j = 0; j < m.cols; j++) {
+          if (j !== colToSkip) row.push(m.data[i][j]);
         }
         data.push(row);
       }
@@ -189,29 +207,48 @@ export class Matrix {
      * @returns {number}
      */
     const runner = (mat, m, n) => {
-      if (m === 1 && n === 1) return mat.#data[0][0];
+      if (m === 1 && n === 1) return mat.data[0][0];
       if (m === 2 && n === 2)
         return (
-          mat.#data[0][0] * mat.#data[1][1] - mat.#data[0][1] * mat.#data[1][0]
+          mat.data[0][0] * mat.data[1][1] - mat.data[0][1] * mat.data[1][0]
         );
 
       let sum = 0;
       for (let j = 0; j < n; j++) {
         const subMat = getSubMatrix(mat, j);
-        sum +=
-          mat.#data[0][j] *
-          runner(subMat, m - 1, n - 1) *
-          (j % 2 === 0 ? 1 : -1);
+        mat.data[0][j] * runner(subMat, m - 1, n - 1) * (j % 2 === 0 ? 1 : -1);
       }
       return sum;
     };
 
-    return runner(matrix, matrix.#rows, matrix.#cols);
+    return runner(matrix, matrix.rows, matrix.cols);
   }
 
   /** @returns {number[][]} */
   get data() {
     return this.#data;
+  }
+
+  /** @param {number[][]} value */
+  set data(value) {
+    if (
+      !Array.isArray(value) ||
+      value.length === 0 ||
+      !Array.isArray(value[0])
+    ) {
+      throw new TypeError("data must be a non-empty 2D array");
+    }
+    const cols = value[0].length;
+    if (cols === 0 || value.some((row) => row.length !== cols)) {
+      throw new RangeError("every row must have the same, non-zero length");
+    }
+    if (value.some((row) => row.some((v) => typeof v !== "number"))) {
+      throw new TypeError("all values must be numbers");
+    }
+
+    this.#data = value.map((row) => [...row]); // copy, don't keep caller's array
+    this.#rows = value.length;
+    this.#cols = cols;
   }
 
   /** @returns {number} */
@@ -262,13 +299,13 @@ export class Matrix {
    * @returns {Matrix}
    */
   static multiply(m1, m2) {
-    if (m1.#rows !== m2.#rows || m1.#cols !== m2.#cols) {
+    if (m1.rows !== m2.rows || m1.cols !== m2.cols) {
       throw new Error("Shape mismatch for element-wise multiplication.");
     }
-    const result = new Matrix(m1.#rows, m1.#cols);
-    for (let i = 0; i < m1.#rows; i++) {
-      for (let j = 0; j < m1.#cols; j++) {
-        result.#data[i][j] = m1.#data[i][j] * m2.#data[i][j];
+    const result = new Matrix(m1.rows, m1.cols);
+    for (let i = 0; i < m1.rows; i++) {
+      for (let j = 0; j < m1.cols; j++) {
+        result.data[i][j] = m1.data[i][j] * m2.data[i][j];
       }
     }
     return result;
@@ -276,7 +313,7 @@ export class Matrix {
 
   /** @returns {Matrix} */
   softmax() {
-    for (let i = 0; i < this.#rows; i++) {
+    for (let i = 0; i < this.rows; i++) {
       const max = Math.max(...this.#data[i]);
       const exps = this.#data[i].map((v) => Math.exp(v - max));
       const sum = exps.reduce((acc, val) => acc + val, 0);
@@ -291,12 +328,12 @@ export class Matrix {
    * @returns {Matrix}
    */
   static add(a, b) {
-    if (a.#rows !== b.#rows || a.#cols !== b.#cols)
+    if (a.rows !== b.rows || a.cols !== b.cols)
       throw new Error("Matrix dimensions must match for addition");
-    const result = new Matrix(a.#rows, a.#cols);
-    for (let i = 0; i < a.#rows; i++) {
-      for (let j = 0; j < a.#cols; j++) {
-        result.#data[i][j] = a.#data[i][j] + b.#data[i][j];
+    const result = new Matrix(a.rows, a.cols);
+    for (let i = 0; i < a.rows; i++) {
+      for (let j = 0; j < a.cols; j++) {
+        result.data[i][j] = a.data[i][j] + b.data[i][j];
       }
     }
     return result;
@@ -308,12 +345,12 @@ export class Matrix {
    * @returns {Matrix}
    */
   static subtract(a, b) {
-    if (a.#rows !== b.#rows || a.#cols !== b.#cols)
+    if (a.rows !== b.rows || a.cols !== b.cols)
       throw new Error("Matrix dimensions must match for subtraction");
-    const result = new Matrix(a.#rows, a.#cols);
-    for (let i = 0; i < a.#rows; i++) {
-      for (let j = 0; j < a.#cols; j++) {
-        result.#data[i][j] = a.#data[i][j] - b.#data[i][j];
+    const result = new Matrix(a.rows, a.cols);
+    for (let i = 0; i < a.rows; i++) {
+      for (let j = 0; j < a.cols; j++) {
+        result.data[i][j] = a.data[i][j] - b.data[i][j];
       }
     }
     return result;
@@ -325,10 +362,10 @@ export class Matrix {
    * @returns {Matrix}
    */
   static scale(m, scalar) {
-    const result = new Matrix(m.#rows, m.#cols);
-    for (let i = 0; i < m.#rows; i++) {
-      for (let j = 0; j < m.#cols; j++) {
-        result.#data[i][j] = m.#data[i][j] * scalar;
+    const result = new Matrix(m.rows, m.cols);
+    for (let i = 0; i < m.rows; i++) {
+      for (let j = 0; j < m.cols; j++) {
+        result.data[i][j] = m.data[i][j] * scalar;
       }
     }
     return result;
@@ -340,16 +377,16 @@ export class Matrix {
    * @returns {Matrix}
    */
   static dot(a, b) {
-    if (a.#cols !== b.#rows)
+    if (a.cols !== b.rows)
       throw new Error("Incompatible matrix dimensions for multiplication");
-    const result = new Matrix(a.#rows, b.#cols);
-    for (let i = 0; i < result.#rows; i++) {
-      for (let j = 0; j < result.#cols; j++) {
+    const result = new Matrix(a.rows, b.cols);
+    for (let i = 0; i < result.rows; i++) {
+      for (let j = 0; j < result.cols; j++) {
         let sum = 0;
-        for (let k = 0; k < a.#cols; k++) {
-          sum += a.#data[i][k] * b.#data[k][j];
+        for (let k = 0; k < a.cols; k++) {
+          sum += a.data[i][k] * b.data[k][j];
         }
-        result.#data[i][j] = sum;
+        result.data[i][j] = sum;
       }
     }
     return result;

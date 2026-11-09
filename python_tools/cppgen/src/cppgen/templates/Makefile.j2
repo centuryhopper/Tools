@@ -1,18 +1,31 @@
-PRESET ?= release
-BUILD_DIR := build/$(PRESET)
-APP   := $(BUILD_DIR)/bin/{{ project_name }}
-CACHE := $(BUILD_DIR)/CMakeCache.txt
+# toggle between debug and release
+PRESET ?= debug
+
+# Optional sanitizer: empty (none), asan, or tsan.
+#   make run SAN=asan
+#   make test SAN=tsan PRESET=release
+SAN ?=
+
+ifneq ($(filter-out asan tsan,$(SAN)),)
+$(error SAN must be empty, asan or tsan (got '$(SAN)'))
+endif
+
+# Each sanitizer gets its own preset and build tree (e.g. build/debug-asan),
+# so switching between them never forces a full rebuild.
+CONFIG    := $(PRESET)$(if $(SAN),-$(SAN))
+BUILD_DIR := build/$(CONFIG)
+APP   := $(BUILD_DIR)/bin/similar_files_checker
+CACHE := $(BUILD_DIR)/.configured
+
+# TSan can abort at startup on newer kernels with high ASLR entropy
+# ("unexpected memory mapping"); disabling address randomization avoids it.
+RUN_PREFIX := $(if $(filter tsan,$(SAN)),setarch $(shell uname -m) -R)
 
 # Changing either presets file triggers a reconfigure.
 # $(wildcard ...) is empty when CMakeUserPresets.json doesn't exist.
 PRESET_FILES := CMakePresets.json $(wildcard CMakeUserPresets.json)
 
-# Under the tsan preset, `make run` uses tsan.supp (if present) to hide OpenMP
-# false positives. ctest gets the same file from CMakeLists.txt.
-TSAN_SUPP := $(wildcard $(CURDIR)/tsan.supp)
-RUN_ENV := $(if $(and $(filter tsan,$(PRESET)),$(TSAN_SUPP)),TSAN_OPTIONS="suppressions=$(TSAN_SUPP) $(TSAN_OPTIONS)")
-
-.PHONY: all configure build run clean asan tsan{% if enable_tests %} test{% endif %}
+.PHONY: all configure build run clean{% if enable_tests %} test{% endif %}
 
 
 all: build
@@ -20,37 +33,80 @@ all: build
 # Configure only when the build tree is missing or the presets changed.
 # Assumes each configure preset uses binaryDir = ${sourceDir}/build/${presetName}.
 $(CACHE): $(PRESET_FILES)
-	cmake --preset $(PRESET)
+	cmake --preset $(CONFIG)
 	@touch $@
+	# make sure clangd intellisense works in cpp files
+	ln -sf build/$(PRESET)/compile_commands.json .
+
 
 configure: $(CACHE)
 
 build: $(CACHE)
-	cmake --build --preset $(PRESET)
+	cmake --build --preset $(CONFIG)
+	ln -sf $(BUILD_DIR)/compile_commands.json compile_commands.json
 
 # Pass program arguments with: make run ARGS="--flag value"
 run: build
-	$(RUN_ENV) ./$(APP) $(ARGS)
+	$(RUN_PREFIX) ./$(APP) $(ARGS)
 
-{% if enable_tests %}
 test: build
-	ctest --preset $(PRESET) --output-on-failure
+	$(RUN_PREFIX) ctest --preset $(CONFIG)
 
-# Shortcuts: build and run the tests under a sanitizer
-asan:
-	$(MAKE) test PRESET=asan
-
-tsan:
-	$(MAKE) test PRESET=tsan
-
-{% else %}
-# Shortcuts: build and run the app under a sanitizer (pass ARGS as usual)
-asan:
-	$(MAKE) run PRESET=asan
-
-tsan:
-	$(MAKE) run PRESET=tsan
-
-{% endif %}
 clean:
 	rm -rf build
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

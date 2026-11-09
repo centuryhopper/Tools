@@ -26,7 +26,7 @@ env = Environment(
 
 ctx = {
     "class_name": "MyClass",
-    "namespace": "project::core",     # nested namespaces work (C++17)
+    "namespace": "project::core",  # nested namespaces work (C++17)
     "header_include": "project/core/my_class.hpp",
 }
 
@@ -37,6 +37,7 @@ app.add_typer(init_app, name="init")
 # cppgen owns this file and rewrites it whole; CMakeLists.txt pulls it in
 # with include(cmake/sources.cmake). Nobody should edit it by hand.
 SOURCES_CMAKE = Path("cmake") / "sources.cmake"
+DEP_CMAKE = Path("cmake") / "dependencies.cmake"
 
 # File types scanned when checking whether anything still includes a header.
 CPP_SUFFIXES = {".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx"}
@@ -144,8 +145,6 @@ def unit_paths(project: Path, name: str) -> tuple[Path, Path, str]:
 # -------------------------
 # Syncing cmake/sources.cmake
 # -------------------------
-
-
 def sync_sources(project: Path) -> bool:
     """
     Regenerate cmake/sources.cmake from the .cpp files currently on disk.
@@ -166,6 +165,27 @@ def sync_sources(project: Path) -> bool:
     content = env.get_template("sources.cmake.j2").render(sources=files)
 
     out = project / SOURCES_CMAKE
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    # Only write on a real change: touching this file makes CMake
+    # reconfigure, so skipping no-op writes keeps builds fast.
+    if out.exists() and out.read_text(encoding="utf-8") == content:
+        return False
+    out.write_text(content, encoding="utf-8")
+    return True
+
+
+# -------------------------
+# Syncing cmake/dependencies.cmake
+# -------------------------
+def sync_dependencies(project: Path) -> bool:
+    """
+    Regenerate cmake/dependencies.cmake
+    Returns True if the file was rewritten.
+    """
+    content = env.get_template("dependencies.cmake.j2").render()
+
+    out = project / DEP_CMAKE
     out.parent.mkdir(parents=True, exist_ok=True)
 
     # Only write on a real change: touching this file makes CMake
@@ -239,10 +259,15 @@ def delete_file(project: Path, path: Path) -> None:
     """
     if is_git_tracked(project, path):
         result = subprocess.run(
-            ["git", "rm", "--cached", "-q", str(path)], cwd=project, check=True, text=True,
+            ["git", "rm", "--cached", "-q", str(path)],
+            cwd=project,
+            check=True,
+            text=True,
         )
         if result.returncode != 0:
-            fail(f"git refused to unstage {path.relative_to(project)}:\n{result.stderr.strip()}")
+            fail(
+                f"git refused to unstage {path.relative_to(project)}:\n{result.stderr.strip()}"
+            )
     path.unlink()
 
 
@@ -270,10 +295,12 @@ def remove_empty_dirs(path: Path, stop: Path) -> None:
 # -------------------------
 
 
-# @app.command()
-@init_app.callback(invoke_without_command=True)
+@app.command()
+# @init_app.callback(invoke_without_command=True)
+# The slash is Click syntax for a flag pair. When Typer sees "--tests/--no-tests", it splits on the /. The name before the slash sets the value to True, and the name after it sets the value to False. If neither is passed, you get the default:
 def init(
-    project_name: str, tests: bool = typer.Option(True, help="Include test setup")
+    project_name: str = typer.Argument(..., help="Name of the new project"),
+    tests: bool = typer.Option(True, "--tests/--no-tests", help="Include test setup"),
 ):
     """
     Create a reusable C++ CMake project.
@@ -307,6 +334,9 @@ def init(
         ("main.cpp.j2", "src/main.cpp"),
         (".gitignore.j2", ".gitignore"),
         ("README.md.j2", "README.md"),
+        (".clangd.j2", ".clangd"),
+        ("CMakePresets.json.j2", "CMakePresets.json"),
+        # ("dependencies.cmake.j2", "dependencies.cmake"),
     ]
 
     # -------------------------
@@ -317,10 +347,6 @@ def init(
 
     if tests:
         render_template("test_main.cpp.j2", root / "tests" / "test_main.cpp", context)
-        
-    # generate CMakePresets.json
-    render_template("CMakePresets.json.j2", root / "CMakePresets.json", context)
-    
 
     # Generate cmake/sources.cmake last, from whatever .cpp files now exist
     # (just src/main.cpp at this point). It is rendered by the same function
@@ -328,6 +354,7 @@ def init(
     # This file also marks the directory as a cppgen project for
     # find_project_root.
     sync_sources(root)
+    sync_dependencies(root)
 
     typer.secho(f"Created C++ project: {project_name}", fg=typer.colors.GREEN)
 
@@ -358,8 +385,12 @@ def add(
     # Project folder names can contain "-", which isn't valid in a C++ identifier.
     namespace = root.name.replace("-", "_")
 
-    render_template("header.hpp.j2", header, {"name": Path(name).name, "namespace": namespace})
-    render_template("source.cpp.j2", source, {"header": include_str, "namespace": namespace})
+    render_template(
+        "header.hpp.j2", header, {"name": Path(name).name, "namespace": namespace}
+    )
+    render_template(
+        "source.cpp.j2", source, {"header": include_str, "namespace": namespace}
+    )
 
     for path in (header, source):
         typer.echo(f"created {path.relative_to(root)}")
@@ -370,7 +401,10 @@ def add(
 
 @app.command()
 def remove(
-    name: str = typer.Argument(..., help="Unit name, e.g. hasher or net/client",),
+    name: str = typer.Argument(
+        ...,
+        help="Unit name, e.g. hasher or net/client",
+    ),
     keep_header: bool = typer.Option(
         False,
         "--keep-header",
@@ -435,7 +469,9 @@ def remove(
                 fg=typer.colors.YELLOW,
             )
 
-    typer.echo("Will delete:\n  " + "\n  ".join(str(p.relative_to(root)) for p in targets))
+    typer.echo(
+        "Will delete:\n  " + "\n  ".join(str(p.relative_to(root)) for p in targets)
+    )
     if not yes and not typer.confirm("Continue?"):
         raise typer.Exit()
     # Delete, then tidy up any folders a nested unit left empty.

@@ -15,21 +15,23 @@ use clap::{Parser, arg, command};
 use rayon::{prelude::*, result};
 use walkdir::WalkDir;
 
-fn extract_image_ocr(path: &PathBuf) -> anyhow::Result<String> {
-    let mut lt = leptess::LepTess::new(None, "eng")?;
+fn extract_image_ocr(path: &Path) -> anyhow::Result<String> {
+    let mut lt = leptess::LepTess::new(None, "eng")
+        .with_context(|| format!("Failed to create leptess instance"))?;
     lt.set_image(path.to_str().unwrap_or(""))?;
     let text = lt.get_utf8_text()?;
     Ok(text)
 }
 
-fn extract_pdf_text(path: &PathBuf) -> anyhow::Result<String> {
+fn extract_pdf_text(path: &Path) -> anyhow::Result<String> {
     let bytes = std::fs::read(path.to_str().unwrap_or(""))
-        .with_context(|| format!("failed to read PDF file: {:?}", path.to_string_lossy()))?;
-    let text = pdf_extract::extract_text_from_mem(&bytes)?;
+        .with_context(|| format!("Failed to read PDF file: {:?}", path.to_string_lossy()))?;
+    let text = pdf_extract::extract_text_from_mem(&bytes)
+        .with_context(|| "Failed to extract text from pdf file".to_string())?;
     Ok(text)
 }
 
-fn search_files(files: &[&PathBuf], query: &str) {
+fn search_files(files: &[PathBuf], query: &str) {
     files.par_iter().for_each(|path| {
         // 1. Determine file type
         let text = match path.extension().and_then(|s| s.to_str()) {
@@ -41,7 +43,7 @@ fn search_files(files: &[&PathBuf], query: &str) {
 
         // 2. Grep the extracted text
         if let Ok(content) = text {
-            println!("content: {}", content);
+            //println!("content: {}", content);
             if content.to_lowercase().contains(&query.to_lowercase()) {
                 println!("Match found in: {:?}", path);
             }
@@ -64,16 +66,19 @@ struct Args {
     path: Option<String>,
 }
 
-// 1. Group the dependent variables together
-struct State {
-    stack: Vec<PathBuf>,
-    active: usize, // workers currently processing a dir
-    all_threads_done: bool,
+trait extras {
+    fn pathbuf_contains(&self, query: &str) -> bool;
 }
 
-struct Ctx {
-    mtx_state: Mutex<State>,
-    cvar: Condvar,
+impl extras for PathBuf {
+    fn pathbuf_contains(&self, query: &str) -> bool {
+        self.file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_lowercase()
+            .contains(&query.to_lowercase())
+    }
 }
 
 fn main() {
@@ -110,32 +115,20 @@ fn main() {
     println!("files count: {:?}", files.len());
     println!("time it took: {:?}", timer.elapsed().as_secs());
 
+    if args.file.is_none() {
+        search_files(&files, &args.search.unwrap());
+        return;
+    }
+
     // pulled the lowercase query out of the closure and lowercasing it exactly once before you start iterating.
     let query_lower = args.file.as_deref().unwrap_or("").to_lowercase();
 
-    // for i in (11000..files.len()) {
-    //     println!("{:?}", files[i].as_os_str());
-    // }
-    //
-    // // -p /home/leo_zhang/Downloads/ -s 'modern c++' -f cpp_scraping_and_philosophy_notes.txt
-    // let FIND = files
-    //     .iter()
-    //     .find(|p| p.to_str().unwrap().to_lowercase().contains(&query_lower));
-
-    //println!("FIND: {:?}", FIND.unwrap_or(&PathBuf::from("")).as_os_str());
-
-    if let Some(file) = files.iter().find(|p| {
-        p.file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_lowercase()
-            .contains(&query_lower)
-        //.map(|os| os.to_str().unwrap().to_lowercase().contains(&query_lower))
-        //.unwrap_or(false)
-    }) {
-        search_files(&[file], &args.search.unwrap());
+    if let Some(file) = files.iter().find(|p| p.pathbuf_contains(&query_lower)) {
+        search_files(&[file.to_path_buf()], &args.search.unwrap());
     } else {
         eprintln!("your file was not found :/");
     }
 }
+
+#[cfg(test)]
+mod tests;

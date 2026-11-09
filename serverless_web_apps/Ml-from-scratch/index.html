@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ML From Scratch</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="ml-favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header>
@@ -102,7 +103,17 @@
         <h3>Log</h3>
         <pre id="log"></pre>
       </aside>
+
+      <button class="btn">CLICK ME</button>
     </main>
+    <script type="module">
+      // You must explicitly import jQuery or your local module
+      import { $ } from "./utils/jquery-loader.js";
+
+      $(".btn").on("click", () => {
+        console.log("Clicked safely inside a module!");
+      });
+    </script>
 
     <script type="module" src="js/main.js"></script>
   </body>

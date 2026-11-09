@@ -1,0 +1,10 @@
+[project]
+name = "fetch-nasa-pic"
+version = "0.1.0"
+description = "Downloads NASA's Astronomy Picture of the Day on a cron schedule"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "python-dotenv>=1.2.4",
+    "requests>=2.32",
+]

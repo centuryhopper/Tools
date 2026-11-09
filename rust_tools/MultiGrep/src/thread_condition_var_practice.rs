@@ -1,3 +1,18 @@
+// Fn  ⊂  FnMut  ⊂  FnOnce
+// (read)  (mutate)  (consume — callable once)
+
+// 1. Group the dependent variables together
+struct State {
+    stack: Vec<PathBuf>,
+    active: usize, // workers currently processing a dir
+    all_threads_done: bool,
+}
+
+struct Ctx {
+    mtx_state: Mutex<State>,
+    cvar: Condvar,
+}
+
 let ctx = Arc::new(Ctx {
         mtx_state: Mutex::new(State {
             stack: vec![root_path],

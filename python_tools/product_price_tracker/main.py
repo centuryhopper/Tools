@@ -3,7 +3,6 @@ import csv
 import os
 import time
 from pathlib import Path
-from typing import List
 
 import uiautomator2 as u2
 from dotenv import load_dotenv
@@ -18,8 +17,9 @@ load_dotenv("secrets.env")
 
 amzn_bot = AmazonBot()
 bestbuy_bot = BestBuyBot(
-    package="com.bestbuy.android", device_serial=os.getenv("GALAXY_S26"),
-    phone_pin=os.getenv('phone_pin')
+    package="com.bestbuy.android",
+    device_serial=os.getenv("GALAXY_S26"),
+    phone_pin=os.getenv("phone_pin"),
 )
 
 
@@ -91,9 +91,9 @@ async def main():
                 f"{'ERROR: ' + str(exception) if isinstance(exception, Exception) else exception}\n  {p}\n"
             )
 
-    output = Path(f'./output')
+    output = Path(f"./output")
     output.mkdir(exist_ok=True)
-    output = output / f'data_{time.strftime("%Y_%m_%d_%H_%M_%S")}.csv'
+    output = output / f"data_{time.strftime('%Y_%m_%d_%H_%M_%S')}.csv"
 
     data = [
         ["product_name", "product_id", "platform", "product_price"],

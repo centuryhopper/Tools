@@ -1,17 +1,17 @@
 use std::{cell::RefCell, rc::Rc};
 
 // Option<T> implements the Clone trait if and only if the inner type T also implements Clone.
-type SharedNode = Option<Rc<RefCell<Node>>>;
-type SharedRefNode<'a> = Option<&'a Rc<RefCell<Node>>>;
+type Option_Rc_Node = Option<Rc<RefCell<Node>>>;
+type Option_Ref_Rc_Node<'a> = Option<&'a Rc<RefCell<Node>>>;
 
 struct Node {
     data: i32,
-    next: SharedNode,
+    next: Option_Rc_Node,
 }
 
 pub struct LinkedList {
-    head: SharedNode,
-    tail: SharedNode,
+    head: Option_Rc_Node,
+    tail: Option_Rc_Node,
     size: usize,
 }
 
@@ -30,7 +30,7 @@ impl LinkedList {
         self.tail.as_ref().map(|n| n.borrow().data)
     }
 
-    fn clear_runner(&mut self, mut cur: SharedNode) {
+    fn clear_runner(&mut self, mut cur: Option_Rc_Node) {
         match cur {
             Some(node) => {
                 let next = node.as_ref().borrow_mut().next.take();
@@ -52,7 +52,7 @@ impl LinkedList {
         self.size
     }
 
-    fn to_vec_runner(&self, cur: SharedRefNode) -> Vec<i32> {
+    fn to_vec_runner(&self, cur: Option_Ref_Rc_Node) -> Vec<i32> {
         let mut res: Vec<i32> = vec![];
         match cur {
             Some(node) => {
@@ -79,7 +79,7 @@ impl LinkedList {
         result
     }
 
-    fn find_runner(&self, cur: SharedRefNode, value: i32, idx: usize) -> Option<usize> {
+    fn find_runner(&self, cur: Option_Ref_Rc_Node, value: i32, idx: usize) -> Option<usize> {
         match cur {
             Some(node) => {
                 if value == node.borrow().data {
@@ -96,7 +96,7 @@ impl LinkedList {
         }
     }
 
-    fn node_create(value: i32, next: SharedNode) -> SharedNode {
+    fn node_create(value: i32, next: Option_Rc_Node) -> Option_Rc_Node {
         Some(Rc::new(RefCell::new(Node {
             data: value,
             next: next,
@@ -109,7 +109,13 @@ impl LinkedList {
         self.size += 1;
     }
 
-    fn push_at_runner(&mut self, idx: usize, value: i32, prev: SharedRefNode, cur: SharedRefNode) {
+    fn push_at_runner(
+        &mut self,
+        idx: usize,
+        value: i32,
+        prev: Option_Ref_Rc_Node,
+        cur: Option_Ref_Rc_Node,
+    ) {
         match cur {
             Some(node) => {
                 if idx == 0 {
@@ -143,7 +149,7 @@ impl LinkedList {
         };
     }
 
-    fn erase_back_runner(&mut self, prev: SharedRefNode, cur: SharedRefNode) {
+    fn erase_back_runner(&mut self, prev: Option_Ref_Rc_Node, cur: Option_Ref_Rc_Node) {
         let next_node_option = cur.unwrap().borrow().next.clone();
         match next_node_option {
             Some(node) => {
@@ -164,7 +170,7 @@ impl LinkedList {
         }
     }
 
-    fn erase_at_runner(&mut self, idx: usize, prev: SharedRefNode, cur: SharedRefNode) {
+    fn erase_at_runner(&mut self, idx: usize, prev: Option_Ref_Rc_Node, cur: Option_Ref_Rc_Node) {
         match cur {
             Some(node) => {
                 if idx == 0 {

@@ -16,7 +16,9 @@ where
 {
     let keyed: Vec<(K, PathBuf)> = paths
         .into_par_iter()
-        .filter_map(|p| Some((functionToApplyToEachElement(&p)?, p)))
+        .filter_map(|p| 
+            Some((functionToApplyToEachElement(&p)?, p))
+        )
         .collect();
 
     let mut groups = HashMap::new();

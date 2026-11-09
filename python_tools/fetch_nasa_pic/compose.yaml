@@ -1,0 +1,19 @@
+services:
+  fetch_nasa_pic:
+    container_name: fetch_nasa_pic
+    build:
+      context: .
+      args:
+        TZ: ${TZ:-America/New_York}
+    restart: unless-stopped
+    environment:
+      NASA_API_KEY: ${NASA_API_KEY:-DEMO_KEY}
+      TZ: ${TZ:-America/New_York}
+    volumes:
+      # Host folder where pictures land; set NASA_PIC_HOST_DIR in .env.
+      - ${NASA_PIC_HOST_DIR:-./nasa_pic_collection}:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"

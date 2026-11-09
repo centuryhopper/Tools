@@ -1,0 +1,19 @@
+# cmake/dependencies.cmake — managed by cppgen-cli; edit blocks via `cppgen add/remove`
+include(FetchContent)
+
+### cppgen:deps:begin
+
+### cppgen:dep:onetbb:begin
+FetchContent_Declare(
+    onetbb
+    GIT_REPOSITORY https://github.com/uxlfoundation/oneTBB.git
+    GIT_TAG        v2023.0.0
+    GIT_SHALLOW    TRUE
+)
+set(TBB_TEST     OFF CACHE BOOL "" FORCE)  # skip oneTBB's own test suite
+set(TBB_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(TBB_STRICT   OFF CACHE BOOL "" FORCE)  # don't treat its warnings as errors
+FetchContent_MakeAvailable(onetbb)
+### cppgen:dep:onetbb:end
+
+### cppgen:deps:end

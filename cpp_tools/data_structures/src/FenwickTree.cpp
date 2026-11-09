@@ -37,6 +37,7 @@ FenwickTree<T>::FenwickTree(std::size_t n) : tree(n + 1, 0) {}
 
 template <typename T> FenwickTree<T>::FenwickTree(std::span<const T> values) {
   tree.resize(values.size() + 1);
+  // auto dbg = rv::enumerate(values) | rng::to<std::vector>();
   for (const auto &[i, val] : rv::enumerate(values)) {
     this->tree[i + 1] = val;
   }
