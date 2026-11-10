@@ -1,0 +1,12 @@
+# LeakSanitizer suppressions: GPU/GL driver allocations that are never freed
+# before exit. Not bugs in this project. A leak is suppressed only if one of
+# these libraries appears in its allocation stack, so leaks in src/ still show.
+leak:libnvidia-glcore.so
+leak:libnvidia-glsi.so
+leak:libnvidia-eglcore.so
+leak:libGLX_nvidia.so
+leak:libGLX_mesa.so
+leak:libGLX.so
+leak:libEGL_mesa.so
+leak:libgallium
+leak:libdbus-1.so
