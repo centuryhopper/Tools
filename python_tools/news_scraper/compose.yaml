@@ -1,0 +1,14 @@
+services:
+  news_scraper:
+    container_name: news_scraper
+    build: .
+    restart: unless-stopped
+    env_file:
+      - secrets.env
+    volumes:
+      - /home/leo_zhang/files_from_docker/news:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
