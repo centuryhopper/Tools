@@ -1,0 +1,1 @@
+/home/leo_zhang/emsdk/upstream/emscripten/emcc -O3 -DNDEBUG -sUSE_GLFW=3 -sASYNCIFY -sTOTAL_MEMORY=67108864 -sFORCE_FILESYSTEM=1 -sEXPORTED_FUNCTIONS=[\"_free\",\"_malloc\",\"_main\"] -sEXPORTED_RUNTIME_METHODS=ccall @CMakeFiles/SortingAlgorithmsVisualizer.dir/objects1.rsp -o SortingAlgorithmsVisualizer.html @CMakeFiles/SortingAlgorithmsVisualizer.dir/linkLibs.rsp
