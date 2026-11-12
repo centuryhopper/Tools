@@ -1,10 +1,9 @@
-# Build output
+# Build output and xmake's saved configuration
 build/
+.xmake/
 
 # Generated compilation database
 compile_commands.json
-
-vcpkg_installed/
 
 # IDEs
 .vscode/
@@ -15,7 +14,6 @@ vcpkg_installed/
 
 # Windows
 Thumbs.db
-
 
 # Editors
 *.swp

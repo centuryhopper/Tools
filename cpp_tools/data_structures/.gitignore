@@ -1,5 +1,6 @@
-# Build output
+# Build output and xmake's saved configuration
 build/
+.xmake/
 
 # Generated compilation database
 compile_commands.json
@@ -13,7 +14,6 @@ compile_commands.json
 
 # Windows
 Thumbs.db
-
 
 # Editors
 *.swp

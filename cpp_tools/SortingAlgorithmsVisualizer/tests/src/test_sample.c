@@ -1,24 +1,18 @@
-#include <unity.h>
+
+// find ~/.xmake/packages/u/unity_test -name unity.h
+#include <unity/unity.h>
 
 // Set up before each test
-void setUp(void)
-{
-    ;
-}
+void setUp(void) { ; }
 // Clean up after each test
-void tearDown(void)
-{
-    // printf("cleaning up after test\n");
+void tearDown(void) {
+  // printf("cleaning up after test\n");
 }
 
-void test_Addition(void)
-{
-    TEST_ASSERT_EQUAL_INT(4, 2 + 2);
-}
+void test_Addition(void) { TEST_ASSERT_EQUAL_INT(4, 2 + 2); }
 
-int main(void)
-{
-    UNITY_BEGIN();
-    RUN_TEST(test_Addition);
-    return UNITY_END();
+int main(void) {
+  UNITY_BEGIN();
+  RUN_TEST(test_Addition);
+  return UNITY_END();
 }

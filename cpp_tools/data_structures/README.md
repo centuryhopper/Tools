@@ -1,52 +1,41 @@
 # data_structures
 
-A modern C++ project generated with **cppgen**.
+C++23 implementations of data structures: a binary search tree (`BST`) and a Fenwick tree (`FenwickTree`), with a demo program and unit tests.
 
 ## Requirements
 
-- CMake 3.20+
-- A C++20 compatible compiler
-- GNU Make (optional, for using the provided Makefile)
+- A C++23 compiler with `<print>` (GCC 14+ or Clang 18+)
+- [xmake](https://xmake.io) 2.8.5 or newer: `curl -fsSL https://xmake.io/shget.text | bash`
 
-## Project Structure
+## Project structure
 
 ```text
 .
-├── CMakeLists.txt
-├── Makefile
-├── include/
+├── xmake.lua
+├── include/data_structures/
 ├── src/
-├── tests/
-└── build/
+└── tests/
 ```
 
-## Build
+## Build and run
 
 ```bash
-make
+xmake          # build (debug by default)
+xmake run      # run the demo program
+xmake test     # build and run the unit tests
 ```
 
-or
+Switch to an optimized build with `xmake f -m release`, then build and run as above. `xmake show` prints the current mode.
 
-```bash
-cmake -S . -B build
-cmake --build build
-```
-
-## Run
-
-```bash
-make run
-```
+New `.cpp` files in `src/` are picked up automatically.
 
 ## Clean
 
 ```bash
-make clean
+xmake clean            # delete build output for the current mode
+rm -rf build .xmake    # start completely fresh
 ```
 
-## Run Tests
+## Editor setup
 
-```bash
-make test
-```
+`compile_commands.json` in the project root is rewritten on every build, and clangd picks it up from there automatically. Build once after cloning so the file exists.

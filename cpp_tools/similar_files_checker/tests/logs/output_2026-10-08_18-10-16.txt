@@ -1,3 +1,0 @@
-KEEP: /home/leo_zhang/synology/root/iphone/dummy.txt
-/home/leo_zhang/synology/root/pics/dummy.txt
-

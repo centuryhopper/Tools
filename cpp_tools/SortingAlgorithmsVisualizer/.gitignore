@@ -1,4 +1,4 @@
 build/
-vcpkg_installed/
+.xmake/
 compile_commands.json
 .cache/
