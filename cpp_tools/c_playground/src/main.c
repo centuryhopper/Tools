@@ -38,10 +38,10 @@ static inline bool match_hex(const char jpeg_check[], const char *hex_string,
 //  grep -obUaP '\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}'
 //  /home/leo_zhang/projects/Tools/cpp_tools/similar_files_checker/tests/images/unique_imgs/IMG_3234.jpg
 bool get_img_timestamp(const char *data, char *output_buffer,
-                       size_t buffer_size)
+                       size_t output_buffer_size)
 {
 
-    if (!output_buffer || buffer_size == 0)
+    if (!output_buffer || output_buffer_size == 0)
     {
         return 0;
     }
@@ -215,8 +215,8 @@ bool get_img_timestamp(const char *data, char *output_buffer,
     //     printf("%c", buffer[dateFindingOffset + i]);
     // }
 
-    memcpy(output_buffer, &buffer[dateFindingOffset], 19);
-    output_buffer[19] = '\0';
+    memcpy(output_buffer, &buffer[dateFindingOffset], output_buffer_size);
+    output_buffer[output_buffer_size - 1] = '\0';
 
     return 1;
 }
@@ -235,28 +235,52 @@ static bool is_directory(const char *path)
     return S_ISDIR(st.st_mode);
 }
 
+void test_str(char *output, const char *input, size_t output_size)
+{
+    if (output_size == 0)
+        return;
+    strncpy(output, input, output_size - 1); // leave room for '\0'
+    output[output_size - 1] = '\0';
+}
+
 int main(int argc, char **argv)
 {
+    const char input[] = "hello";
+    size_t size = strlen(input) + 1;
+    char output[size];
+
+    // printf("BEFORE:\n input: %s, input size: %zu ||| output: %s, output size:
+    // "
+    //        "%zu\n",
+    //        input, strlen(input), output, size);
+
+    test_str(output, input, size);
+
+    printf("AFTER:\n input: %s, input size: %zu ||| output: %s, output size: "
+           "%zu\n",
+           input, strlen(input), output, strlen(output));
+
     /*
      /home/leo_zhang/projects/Tools/cpp_tools/c_playground/imgs/20261007_104719.jpg
      /home/leo_zhang/projects/Tools/cpp_tools/c_playground/imgs/IMG_3234.jpg
 
      */
-    char date[20];
-    if (argc < 2)
-    {
-        perror("please add a path argument");
-        return 1;
-    }
-    if (!file_exists(argv[1]))
-    {
-        perror("directory not found");
-        return 1;
-    }
-    bool found = get_img_timestamp(argv[1], date, sizeof date);
-    printf("%s\n", found ? "date found" : "date not found");
-    if (found)
-        printf("date: %s\n", date);
+    // char date[20];
+    // if (argc < 2)
+    // {
+    //     perror("please add a path argument");
+    //     return 1;
+    // }
+    // if (!file_exists(argv[1]))
+    // {
+    //     perror("directory not found");
+    //     return 1;
+    // }
+    // bool found = get_img_timestamp(argv[1], date, sizeof date);
+    // printf("%s\n", found ? "date found" : "date not found");
+    // if (found)
+    //     printf("date: %s\n", date);
+    //
 
     return 0;
 }

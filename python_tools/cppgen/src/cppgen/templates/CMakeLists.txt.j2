@@ -5,30 +5,48 @@ project({{ project_name }}
     LANGUAGES CXX
 )
 
+# =============================================================================
+# 1. Language and output settings
+# =============================================================================
+
 set(CMAKE_CXX_STANDARD {{ cpp_standard }})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)   # compile_commands.json for clangd / clang-tidy
 
+# Writes compile_commands.json, which clangd and clang-tidy read.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# All executables land in <build dir>/bin.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# -------------------------
-# Build options
-# -------------------------
+# =============================================================================
+# 2. Build options
+# =============================================================================
+#
 #   cmake --preset debug -DSANITIZER=address     ASan + UBSan (memory errors, leaks, UB)
 #   cmake --preset debug -DSANITIZER=thread      TSan + UBSan (data races, UB)
 #   cmake --preset debug -DSANITIZER=undefined   UBSan only
-#   -DWARNINGS_AS_ERRORS=ON                      fail the build on any warning
+#   cmake --preset debug -DWARNINGS_AS_ERRORS=ON fail the build on any warning
 #
 # ASan and TSan can't be combined, so give each its own build directory.
 
 set(SANITIZER "" CACHE STRING "Sanitizer: address, thread, undefined, or empty")
 set_property(CACHE SANITIZER PROPERTY STRINGS "" address thread undefined)
+
 option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
 if(SANITIZER AND NOT SANITIZER MATCHES "^(address|thread|undefined)$")
-    message(FATAL_ERROR "SANITIZER must be address, thread, undefined, or empty (got '${SANITIZER}')")
+    message(FATAL_ERROR
+        "SANITIZER must be address, thread, undefined, or empty (got '${SANITIZER}')")
 endif()
+
+if(SANITIZER)
+    message(STATUS "Sanitizer: ${SANITIZER}")
+endif()
+
+# =============================================================================
+# 3. Compiler flags for our own code
+# =============================================================================
 
 set(PROJECT_WARNINGS
     -Wall
@@ -40,8 +58,14 @@ set(PROJECT_WARNINGS
     -Wnull-dereference
     -Wimplicit-fallthrough
     -Wformat=2
-    $<$<BOOL:${WARNINGS_AS_ERRORS}>:-Werror>
 )
+
+if(WARNINGS_AS_ERRORS)
+    list(APPEND PROJECT_WARNINGS -Werror)
+endif()
+
+# Stays empty when no sanitizer was requested.
+set(SANITIZER_FLAGS "")
 
 if(SANITIZER STREQUAL "address")
     set(SANITIZER_FLAGS -fsanitize=address,undefined)
@@ -51,15 +75,18 @@ elseif(SANITIZER STREQUAL "undefined")
     set(SANITIZER_FLAGS -fsanitize=undefined)
 endif()
 
-# Applies warnings, debug checks and the chosen sanitizer to one of our own
-# targets. Never call this on third-party targets (fmt, exiv2, ...).
+# apply_project_options(<target>)
+#
+# Gives one of our own targets the include/ directory, the warnings above,
+# debug-only standard library checks, and the chosen sanitizer.
+# Never call this on third-party targets (fmt, exiv2, ...).
 function(apply_project_options target)
     target_include_directories(${target} PRIVATE include)
     target_compile_options(${target} PRIVATE ${PROJECT_WARNINGS})
 
-    # Debug only: bounds-check vector[]/string[]/span and empty optional access
-    # inside the standard library. Cheap; turns silent corruption into an
-    # immediate assertion message.
+    # Debug only: bounds-check vector[], string[], span, and empty optional
+    # access inside the standard library. Cheap, and it turns silent
+    # corruption into an immediate assertion message.
     target_compile_definitions(${target} PRIVATE
         $<$<CONFIG:Debug>:_GLIBCXX_ASSERTIONS>
     )
@@ -74,50 +101,34 @@ function(apply_project_options target)
     endif()
 endfunction()
 
-if(SANITIZER)
-    message(STATUS "Sanitizer: ${SANITIZER}")
-endif()
+# =============================================================================
+# 4. Third-party dependencies
+# =============================================================================
 
+# cmake/dependencies.cmake finds or fetches the libraries.
+include(cmake/dependencies.cmake)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(dependencies)
+# Every library our targets link against. Add new ones here only.
+set(PROJECT_DEPENDENCIES
+    TBB::tbb
+)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb)
-
-
-# -------------------------
-# Shared library (use this when code is shared by both main.cpp and test_main.cpp)
-# -------------------------
-
-#add_library(name_of_your_lib
-#    src/[name].cpp
-#)
-#
-#target_include_directories(name_of_your_lib
-#    PUBLIC
-#        include
-#)
-#
-#target_compile_options(name_of_your_lib
-#    PRIVATE
-#        ${PROJECT_WARNINGS}
-#)
-
-# -------------------------
-# Main executable
-# -------------------------
+# =============================================================================
+# 5. Main executable
+# =============================================================================
 
 add_executable(${PROJECT_NAME})
 
-include(cmake/sources.cmake)   # generated by cppgen-cli
+# cmake/sources.cmake is generated by cppgen-cli and adds the .cpp files.
+include(cmake/sources.cmake)
 
 apply_project_options(${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_DEPENDENCIES})
 
 {% if enable_tests %}
-
-# -------------------------
-# Tests
-# -------------------------
+# =============================================================================
+# 6. Tests
+# =============================================================================
 
 enable_testing()
 
@@ -125,12 +136,13 @@ add_executable(tests
     tests/test_main.cpp
 )
 
-# Reuse every source cppgen added to the main target, except its main()
-get_target_property(LIB_SOURCES ${PROJECT_NAME} SOURCES)
-list(FILTER LIB_SOURCES EXCLUDE REGEX "src/main\\.cpp$")
-target_sources(tests PRIVATE ${LIB_SOURCES})
+# Compile the main target's sources into the tests too, minus its main().
+get_target_property(MAIN_SOURCES ${PROJECT_NAME} SOURCES)
+list(FILTER MAIN_SOURCES EXCLUDE REGEX "src/main\\.cpp$")
+target_sources(tests PRIVATE ${MAIN_SOURCES})
 
 apply_project_options(tests)
+target_link_libraries(tests PRIVATE ${PROJECT_DEPENDENCIES})
 
 add_test(NAME unit_tests COMMAND tests)
 
@@ -139,75 +151,5 @@ if(SANITIZER STREQUAL "thread" AND EXISTS "${CMAKE_SOURCE_DIR}/tsan.supp")
     set_tests_properties(unit_tests PROPERTIES
         ENVIRONMENT "TSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tsan.supp")
 endif()
-
 {% endif %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -142,6 +142,13 @@ def unit_paths(project: Path, name: str) -> tuple[Path, Path, str]:
     return header, source, include_str
 
 
+def sync_vcpkgs(project: Path) -> bool:
+    """
+    Reads vcpkg.json's dependencies and upserts them into
+    CMakeLists.txt
+    """
+
+
 # -------------------------
 # Syncing cmake/sources.cmake
 # -------------------------
@@ -334,7 +341,6 @@ def init(
         ("main.cpp.j2", "src/main.cpp"),
         (".gitignore.j2", ".gitignore"),
         ("README.md.j2", "README.md"),
-        (".clangd.j2", ".clangd"),
         ("CMakePresets.json.j2", "CMakePresets.json"),
         # ("dependencies.cmake.j2", "dependencies.cmake"),
     ]

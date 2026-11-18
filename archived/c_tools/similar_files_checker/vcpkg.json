@@ -1,0 +1,14 @@
+{
+  "dependencies": [
+    "fmt",
+    "exiv2",
+    "argparse",
+    "blake3",
+    "tbb",
+    "ffmpeg",
+    {
+      "name": "opencv4",
+      "features": ["ffmpeg", "contrib"]
+    }
+  ]
+}

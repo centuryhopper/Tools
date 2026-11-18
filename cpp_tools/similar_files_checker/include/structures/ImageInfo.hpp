@@ -1,13 +1,12 @@
 #pragma once
 
-#include <filesystem>
-#include <chrono>
-#include <opencv2/opencv.hpp>
-#include <opencv2/img_hash.hpp>
 #include "MediaInfo.hpp"
+#include <chrono>
+#include <filesystem>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/img_hash.hpp>
 
-
-
-struct ImageInfo : MediaInfo {   // public inheritance by default
+struct ImageInfo : MediaInfo
+{ // public inheritance by default
     cv::Mat phash;
 };

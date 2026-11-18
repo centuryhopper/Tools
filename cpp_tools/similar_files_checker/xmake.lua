@@ -40,48 +40,14 @@ if is_mode("debug") then
 	add_defines("_GLIBCXX_ASSERTIONS", "_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST")
 end
 
--- exiv2 isn't in xmake's package repository, so this builds it from source
--- with its own CMake build. Optional features we don't use are switched off
--- to avoid extra dependencies.
-package("exiv2")
-set_homepage("https://exiv2.org")
-set_license("GPL-2.0")
-add_urls("https://github.com/Exiv2/exiv2.git")
-add_versions("0.28.9", "v0.28.9") -- version -> git tag
-add_deps("cmake")
-add_deps("expat", "zlib") -- XMP metadata and PNG support
-add_links("exiv2", "exiv2-xmp")
-on_install("linux", "macosx", function(package)
-	local configs = {
-		"-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"),
-		"-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"),
-		"-DEXIV2_ENABLE_XMP=ON",
-		"-DEXIV2_ENABLE_PNG=ON",
-		"-DEXIV2_ENABLE_BMFF=ON",
-		"-DEXIV2_ENABLE_INIH=OFF",
-		"-DEXIV2_ENABLE_BROTLI=OFF",
-		"-DEXIV2_ENABLE_NLS=OFF",
-		"-DEXIV2_ENABLE_CURL=OFF",
-		"-DEXIV2_ENABLE_WEBREADY=OFF",
-		"-DEXIV2_BUILD_SAMPLES=OFF",
-		"-DEXIV2_BUILD_EXIV2_COMMAND=OFF",
-		"-DEXIV2_BUILD_UNIT_TESTS=OFF",
-		"-DEXIV2_BUILD_FUZZ_TESTS=OFF",
-		"-DEXIV2_BUILD_DOC=OFF",
-	}
-	import("package.tools.cmake").install(package, configs)
-end)
-package_end()
-
 -- Third-party packages, downloaded and built by xmake on the first build.
 -- OpenCV and FFmpeg take a long time the first time; later builds reuse them.
 add_requires("fmt", "argparse", "blake3", "tbb", "ffmpeg", "xxhash")
-add_requires("exiv2 0.28.9")
 add_requires("opencv", { configs = { ffmpeg = true } }) -- video support via FFmpeg
 
 -- Settings shared by the app and the tests.
 add_includedirs("include")
-add_packages("fmt", "exiv2", "argparse", "blake3", "tbb", "ffmpeg", "xxhash", "opencv")
+add_packages("fmt", "argparse", "blake3", "tbb", "ffmpeg", "xxhash", "opencv")
 
 target("similar_files_checker")
 set_kind("binary")
